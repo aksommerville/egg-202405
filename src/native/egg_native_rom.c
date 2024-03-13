@@ -242,6 +242,15 @@ int egg_native_init_client_code() {
 /* Calls to client.
  */
  
+#if EGG_ROM_SOURCE==NATIVE
+
+int egg_native_call_client_init() { return egg_client_init(); }
+void egg_native_call_client_quit() { egg_client_quit(); }
+int egg_native_call_client_update(double elapsed) { egg_client_update(elapsed); return 0; }
+int egg_native_call_client_render() { egg_client_render(); return 0; }
+
+#else
+ 
 int egg_native_call_client_init() {
   int err=0;
   uint32_t argv[1]={0};
@@ -284,3 +293,5 @@ int egg_native_call_client_render() {
   }
   return err;
 }
+
+#endif

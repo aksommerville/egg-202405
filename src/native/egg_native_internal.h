@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <unistd.h>
+#include "egg/egg.h"
 #include "opt/hostio/hostio.h"
 #include "opt/timer/timer.h"
 #include "opt/wamr/wamr.h"
