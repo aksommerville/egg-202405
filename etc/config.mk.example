@@ -1,0 +1,70 @@
+APPNAME_LOWER:=egg
+APPNAME_CAMEL:=Egg
+
+# Who are we building for? eg "linux", "web", "macos"... See etc/target/*.mk
+TARGETS:=web
+
+run:web-run
+
+WAMR_SDK:=path/to/wasm-micro-runtime
+WASI_SDK:=path/to/wasi-sdk-16.0
+QJS_SDK:=path/to/quickjs-2023-12-09
+
+#----------------------------------------------------------------
+
+# Must select at least one video driver:   drmfb drmgx glx x11fb
+# Should select at least one audio driver: alsafd asound pulse
+# Input drivers are optional but why not:  evdev
+# Enable fake unit "xinerama" for the X11 Xinerama extension, for monitor size detection.
+linux_OPT_ENABLE:=alsafd asound pulse drmfb drmgx glx x11fb xinerama evdev
+
+linux_TOOLCHAIN:=
+linux_CC_EXTRA:=
+linux_LD_EXTRA:=
+linux_LDPOST_EXTRA:=
+linux_RUN_ARGS:=out/rom/hello.egg
+
+#----------------------------------------------------------------
+
+tools_OPT_ENABLE:=jpeg
+tools_CC_EXTRA:=
+tools_LD_EXTRA:=
+tools_LDPOST_EXTRA:=
+
+#----------------------------------------------------------------
+
+web_OPT_ENABLE:=
+web_CC_EXTRA:=
+web_LD_EXTRA:=
+web_LDPOST_EXTRA:=
+
+#----------------------------------------------------------------
+
+demos_OPT_ENABLE:=
+demos_CC_EXTRA:=
+demos_LD_EXTRA:=
+demos_LDPOST_EXTRA:=
+
+#----------------------------------------------------------------
+
+tests_OPT_ENABLE:=alsafd asound bcm drmfb drmgx evdev glx pulse x11fb xinerama ossmidi http jpeg
+tests_CC_EXTRA:=-I/usr/include/libdrm
+tests_LDPOST_EXTRA:=-lasound -ldrm -lgbm -lEGL -lX11 -lXinerama -lGL -lpulse-simple $(QJS_SDK)/libquickjs.a $(WAMR_SDK)/build/libvmlib.a
+
+#----------------------------------------------------------------
+
+macos_OPT_ENABLE:=
+macos_TOOLCHAIN:=
+macos_CC_EXTRA:=
+macos_LD_EXTRA:=
+macos_LDPOST_EXTRA:=
+macos_RUN_ARGS:=
+
+#----------------------------------------------------------------
+
+mswin_OPT_ENABLE:=
+mswin_TOOLCHAIN:=
+mswin_CC_EXTRA:=
+mswin_LD_EXTRA:=
+mswin_LDPOST_EXTRA:=
+mswin_RUN_ARGS:=

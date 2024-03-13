@@ -1,0 +1,205 @@
+#include "egg_native_internal.h"
+#include <signal.h>
+
+struct egg egg={0};
+
+/* Signal.
+ */
+ 
+static void egg_native_rcvsig(int sigid) {
+  switch (sigid) {
+    case SIGINT: if (++(egg.sigc)>=3) {
+        fprintf(stderr,"Too many unprocessed signals.\n");
+        exit(1);
+      } break;
+  }
+}
+
+/* Quit.
+ */
+ 
+static void egg_native_quit(int status) {
+  egg_native_call_client_quit();
+  if (!status) {
+    timer_report(&egg.timer);
+    fprintf(stderr,"%s: Normal exit.\n",egg.exename);
+  } else {
+    fprintf(stderr,"%s: Abnormal exit.\n",egg.exename);
+  }
+  hostio_del(egg.hostio);
+  wamr_del(egg.wamr);
+  qjs_del(egg.qjs);
+  egg_native_rom_cleanup();
+  egg_configure_cleanup();
+}
+
+/* Init.
+ */
+ 
+static int egg_native_init() {
+  int err;
+
+  if ((err=egg_native_rom_init())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Unspecified error loading ROM.\n",egg.exename);
+    return -2;
+  }
+  
+  /* Create both runtimes.
+   */
+  if (!(egg.wamr=wamr_new())) {
+    fprintf(stderr,"%s: Failed to initialize WebAssembly runtime.\n",egg.exename);
+    return -2;
+  }
+  if (!(egg.qjs=qjs_new())) {
+    fprintf(stderr,"%s: Failed to initialize JavaScript runtime.\n",egg.exename);
+    return -2;
+  }
+  if ((err=egg_native_install_runtime_exports())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Unspecified error configuring Wasm or JS runtime.\n",egg.exename);
+    return -2;
+  }
+  if ((err=egg_native_init_client_code())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Unspecified error initializing client code.\n",egg.exename);
+    return -2;
+  }
+ 
+  /* Bring hostio up.
+   */
+  struct hostio_video_delegate video_delegate={
+    .cb_close=egg_native_cb_close,
+    .cb_focus=egg_native_cb_focus,
+    .cb_resize=egg_native_cb_resize,
+    .cb_key=egg_native_cb_key,
+    .cb_text=egg_native_cb_text,
+    .cb_mmotion=egg_native_cb_mmotion,
+    .cb_mbutton=egg_native_cb_mbutton,
+    .cb_mwheel=egg_native_cb_mwheel,
+  };
+  struct hostio_audio_delegate audio_delegate={
+    .cb_pcm_out=egg_native_cb_pcm_out,
+  };
+  struct hostio_input_delegate input_delegate={
+    .cb_connect=egg_native_cb_connect,
+    .cb_disconnect=egg_native_cb_disconnect,
+    .cb_button=egg_native_cb_button,
+  };
+  if (!(egg.hostio=hostio_new(&video_delegate,&audio_delegate,&input_delegate))) return -1;
+  
+  /* Initialize video driver.
+   */
+  struct hostio_video_setup video_setup={
+    .w=egg.video_w,
+    .h=egg.video_h,
+    .fullscreen=egg.fullscreen,
+    .fbw=egg.romfbw,
+    .fbh=egg.romfbh,
+    .device=egg.video_device,
+  };
+  if (egg.romtitle&&egg.romtitle[0]) video_setup.title=egg.romtitle;
+  else if (egg.rompath&&egg.rompath[0]) video_setup.title=egg.rompath;
+  else video_setup.title=egg.exename;
+  if (egg.romicon&&(egg.romiconw>0)&&(egg.romiconh>0)) {
+    video_setup.iconrgba=egg.romicon;
+    video_setup.iconw=egg.romiconw;
+    video_setup.iconh=egg.romiconh;
+  } else {
+    //TODO default app icon
+  }
+  if (hostio_init_video(egg.hostio,egg.video_driver,&video_setup)<0) {
+    fprintf(stderr,"%s: Failed to initialize video.\n",egg.exename);
+    return -2;
+  }
+  
+  /* Initialize input drivers.
+   */
+  struct hostio_input_setup input_setup={
+    .path=egg.input_device,
+  };
+  if (hostio_init_input(egg.hostio,egg.input_driver,&input_setup)<0) {
+    fprintf(stderr,"%s: Failed to initialize input.\n",egg.exename);
+    return -2;
+  }
+  
+  /* Initialize audio driver.
+   */
+  struct hostio_audio_setup audio_setup={
+    .rate=egg.audio_rate,
+    .chanc=egg.audio_chanc,
+    .device=egg.audio_device,
+    .buffer_size=egg.audio_buffer,
+  };
+  if (hostio_init_audio(egg.hostio,egg.audio_driver,&audio_setup)<0) {
+    fprintf(stderr,"%s: Failed to initialize audio.\n",egg.exename);
+    return -2;
+  }
+  
+  hostio_log_driver_names(egg.hostio);
+  
+  if ((err=egg_native_call_client_init())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Error initializing game.\n",egg.exename);
+    return -2;
+  }
+  
+  hostio_audio_play(egg.hostio,1);
+  
+  timer_init(&egg.timer,60,0.25);
+  
+  return 0;
+}
+
+/* Update.
+ */
+ 
+static int egg_native_update() {
+  int err;
+  if (hostio_update(egg.hostio)<0) {
+    fprintf(stderr,"%s: Unspecified error updating drivers.\n",egg.exename);
+    return -2;
+  }
+  
+  double elapsed=timer_tick(&egg.timer);
+  if ((err=egg_native_call_client_update(elapsed))<0) {
+    if (err!=-2) fprintf(stderr,"%s: Error updating game.\n",egg.exename);
+    return -2;
+  }
+  
+  //TODO render fences
+  if ((err=egg_native_call_client_render())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Error rendering game.\n",egg.exename);
+    return -2;
+  }
+
+  return 0;
+}
+
+/* Main.
+ */
+ 
+int main(int argc,char **argv) {
+  signal(SIGINT,egg_native_rcvsig);
+  int err;
+  
+  if ((err=egg_native_configure(argc,argv))<0) {
+    if (err!=-2) fprintf(stderr,"%s: Unspecified error reading configuration.\n",egg.exename);
+    return 1;
+  }
+  if (egg.terminate) return 0; // eg --help
+  
+  if ((err=egg_native_init())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Unspecified error initializing.\n",egg.exename);
+    egg_native_quit(1);
+    return 1;
+  }
+  
+  fprintf(stderr,"%s: Running.\n",egg.exename);
+  while (!egg.sigc&&!egg.terminate) {
+    if ((err=egg_native_update())<0) {
+      if (err!=-2) fprintf(stderr,"%s: Unspecified error updating.\n",egg.exename);
+      egg_native_quit(1);
+      return 1;
+    }
+  }
+  
+  egg_native_quit(0);
+  return 0;
+}
