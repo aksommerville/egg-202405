@@ -45,12 +45,13 @@ void egg_client_render();
 #define EGG_EVENT_HTTP_RSP      4 /* [reqid,status,length,_] */
 #define EGG_EVENT_WS_CONNECT    5 /* [wsid,_,_,_] */
 #define EGG_EVENT_WS_DISCONNECT 6 /* [wsid,_,_,_] */
-#define EGG_EVENT_WS_MESSAGE    7 /* [wsid,msgid,length,_] */
+#define EGG_EVENT_WS_MESSAGE    7 /* [wsid,msgid,opcode,length] */
 #define EGG_EVENT_MMOTION       8 /* [x,y,_,_] */
 #define EGG_EVENT_MBUTTON       9 /* [btnid,value,x,y] */
 #define EGG_EVENT_MWHEEL       10 /* [dx,dy,x,y] */
-#define EGG_EVENT_TEXT         11 /* [codepoint,_,_,_] */
-#define EGG_EVENT_RESIZE       12 /* [w,h,_,_] */
+#define EGG_EVENT_KEY          11 /* [hidusage,value,_,_] */
+#define EGG_EVENT_TEXT         12 /* [codepoint,_,_,_] */
+#define EGG_EVENT_RESIZE       13 /* [w,h,_,_] */
  
 struct egg_event {
   int type;
@@ -173,7 +174,7 @@ int egg_http_request(
  */
 int egg_http_get_status(int reqid);
 
-int egg_http_get_header(char *dst,int dsta,int reqid,const char *k,int kc);
+int egg_http_get_header(char *dst,int dsta,int reqid,const char *k,int kc);//XXX complicated. Can we live without this?
 int egg_http_get_body(void *dst,int dsta,int reqid);
 
 /* Establish a WebSocket connection.
@@ -221,5 +222,13 @@ void egg_time_get(int *year,int *month,int *day,int *hour,int *minute,int *secon
  * Be prepared for an empty response, we don't necessarily know this on every platform.
  */
 int egg_get_user_languages(int *dst,int dsta);
+
+/* Requesting termination does not guarantee that execution will end immediately, or at all.
+ * egg_is_terminable() will return the same every time:
+ *   0 for web browsers and maybe consoles, where there's no concept of termination.
+ *   1 if egg_request_termination() is expected to work. Though again, not necessarily immediately, be careful.
+ */
+void egg_request_termination();
+int egg_is_terminable();
 
 #endif

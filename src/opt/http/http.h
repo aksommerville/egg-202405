@@ -79,6 +79,8 @@ void *http_websocket_get_userdata(const struct http_websocket *ws);
 void http_websocket_set_userdata(struct http_websocket *ws,void *userdata);
 void http_websocket_set_callback(struct http_websocket *ws,int (*cb)(struct http_websocket *ws,int opcode,const void *v,int c));
 
+struct http_websocket *http_context_get_websocket_by_index(const struct http_context *ctx,int p);
+
 /* Convenience for WebSocket servers.
  * If this request asks for an upgrade to WebSocket, respond affirmatively and return the new WebSocket object.
  * Not-a-WebSocket-request is indistinguishable from real errors.

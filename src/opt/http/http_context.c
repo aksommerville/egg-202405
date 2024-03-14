@@ -262,6 +262,22 @@ int http_update_file(struct http_context *ctx,int fd) {
   return 0;
 }
 
+/* Find websocket.
+ */
+ 
+struct http_websocket *http_context_get_websocket_by_index(const struct http_context *ctx,int p) {
+  if (p<0) return 0;
+  struct http_socket **sock=ctx->socketv;
+  int i=ctx->socketc;
+  for (;i-->0;sock++) {
+    if ((*sock)->role!=HTTP_SOCKET_ROLE_WEBSOCKET) continue;
+    if (!(*sock)->ws) continue;
+    if (p--) continue;
+    return (*sock)->ws;
+  }
+  return 0;
+}
+
 /* New WebSocket client connection.
  */
  

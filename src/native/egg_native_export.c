@@ -1,3 +1,12 @@
+/* egg_native_export.c
+ * All JS and Wasm hooks live here.
+ * Most of the Public API is implemented here.
+ * Elsewhere:
+ *   egg_native_net.c -- http and ws
+ *   egg_native_event.c -- egg_event_next,egg_event_enable
+ *   egg_native_input.c -- input
+ */
+
 #include "egg_native_internal.h"
 #include "quickjs.h"
 #include "wasm_export.h"
@@ -10,112 +19,7 @@
 #define JSASSERTARGRANGE(lo,hi) if ((argc<lo)||(argc>hi)) return JS_ThrowTypeError(ctx,"%s requires %d..%d arguments, got %d",__func__,lo,hi,argc);
 
 static void egg_js_dummy_free(JSRuntime *rt,void *opaque,void *ptr) {}
-
-/* Event queue.
- */
- 
-int egg_event_next(struct egg_event *eventv,int eventa) {
-  //fprintf(stderr,"%s\n",__func__);//TODO
-  switch (rand()%10) {
-    case 0: {
-        if (eventa>=1) {
-          eventv[0].type=EGG_EVENT_MMOTION;
-          eventv[0].v[0]=200;
-          eventv[0].v[1]=250;
-          eventv[0].v[2]=0;
-          eventv[0].v[3]=0;
-          return 1;
-        }
-      } break;
-    case 1: {
-        if (eventa>=2) {
-          eventv[0].type=EGG_EVENT_MMOTION;
-          eventv[0].v[0]=201;
-          eventv[0].v[1]=251;
-          eventv[0].v[2]=0;
-          eventv[0].v[3]=0;
-          eventv[1].type=EGG_EVENT_INPUT;
-          eventv[1].v[0]=123; // devid
-          eventv[1].v[1]=4; // btnid
-          eventv[1].v[2]=1; // value
-          eventv[1].v[3]=0;
-          return 2;
-        }
-      } break;
-  }
-  return 0;
-}
-
-/* Event mask.
- */
- 
-int egg_event_enable(int evttype,int evtstate) {
-  fprintf(stderr,"%s %d=%d\n",__func__,evttype,evtstate);//TODO
-  return EGG_EVTSTATE_IMPOSSIBLE;
-}
-
-/* Input devices.
- * We don't associate devid with their driver.
- * Devices will have unique devid, just we don't have a good registry of them.
- * So these calls will try each driver in turn until one appears to succeed.
- * Anyway, realistic hosts won't have more than one driver active.
- */
- 
-int egg_input_device_get_name(char *dst,int dsta,int devid) {
-  if (!dst||(dsta<0)) dsta=0;
-  if (devid<1) {
-    if (dsta>0) dst[0]=0;
-    return 0;
-  }
-  int di=0; for (;di<egg.hostio->inputc;di++) {
-    struct hostio_input *driver=egg.hostio->inputv[di];
-    if (!driver->type->get_ids) continue;
-    int vid,pid,version;
-    const char *src=driver->type->get_ids(&vid,&pid,&version,driver,devid);
-    if (!src) continue;
-    int srcc=0; while (src[srcc]) srcc++;
-    if (srcc<=dsta) {
-      memcpy(dst,src,srcc);
-      if (srcc<dsta) dst[srcc]=0;
-    }
-    return srcc;
-  }
-  if (dsta>0) dst[0]=0;
-  return 0;
-}
-
-void egg_input_device_get_ids(int *vid,int *pid,int *version,int devid) {
-  if (vid) *vid=0;
-  if (pid) *pid=0;
-  if (version) *version=0;
-  if (devid<1) return;
-  int di=0; for (;di<egg.hostio->inputc;di++) {
-    struct hostio_input *driver=egg.hostio->inputv[di];
-    if (!driver->type->get_ids) continue;
-    if (driver->type->get_ids(vid,pid,version,driver,devid)) return;
-  }
-}
-
-void egg_input_device_get_button(int *btnid,int *hidusage,int *lo,int *hi,int *value,int devid,int index) {
-  fprintf(stderr,"%s %d %d\n",__func__,devid,index);//TODO
-  //TODO This is not going to work as is. We need to iterate the device and cache its button list.
-  // Iterating again for each call is out of the question.
-  // Also we really do need to know which driver is associated with the devid, in advance.
-  //*** Is it feasible to have the client supply a callback function? ***
-  if (btnid) *btnid=0;
-  if (hidusage) *hidusage=0;
-  if (lo) *lo=0;
-  if (hi) *hi=0;
-  if (value) *value=0;
-}
-
-void egg_input_device_disconnect(int devid) {
-  if (devid<1) return;
-  int di=0; for (;di<egg.hostio->inputc;di++) {
-    struct hostio_input *driver=egg.hostio->inputv[di];
-    if (driver->type->disconnect) driver->type->disconnect(driver,devid);
-  }
-}
+static void egg_js_basic_free(JSRuntime *rt,void *opaque,void *ptr) { if (ptr) free(ptr); }
 
 /* Video driver.
  */
@@ -181,67 +85,33 @@ void egg_res_id_by_index(int *tid,int *qual,int *rid,int index) {
 int egg_store_set(const char *k,int kc,const char *v,int vc) {
   if (!k) kc=0; else if (kc<0) { kc=0; while (k[kc]) kc++; }
   if (!v) vc=0; else if (vc<0) { vc=0; while (v[vc]) vc++; }
-  fprintf(stderr,"%s '%.*s' = '%.*s'\n",__func__,kc,k,vc,v);//TODO
-  return -1;
+  return localstore_set(&egg.localstore,k,kc,v,vc);
 }
 
 int egg_store_get(char *dst,int dsta,const char *k,int kc) {
   if (!k) kc=0; else if (kc<0) { kc=0; while (k[kc]) kc++; }
-  fprintf(stderr,"%s '%.*s'\n",__func__,kc,k);//TODO
-  if (dsta>0) dst[0]=0;
-  return 0;
+  const char *src=0;
+  int srcc=localstore_get(&src,&egg.localstore,k,kc);
+  if (srcc<0) srcc=0;
+  if (srcc<=dsta) {
+    memcpy(dst,src,srcc);
+    if (srcc<dsta) dst[srcc]=0;
+  }
+  return srcc;
 }
 
 int egg_store_key_by_index(char *dst,int dsta,int index) {
-  fprintf(stderr,"%s %d\n",__func__,index);//TODO
-  if (dsta>0) dst[0]=0;
-  return 0;
-}
-
-/* HTTP requests.
- */
- 
-int egg_http_request(const char *method,const char *url,const void *body,int bodyc) {
-  fprintf(stderr,"%s %s %s c=%d\n",__func__,method,url,bodyc);//TODO
-  return -1;
-}
-
-int egg_http_get_status(int reqid) {
-  fprintf(stderr,"%s %d\n",__func__,reqid);//TODO
-  return -1;
-}
-
-int egg_http_get_header(char *dst,int dsta,int reqid,const char *k,int kc) {
-  if (!k) kc=0; else if (kc<0) { kc=0; while (k[kc]) kc++; }
-  fprintf(stderr,"%s reqid=%d k='%.*s'\n",__func__,reqid,kc,k);//TODO
-  if (dsta>0) dst[0]=0;
-  return 0;
-}
-
-int egg_http_get_body(void *dst,int dsta,int reqid) {
-  fprintf(stderr,"%s %d\n",__func__,reqid);//TODO
-  return 0;
-}
-
-/* WebSocket.
- */
- 
-int egg_ws_connect(const char *url) {
-  fprintf(stderr,"%s %s\n",__func__,url);//TODO
-  return -1;
-}
-
-void egg_ws_disconnect(int wsid) {
-  fprintf(stderr,"%s %d\n",__func__,wsid);//TODO
-}
-
-int egg_ws_get_message(void *dst,int dsta,int wsid,int msgid) {
-  fprintf(stderr,"%s wsid=%d msgid=%d\n",__func__,wsid,msgid);//TODO
-  return 0;
-}
-
-void egg_ws_send(int wsid,int opcode,const void *v,int c) {
-  fprintf(stderr,"%s %d c=%d\n",__func__,wsid,c);//TODO
+  const char *k=0;
+  int kc=0;
+  if ((index>=0)&&(index<egg.localstore.entryc)) {
+    k=egg.localstore.entryv[index].k;
+    kc=egg.localstore.entryv[index].kc;
+  }
+  if (kc<=dsta) {
+    memcpy(dst,k,kc);
+    if (kc<dsta) dst[kc]=0;
+  }
+  return kc;
 }
 
 /* Real time.
@@ -275,12 +145,44 @@ void egg_time_get(int *year,int *month,int *day,int *hour,int *minute,int *secon
  */
 
 int egg_get_user_languages(int *dst,int dsta) {
-  fprintf(stderr,"%s\n",__func__);//TODO
+  /* POSIX systems typically have LANG as the single preferred locale, which starts with a language code.
+   * There can also be LANGUAGE, which is multiple language codes separated by colons.
+   */
   int dstc=0;
-  if (dstc<dsta) dst[dstc++]=('e'<<8)|'n';
-  if (dstc<dsta) dst[dstc++]=('f'<<8)|'r';
-  if (dstc<dsta) dst[dstc++]=('r'<<8)|'u';
+  const char *src;
+  if (src=getenv("LANG")) {
+    if ((src[0]>='a')&&(src[0]<='z')&&(src[1]>='a')&&(src[1]<='z')) {
+      if (dstc<dsta) dst[dstc++]=(src[0]<<8)|src[1];
+    }
+  }
+  if (dstc>=dsta) return dstc;
+  if (src=getenv("LANGUAGE")) {
+    int srcp=0;
+    while (src[srcp]&&(dstc<dsta)) {
+      const char *token=src+srcp;
+      int tokenc=0;
+      while (src[srcp]&&(src[srcp++]!=':')) tokenc++;
+      if ((tokenc>=2)&&(token[0]>='a')&&(token[0]<='z')&&(token[1]>='a')&&(token[1]<='z')) {
+        int lang=(token[0]<<8)|token[1];
+        int already=0,i=dstc;
+        while (i-->0) if (dst[i]==lang) { already=1; break; }
+        if (!already) dst[dstc++]=lang;
+      }
+    }
+  }
+  //TODO I'm sure there are other mechanisms for MacOS and Windows. Find those.
   return dstc;
+}
+
+/* Termination.
+ */
+ 
+void egg_request_termination() {
+  egg.terminate=1;
+}
+
+int egg_is_terminable() {
+  return 1;
 }
 
 /* Log.
@@ -447,7 +349,7 @@ static JSValue egg_js_input_device_get_name(JSContext *ctx,JSValueConst this,int
   char tmp[256];
   int tmpc=egg_input_device_get_name(tmp,sizeof(tmp),devid);
   if ((tmpc<0)||(tmpc>=sizeof(tmp))) tmpc=0;
-  return JS_NewString(ctx,tmp);
+  return JS_NewStringLen(ctx,tmp,tmpc);
 }
 
 static int egg_wasm_input_device_get_name(wasm_exec_env_t ee,char *dst,int dsta,int devid) {
@@ -484,6 +386,7 @@ static JSValue egg_js_input_device_get_button(JSContext *ctx,JSValueConst this,i
   JS_ToInt32(ctx,&index,argv[1]);
   int btnid=0,hidusage=0,lo=0,hi=0,value=0;
   egg_input_device_get_button(&btnid,&hidusage,&lo,&hi,&value,devid,index);
+  if (!btnid) return JS_NULL;
   JSValue result=JS_NewObject(ctx);
   JS_SetPropertyStr(ctx,result,"btnid",JS_NewInt32(ctx,btnid));
   JS_SetPropertyStr(ctx,result,"hidusage",JS_NewInt32(ctx,hidusage));
@@ -624,8 +527,8 @@ static JSValue egg_js_store_set(JSContext *ctx,JSValueConst this,int argc,JSValu
   const char *k=JS_ToCStringLen(ctx,&kc,argv[0]);
   const char *v=JS_ToCStringLen(ctx,&vc,argv[1]);
   int err=egg_store_set(k,kc,v,vc);
-  JS_FreeCString(ctx,k);
-  JS_FreeCString(ctx,v);
+  if (k) JS_FreeCString(ctx,k);
+  if (v) JS_FreeCString(ctx,v);
   return JS_NewInt32(ctx,err);
 }
  
@@ -640,6 +543,7 @@ static JSValue egg_js_store_get(JSContext *ctx,JSValueConst this,int argc,JSValu
   JSASSERTARGC(1)
   size_t kc=0;
   const char *k=JS_ToCStringLen(ctx,&kc,argv[0]);
+  if (!k) return JS_NewInt32(ctx,0);
   int bufa=1024;
   char *buf=malloc(bufa);
   if (!buf) {
@@ -702,8 +606,8 @@ static JSValue egg_js_http_request(JSContext *ctx,JSValueConst this,int argc,JSV
     }
   }
   int reqid=egg_http_request(method,path,body,bodyc);
-  JS_FreeCString(ctx,method);
-  JS_FreeCString(ctx,path);
+  if (method) JS_FreeCString(ctx,method);
+  if (path) JS_FreeCString(ctx,path);
   if (freebody) JS_FreeCString(ctx,body);
   return JS_NewInt32(ctx,reqid);
 }
@@ -738,7 +642,7 @@ static JSValue egg_js_http_get_header(JSContext *ctx,JSValueConst this,int argc,
   char tmp[1024];
   int tmpc=egg_http_get_header(tmp,sizeof(tmp),reqid,k,kc);
   if ((tmpc<0)||tmpc>sizeof(tmp)) tmpc=0;
-  JS_FreeCString(ctx,k);
+  if (k) JS_FreeCString(ctx,k);
   return JS_NewStringLen(ctx,tmp,tmpc);
 }
  
@@ -761,7 +665,7 @@ static JSValue egg_js_http_get_body(JSContext *ctx,JSValueConst this,int argc,JS
     int bufc=egg_http_get_body(buf,bufa,reqid);
     if (bufc<0) bufc=0;
     if (bufc<=bufa) {
-      return JS_NewArrayBuffer(ctx,buf,bufc,egg_js_dummy_free,0,0);
+      return JS_NewArrayBuffer(ctx,buf,bufc,egg_js_basic_free,0,0);
     }
     void *nv=realloc(buf,bufa=bufc+1);
     if (!nv) {
@@ -907,6 +811,30 @@ static int egg_wasm_get_user_languages(wasm_exec_env_t ee,int *dst,int dsta) {
   return egg_get_user_languages(dst,dsta);
 }
 
+/* egg_request_termination
+ */
+ 
+static JSValue egg_js_request_termination(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  egg_request_termination();
+  return JS_NULL;
+}
+
+static void egg_wasm_request_termination(wasm_exec_env_t ee) {
+  egg_request_termination();
+}
+
+/* egg_is_terminable
+ * Our answer is always one; don't bother calling the inner implementation.
+ */
+ 
+static JSValue egg_js_is_terminable(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  return JS_NewInt32(ctx,1);
+}
+
+static int egg_wasm_is_terminable(wasm_exec_env_t ee) {
+  return 1;
+}
+
 /* Install exports (both runtimes).
  */
  
@@ -938,6 +866,8 @@ static const JSCFunctionListEntry egg_native_js_exports[]={
   JS_CFUNC_DEF("time_real",0,egg_js_time_real),
   JS_CFUNC_DEF("time_get",0,egg_js_time_get),
   JS_CFUNC_DEF("get_user_languages",0,egg_js_get_user_languages),
+  JS_CFUNC_DEF("request_termination",0,egg_js_request_termination),
+  JS_CFUNC_DEF("is_terminable",0,egg_js_is_terminable),
 };
 
 static NativeSymbol egg_native_wasm_exports[]={
@@ -968,6 +898,8 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_time_real",egg_wasm_time_real,"()f"},
   {"egg_time_get",egg_wasm_time_get,"($$$$$$$)"},
   {"egg_get_user_languages",egg_wasm_get_user_languages,"($i)i"},
+  {"egg_request_termination",egg_wasm_request_termination,"()"},
+  {"egg_is_terminable",egg_wasm_is_terminable,"()i"},
 };
  
 int egg_native_install_runtime_exports() {

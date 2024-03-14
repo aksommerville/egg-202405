@@ -76,6 +76,7 @@ int qjs_check_js_exception(struct qjs *qjs,JSValue v) {
     JS_FreeCString(qjs->jsctx,reprd);
   }
   JS_FreeValue(qjs->jsctx,exception);
+  JS_FreeValue(qjs->jsctx,stack);
   return -2;
 }
 
@@ -86,7 +87,7 @@ static JSValue qjs_exportModule(JSContext *ctx,JSValueConst this,int argc,JSValu
   struct qjs *qjs=JS_GetContextOpaque(ctx);
   if (argc!=1) return JS_ThrowTypeError(ctx,"exportModule requires 1 argument");
   if (!qjs->module_loading) return JS_ThrowTypeError(ctx,"exportModule called from outside a module's bootstrap");
-  JS_FreeValue(qjs->jsctx,qjs->module_loading->jsmod);
+  //JS_FreeValue(qjs->jsctx,qjs->module_loading->jsmod);
   qjs->module_loading->jsmod=JS_DupValue(qjs->jsctx,argv[0]);
   return JS_NULL;
 }

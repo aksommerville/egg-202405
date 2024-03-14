@@ -73,7 +73,7 @@ export enum EventState {
  */
 export declare function input_device_get_name(devid: number): string;
 export declare function input_device_get_ids(devid: number): { vid: number, pid: number, version: number };
-export declare function input_device_get_button(devid: number, index: number): { btnid: number, hidusage: number, lo: number, hi: number, value: number };
+export declare function input_device_get_button(devid: number, index: number): { btnid: number, hidusage: number, lo: number, hi: number, value: number } | null;
 
 export declare function input_device_disconnect(devid: number): void;
 
@@ -200,3 +200,7 @@ export declare function time_get(): { year: number, month: number, day: number, 
  * Be prepared for an empty response, we don't necessarily know this on every platform.
  */
 export declare function get_user_languages(): number[];
+
+export declare function request_termination(): void;
+
+export declare function is_terminable(): boolean;

@@ -12,6 +12,7 @@ void egg_configure_cleanup() {
   if (egg.input_driver) free(egg.input_driver);
   if (egg.input_device) free(egg.input_device);
   if (egg.rompath) free(egg.rompath);
+  if (egg.storepath) free(egg.storepath);
 }
 
 /* Set string field.
@@ -54,6 +55,7 @@ static void egg_native_configure_print_help(const char *topic,int topicc) {
     "  --audio-buffer=BYTES     Suggest audio buffer size.\n"
     "  --input-driver=LIST      Input drivers. Will try to load all. See below.\n"
     "  --input-device=NAME      If required by driver.\n"
+    "  --store=PATH             File for persistent data, per-game.\n"
     "\n"
   );
   {
@@ -164,6 +166,7 @@ static int egg_native_configure_kv(const char *k,int kc,const char *v,int vc) {
   INTOPT("audio-buffer",audio_buffer)
   STROPT("input-driver",input_driver)
   STROPT("input-device",input_device)
+  STROPT("store",storepath)
   
   #undef STROPT
   #undef INTOPT
@@ -230,10 +233,45 @@ static int egg_native_configure_argv(int argc,char **argv) {
   return 0;
 }
 
+/* Determine a default storepath.
+ */
+ 
+static int egg_native_configure_default_storepath() {
+  const char *refpath;
+  if (egg.rompath&&egg_native_uses_rom_file()) {
+    refpath=egg.rompath;
+  } else {
+    refpath=egg.exename;
+  }
+  int refpathc=0;
+  while (refpath[refpathc]) refpathc++;
+  int refsepp=path_split(refpath,refpathc);
+  int dirlen=refsepp+1;
+  if (dirlen<0) dirlen=0;
+  const char *refbase=refpath+dirlen;
+  int refbasec=refpathc-dirlen;
+  int refstemc=0;
+  while ((refstemc<refbasec)&&(refbase[refstemc]!='.')) refstemc++;
+  const char *sfx=".save";
+  int sfxc=5;
+  int storepathc=dirlen+refstemc+sfxc;
+  if (!(egg.storepath=malloc(storepathc+1))) return -1;
+  memcpy(egg.storepath,refpath,dirlen+refstemc);
+  memcpy(egg.storepath+dirlen+refstemc,sfx,sfxc);
+  egg.storepath[storepathc]=0;
+  return 0;
+}
+
 /* Done reading configuration. Validate or set defaults.
  */
  
 static int egg_native_configure_finish() {
+  int err;
+
+  if (!egg.storepath) {
+    if ((err=egg_native_configure_default_storepath())<0) return err;
+  }
+  
   return 0;
 }
 

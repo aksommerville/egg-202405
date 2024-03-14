@@ -20,6 +20,9 @@ static void egg_native_rcvsig(int sigid) {
  
 static void egg_native_quit(int status) {
   egg_native_call_client_quit();
+  if (egg.localstore.dirty&&egg.storepath) {
+    localstore_save(&egg.localstore,egg.storepath);
+  }
   if (!status) {
     timer_report(&egg.timer);
     fprintf(stderr,"%s: Normal exit.\n",egg.exename);
@@ -29,8 +32,11 @@ static void egg_native_quit(int status) {
   hostio_del(egg.hostio);
   wamr_del(egg.wamr);
   qjs_del(egg.qjs);
+  egg_native_net_cleanup();
   egg_native_rom_cleanup();
+  egg_native_input_cleanup();
   egg_configure_cleanup();
+  localstore_cleanup(&egg.localstore);
 }
 
 /* Init.
@@ -38,6 +44,20 @@ static void egg_native_quit(int status) {
  
 static int egg_native_init() {
   int err;
+  
+  if (egg.storepath) {
+    if (localstore_load(&egg.localstore,egg.storepath)<0) {
+      fprintf(stderr,"%s: Failed to load game's data store.\n",egg.storepath);
+    } else {
+      fprintf(stderr,"%s: Loaded game's data store.\n",egg.storepath);
+    }
+  }
+  
+  if ((err=egg_native_net_init())<0) {
+    fprintf(stderr,"%s: Starting up without networking due to error.\n",egg.exename);
+  }
+  
+  if ((err=egg_native_event_init())<0) return err;
 
   if ((err=egg_native_rom_init())<0) {
     if (err!=-2) fprintf(stderr,"%s: Unspecified error loading ROM.\n",egg.exename);
@@ -156,11 +176,23 @@ static int egg_native_update() {
     fprintf(stderr,"%s: Unspecified error updating drivers.\n",egg.exename);
     return -2;
   }
+  if ((err=egg_native_net_update())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Error updating network.\n",egg.exename);
+    return -2;
+  }
   
   double elapsed=timer_tick(&egg.timer);
   if ((err=egg_native_call_client_update(elapsed))<0) {
     if (err!=-2) fprintf(stderr,"%s: Error updating game.\n",egg.exename);
     return -2;
+  }
+  
+  if (egg.localstore.dirty&&egg.storepath) {
+    if (localstore_save(&egg.localstore,egg.storepath)<0) {
+      fprintf(stderr,"%s: Failed to save game data.\n",egg.storepath);
+    } else {
+      fprintf(stderr,"%s: Saved.\n",egg.storepath);
+    }
   }
   
   //TODO render fences

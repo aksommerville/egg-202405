@@ -15,6 +15,10 @@
 #include "opt/romr/romr.h"
 #include "opt/fs/fs.h"
 #include "opt/serial/serial.h"
+#include "opt/localstore/localstore.h"
+#include "opt/http/http.h"
+
+#define EGG_EVENT_QUEUE_LENGTH 256
 
 struct egg_function_location {
   uint8_t tid; // 0,EGG_TID_wasm,EGG_TID_js
@@ -37,6 +41,7 @@ extern struct egg {
   char *input_driver;
   char *input_device;
   char *rompath;
+  char *storepath;
   
   // From ROM file.
   char *romtitle;
@@ -51,14 +56,51 @@ extern struct egg {
   struct egg_function_location loc_client_update;
   struct egg_function_location loc_client_render;
   
+  // Managed by egg_native_net.c.
+  struct egg_net_op {
+    int id; // reqid or wsid exposed to game
+    struct http_xfer *req;
+    struct http_websocket *ws;
+    void *v;
+    int c;
+    int status;
+    int ttl;
+    int msgid_next;
+    struct egg_net_msg {
+      int msgid;
+      int opcode;
+      void *v;
+      int c;
+      int ttl;
+    } *msgv;
+    int msgc,msga;
+  } *net_opv;
+  int net_opc,net_opa;
+  int net_id_next;
+  struct http_context *http;
+  
   volatile int sigc;
   int terminate;
+  struct egg_event eventq[EGG_EVENT_QUEUE_LENGTH];
+  int eventp,eventc;
+  uint32_t eventmask; // bitfields; 1<<EGG_EVENT_*
+  int mousex,mousey;
+  struct egg_input_device {
+    int devid;
+    struct hostio_input *driver; // WEAK
+    struct egg_input_button {
+      int btnid,hidusage,lo,hi,value;
+    } *buttonv;
+    int buttonc,buttona;
+  } *input_devicev;
+  int input_devicec,input_devicea;
   
   struct timer timer;
   struct hostio *hostio;
   struct wamr *wamr;
   struct qjs *qjs;
   struct romr romr;
+  struct localstore localstore;
   
 } egg;
 
@@ -69,12 +111,25 @@ void egg_native_rom_cleanup();
 int egg_native_rom_init();
 int egg_native_uses_rom_file(); // constant but private
 
+void egg_native_net_cleanup();
+int egg_native_net_init();
+int egg_native_net_update();
+
+void egg_native_input_cleanup();
+void egg_native_input_add_device(struct hostio_input *driver,int devid);
+void egg_native_input_remove_device(int devid);
+
 int egg_native_install_runtime_exports();
 int egg_native_init_client_code();
 int egg_native_call_client_init();
 void egg_native_call_client_quit();
 int egg_native_call_client_update(double elapsed);
 int egg_native_call_client_render();
+
+// Never fails. May overwrite the oldest event.
+struct egg_event *egg_native_push_event();
+
+int egg_native_event_init();
 
 void egg_native_cb_close(struct hostio_video *driver);
 void egg_native_cb_focus(struct hostio_video *driver,int focus);
