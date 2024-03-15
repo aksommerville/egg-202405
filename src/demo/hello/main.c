@@ -1,11 +1,61 @@
 #include "egg/egg.h"
+#include "GLES2/gl2.h"
+
+struct vertex {
+  GLfloat x,y;
+  uint8_t r,g,b,a;
+};
+
+static GLuint glprogram=0;
 
 void egg_client_quit() {
   egg_log("egg_client_quit");
 }
 
+static int compile_shader(int type,const char *src) {
+  int shader=glCreateShader(type);
+  int srcc=0; while (src[srcc]) srcc++;
+  singleShaderSource(shader,1,src,srcc);
+  glCompileShader(shader);
+  glAttachShader(glprogram,shader);
+  glDeleteShader(shader);
+  return 0;
+}
+
 int egg_client_init() {
   egg_log("egg_client_init");
+  
+  if (!(glprogram=glCreateProgram())) return -1;
+  if (compile_shader(GL_VERTEX_SHADER,
+    "attribute vec2 aposition;\n"
+    "attribute vec4 acolor;\n"
+    "varying vec4 vcolor;\n"
+    "void main() {\n"
+      "gl_Position=vec4(aposition,0.0,1.0);\n"
+      "vcolor=acolor;\n"
+    "}\n"
+  )<0) return -1;
+  if (compile_shader(GL_FRAGMENT_SHADER,
+    "varying vec4 vcolor;\n"
+    "void main() {\n"
+      "gl_FragColor=vcolor;\n"
+    "}\n"
+  )<0) return -1;
+  glLinkProgram(glprogram);
+  GLint status=0;
+  glGetProgramiv(glprogram,GL_LINK_STATUS,&status);
+  if (!status) {
+    egg_log("GLSL LINK FAILED");
+    char infolog[1024];
+    GLsizei infologa=sizeof(infolog),infologc=0;
+    glGetProgramInfoLog(glprogram,infologa,&infologc,infolog);
+    if ((infologc<0)||(infologc>sizeof(infolog))) infologc=0;
+    egg_log("%.*s",infologc,infolog);
+    return -1;
+  }
+  glBindAttribLocation(glprogram,0,"aposition");
+  glBindAttribLocation(glprogram,1,"acolor");
+  
   return 0;
 }
 
@@ -91,5 +141,26 @@ void egg_client_update(double elapsed) {
 /**/
 
 void egg_client_render() {
-  //egg_log("string=%s int=%d float=%f char=%c",__func__,123,-543.21,'!');
+  int screenw=0,screenh=0;
+  egg_video_get_size(&screenw,&screenh);
+  glViewport(0,0,screenw,screenh);
+  glClearColor(0.5f,0.25f,0.0f,1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+  
+  {
+    static struct vertex vertexv[]={
+      {0.0f,0.5f,0xff,0x00,0x00,0xff}, // red on top
+      {-0.5f,-0.5f,0x00,0xff,0x00,0xff}, // green lower left
+      {0.5f,-0.5f,0x00,0x00,0xff,0xff}, // blue lower right
+    };
+    glUseProgram(glprogram);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0,2,GL_FLOAT,0,sizeof(struct vertex),&vertexv[0].x);
+    glVertexAttribPointer(1,4,GL_UNSIGNED_BYTE,1,sizeof(struct vertex),&vertexv[0].r);
+    glDrawArrays(GL_TRIANGLES,0,sizeof(vertexv)/sizeof(vertexv[0]));
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glUseProgram(0);
+  }
 }

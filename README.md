@@ -6,11 +6,9 @@ Game code can be in JavaScript or WebAssembly.
 
 ## TODO
 
-- [x] Define API.
-- [x] Wire the native side of API.
-- [x] egg_request_termination() and egg_is_terminable()
-- [x] Events.
-- [x] egg_input_device_get_button, need a better strategy
+- [ ] OpenGL for Javascript.
+- - Match webgl exactly, and add a context parameter to egg_client_render for js.
+- [ ] Failing to launch with drmgx (permissions error at drmModeSetCrtc)...?
 - [ ] Test each entry point in Javascript.
 - [ ] Test each entry point in WebAssembly.
 - [ ] Test each entry point natively.
@@ -23,3 +21,5 @@ Game code can be in JavaScript or WebAssembly.
 - [ ] User-supplied HTTP permissions.
 - [ ] User-supplied storage permissions.
 - [ ] Can we do some kind of "warp cursor" or "trap cursor"? First-person shooters really need that.
+- [ ] Validate size of wasm gl parameters, some are probably off.
+- [x] glGetVertexAttribPointerv wasm needs rephrased; we can't pass a double-pointer in from the wasm space.

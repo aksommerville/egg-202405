@@ -195,9 +195,20 @@ static int egg_native_update() {
     }
   }
   
-  //TODO render fences
+  //TODO Remove drivers with no GX support; it's mandatory.
+  if (!egg.hostio->video||!egg.hostio->video->type->gx_begin||!egg.hostio->video->type->gx_end) return -1;
+  if (egg.hostio->video->type->gx_begin(egg.hostio->video)<0) {
+    fprintf(stderr,"%s: Error entering GX context.\n",egg.exename);
+    return -2;
+  }
+  
   if ((err=egg_native_call_client_render())<0) {
     if (err!=-2) fprintf(stderr,"%s: Error rendering game.\n",egg.exename);
+    return -2;
+  }
+  
+  if (egg.hostio->video->type->gx_end(egg.hostio->video)<0) {
+    fprintf(stderr,"%s: Error exiting GX context.\n",egg.exename);
     return -2;
   }
 
