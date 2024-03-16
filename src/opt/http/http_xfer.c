@@ -174,7 +174,7 @@ int http_xfer_set_status(struct http_xfer *xfer,int status,const char *fmt,...) 
   if (fmt&&fmt[0]) {
     va_list vargs;
     va_start(vargs,fmt);
-    int err=snprintf(tmp+tmpc,sizeof(tmp)-tmpc,fmt,vargs);
+    int err=vsnprintf(tmp+tmpc,sizeof(tmp)-tmpc,fmt,vargs);
     if ((err>0)&&(tmpc+err<sizeof(tmp))) tmpc+=err;
   }
   return http_xfer_set_topline(xfer,tmp,tmpc);

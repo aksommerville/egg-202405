@@ -24,6 +24,8 @@ let glprogram = 0;
 let posbuffer = 0;
 let colorbuffer = 0;
 
+egg.log("1.js outer");
+
 function egg_client_quit() {
 }
 
@@ -45,6 +47,7 @@ function compile_shader(gl, type, src) {
 }
 
 function egg_client_init() {
+  egg.log("1.js egg_client_init");
 
   // Mouse and text events start off disabled. Uncomment to enable:
   // egg.event_enable(EGG_EVENT_MMOTION, EGG_EVTSTATE_ENABLED);
@@ -182,7 +185,7 @@ function egg_client_render(gl) {
     gl.drawArrays(gl.TRIANGLES,0,3);
     gl.disableVertexAttribArray(0);
     gl.disableVertexAttribArray(1);
-    gl.useProgram(0);
+    gl.useProgram(null);
   }
 }
 

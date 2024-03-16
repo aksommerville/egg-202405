@@ -27,3 +27,6 @@ Game code can be in JavaScript or WebAssembly.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
 - [ ] Pull the WebGL stuff out of egg_native_export.c, just for cleanliness's sake. Way more of it than I expected.
 - [ ] QuickJS JS_GetArrayBuffer: Does this read TypedArray, SharedArrayBuffer, and DataView as well?
+- [ ] server: Capture make output and deliver to client on errors.
+- [ ] server: Non-blocking make.
+- [ ] Remove JS "import egg", use a global instead. See src/web/index.html

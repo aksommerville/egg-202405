@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!--
+  This is a bare-bones Egg web wrapper for our dev server to use.
+  
+  If you're hosting an Egg game somewhere on the web, basically just do two things:
+    - <script type="module" src=".../egg.js"></script>
+    - window.postMessage({ eggRunSerial, eggFileName, eggCanvasId })
+  eggRunSerial is an ArrayBuffer containing the full Egg file.
+  
+  Alternately, build embedded and you'll get an HTML file with nice outer chrome, and the Egg file and runner embedded.
+-->
+<html>
+<head>
+<title>Egg Dev Server</title>
+<style>
+html {
+  background-color: #222;
+  color: #fff;
+}
+canvas {
+  background-color: #000;
+}
+</style>
+<!-- TODO !!! importmap is a bad idea in any case because it's so new (standard as of 2023).
+     And in our case it is particularly unworkable: We want to ultimately pack everything into one HTML file, that's a non-negotiable design goal.
+     We need to restructure the JS API with a global "egg" instead of an import.
+-->
+<script type="importmap">{ "imports": { "egg": "./js/egg_public.js" }}</script>
+<script type="module" src="./egg.js"></script>
+<script>
+//window.exportModule = mod => console.log(`fake window exportModule`, mod);
+function loadGame(name) {
+  window.fetch("/" + name).then(rsp => {
+    if (!rsp.ok) throw rsp;
+    return rsp.arrayBuffer();
+  }).then(serial => {
+    window.postMessage({
+      eggRunSerial: serial,
+      eggFileName: name,
+      eggCanvasId: "game",
+    });
+  }).catch(e => {
+    console.error(`failed to download ${JSON.stringify(name)}`, e);
+  });
+}
+function populateGamesList(names) {
+  const container = document.getElementById("gameslist");
+  container.innerHTML = "";
+  for (const name of names) {
+    const button = document.createElement("BUTTON");
+    button.innerText = name;
+    button.addEventListener("click", () => loadGame(name));
+    container.appendChild(button);
+  }
+}
+window.addEventListener("load", () => {
+  window.fetch("/list-games").then(rsp => {
+    if (!rsp.ok) throw rsp;
+    return rsp.json();
+  }).then(games => {
+    populateGamesList(games);
+  }).catch(e => {
+    console.error(`Failed to fetch games list`, e);
+    populateGamesList([]);
+  });
+});
+</script>
+</head>
+<body>
+<div id="gameslist"></div>
+<canvas id="game" width="640" height="360"></canvas>
+</body>
+</html>

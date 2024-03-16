@@ -4,7 +4,7 @@
 tools_MIDDIR:=mid/tool
 tools_OUTDIR:=out/tool
 
-tools_OPT_ENABLE+=fs serial romr romw midi wav
+tools_OPT_ENABLE+=fs serial romr romw midi wav http
 tools_OPT_ENABLE+=qoi rlead rawimg bmp gif ico
 
 tools_CCWARN:=-Werror -Wimplicit
@@ -42,3 +42,5 @@ endef
 
 tools_TOOLS:=$(filter-out common,$(notdir $(wildcard src/tool/*)))
 $(foreach T,$(tools_TOOLS),$(eval $(call TOOL_RULES,$T)))
+
+serve:$(tools_server_EXE) demos-all;$(tools_server_EXE) --port=8080 --htdocs=src/web --makeable-dir=out/rom
