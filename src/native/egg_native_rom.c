@@ -289,7 +289,7 @@ int egg_native_call_client_render() {
   uint32_t argv[1]={0};
   switch (egg.loc_client_render.tid) {
     case EGG_TID_wasm: err=wamr_call(egg.wamr,egg.loc_client_render.modid,egg.loc_client_render.fnid,argv,1); break;
-    case EGG_TID_js: err=qjs_call(egg.qjs,egg.loc_client_render.modid,egg.loc_client_render.fnid,argv,1); break;
+    case EGG_TID_js: err=qjs_callf(egg.qjs,egg.loc_client_render.modid,egg.loc_client_render.fnid,"o",&egg.jsgl); break;
   }
   return err;
 }

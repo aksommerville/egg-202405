@@ -432,6 +432,14 @@ static void egg_wasm_video_get_size(wasm_exec_env_t ee,int *w,int *h) {
   egg_video_get_size(w,h);
 }
 
+/* egg_video_get_context
+ * This is Javascript only; for C code the GX context is always in scope.
+ */
+ 
+static JSValue egg_js_video_get_context(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  return JS_DupValue(ctx,egg.jsgl);
+}
+
 /* egg_audio_play_song
  */
  
@@ -1410,7 +1418,8 @@ static void egg_glViewport(wasm_exec_env_t ee,GLint x, GLint y, GLsizei width, G
   glViewport(x, y, width, height);
 }
 
-/* Install exports (both runtimes).
+/* Main export tables.
+ * GL is listed here for wasm; the JS version is a bit further down (it's wrapped in a context object, like browsers do).
  */
  
 static const JSCFunctionListEntry egg_native_js_exports[]={
@@ -1422,6 +1431,7 @@ static const JSCFunctionListEntry egg_native_js_exports[]={
   JS_CFUNC_DEF("input_device_get_button",0,egg_js_input_device_get_button),
   JS_CFUNC_DEF("input_device_disconnect",0,egg_js_input_device_disconnect),
   JS_CFUNC_DEF("video_get_size",0,egg_js_video_get_size),
+  JS_CFUNC_DEF("video_get_context",0,egg_js_video_get_context),
   JS_CFUNC_DEF("audio_play_song",0,egg_js_audio_play_song),
   JS_CFUNC_DEF("audio_play_sound",0,egg_js_audio_play_sound),
   JS_CFUNC_DEF("audio_get_playhead",0,egg_js_audio_get_playhead),
@@ -1618,9 +1628,1799 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"glVertexAttribPointer",egg_glVertexAttribPointer,"(iiiii*)"},
   {"glViewport",egg_glViewport,"(iiii)"},
 };
+
+/* WebGLRenderingContext.
+ */
+ 
+// Copied out of Linux Chrome 122.0.6261.128
+#define GL_BROWSER_DEFAULT_WEBGL 37444
+#define GL_CONTEXT_LOST_WEBGL 37442
+#define GL_DEPTH_STENCIL 34041
+#define GL_DEPTH_STENCIL_ATTACHMENT 33306
+#define GL_RGB8 32849
+#define GL_RGBA8 32856
+#define GL_UNPACK_COLORSPACE_CONVERSION_WEBGL 37443
+#define GL_UNPACK_FLIP_Y_WEBGL 37440
+#define GL_UNPACK_PREMULTIPLY_ALPHA_WEBGL 37441
+ 
+#define EGG_WEBGL_(fnname,glFnname) /*TODO*/ \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    return JS_ThrowTypeError(ctx,"TODO: %s",__func__); \
+  }
+ 
+#define EGG_WEBGL__(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    glFnname(); \
+    return JS_NULL; \
+  }
+ 
+#define EGG_WEBGL_i(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(1) \
+    int32_t a=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    glFnname(a); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_ii(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(2) \
+    int32_t a=0,b=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    glFnname(a,b); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_iii(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(3) \
+    int32_t a=0,b=0,c=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    JS_ToInt32(ctx,&c,argv[2]); \
+    glFnname(a,b,c); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_iiii(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(4) \
+    int32_t a=0,b=0,c=0,d=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    JS_ToInt32(ctx,&c,argv[2]); \
+    JS_ToInt32(ctx,&d,argv[3]); \
+    glFnname(a,b,c,d); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_iiiii(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(5) \
+    int32_t a=0,b=0,c=0,d=0,e=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    JS_ToInt32(ctx,&c,argv[2]); \
+    JS_ToInt32(ctx,&d,argv[3]); \
+    JS_ToInt32(ctx,&e,argv[4]); \
+    glFnname(a,b,c,d,e); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_iiiiii(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(6) \
+    int32_t a=0,b=0,c=0,d=0,e=0,f=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    JS_ToInt32(ctx,&c,argv[2]); \
+    JS_ToInt32(ctx,&d,argv[3]); \
+    JS_ToInt32(ctx,&e,argv[4]); \
+    JS_ToInt32(ctx,&f,argv[5]); \
+    glFnname(a,b,c,d,e,f); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_iiiiiiii(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(8) \
+    int32_t a=0,b=0,c=0,d=0,e=0,f=0,g=0,h=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    JS_ToInt32(ctx,&c,argv[2]); \
+    JS_ToInt32(ctx,&d,argv[3]); \
+    JS_ToInt32(ctx,&e,argv[4]); \
+    JS_ToInt32(ctx,&f,argv[5]); \
+    JS_ToInt32(ctx,&g,argv[6]); \
+    JS_ToInt32(ctx,&h,argv[7]); \
+    glFnname(a,b,c,d,e,f,g,h); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_iis(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(3) \
+    int32_t a=0,b=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    const char *cv=JS_ToCString(ctx,argv[2]); \
+    if (!cv) return JS_NULL; \
+    glFnname(a,b,cv); \
+    JS_FreeCString(ctx,cv); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_f(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(1) \
+    double a=0.0; \
+    JS_ToFloat64(ctx,&a,argv[0]); \
+    glFnname(a); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_ff(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(2) \
+    double a=0.0,b=0.0; \
+    JS_ToFloat64(ctx,&a,argv[0]); \
+    JS_ToFloat64(ctx,&b,argv[1]); \
+    glFnname(a,b); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_fff(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(3) \
+    double a=0.0,b=0.0,c=0.0; \
+    JS_ToFloat64(ctx,&a,argv[0]); \
+    JS_ToFloat64(ctx,&b,argv[1]); \
+    JS_ToFloat64(ctx,&c,argv[2]); \
+    glFnname(a,b,c); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_ffff(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(4) \
+    double a=0.0,b=0.0,c=0.0,d=0.0; \
+    JS_ToFloat64(ctx,&a,argv[0]); \
+    JS_ToFloat64(ctx,&b,argv[1]); \
+    JS_ToFloat64(ctx,&c,argv[2]); \
+    JS_ToFloat64(ctx,&d,argv[3]); \
+    glFnname(a,b,c,d); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_if(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(2) \
+    int32_t a=0; \
+    double b=0.0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToFloat64(ctx,&b,argv[1]); \
+    glFnname(a,b); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_iff(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(3) \
+    int32_t a=0; \
+    double b=0.0,c=0.0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToFloat64(ctx,&b,argv[1]); \
+    JS_ToFloat64(ctx,&c,argv[2]); \
+    glFnname(a,b,c); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_ifff(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(4) \
+    int32_t a=0; \
+    double b=0.0,c=0.0,d=0.0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToFloat64(ctx,&b,argv[1]); \
+    JS_ToFloat64(ctx,&c,argv[2]); \
+    JS_ToFloat64(ctx,&d,argv[3]); \
+    glFnname(a,b,c,d); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_iffff(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(5) \
+    int32_t a=0; \
+    double b=0.0,c=0.0,d=0.0,e=0.0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToFloat64(ctx,&b,argv[1]); \
+    JS_ToFloat64(ctx,&c,argv[2]); \
+    JS_ToFloat64(ctx,&d,argv[3]); \
+    JS_ToFloat64(ctx,&e,argv[4]); \
+    glFnname(a,b,c,d,e); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_iif(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(3) \
+    int32_t a=0,b=0; \
+    double c=0.0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    JS_ToFloat64(ctx,&c,argv[2]); \
+    glFnname(a,b,c); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_fi(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(2) \
+    double a=0.0; \
+    int32_t b=0; \
+    JS_ToFloat64(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    glFnname(a,b); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL_is(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(2) \
+    int32_t a=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    const char *b=JS_ToCString(ctx,argv[1]); \
+    if (!b) return JS_NULL; \
+    glFnname(a,b); \
+    JS_FreeCString(ctx,b); \
+    return JS_NULL; \
+  }
+  
+#define EGG_WEBGL__i(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    return JS_NewInt32(ctx,glFnname()); \
+  }
+  
+#define EGG_WEBGL_i_i(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(1) \
+    int32_t a=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    return JS_NewInt32(ctx,glFnname(a)); \
+  }
+  
+#define EGG_WEBGL_ii_i(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(2) \
+    int32_t a=0,b=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    return JS_NewInt32(ctx,glFnname(a,b)); \
+  }
+  
+#define EGG_WEBGL_iii_i(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(3) \
+    int32_t a=0,b=0,c=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    JS_ToInt32(ctx,&b,argv[1]); \
+    JS_ToInt32(ctx,&c,argv[2]); \
+    return JS_NewInt32(ctx,glFnname(a,b,c)); \
+  }
+  
+#define EGG_WEBGL_is_i(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(2) \
+    int32_t a=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    const char *b=JS_ToCString(ctx,argv[1]); \
+    if (!b) return JS_NewInt32(ctx,0); \
+    int32_t result=glFnname(a,b); \
+    JS_FreeCString(ctx,b); \
+    return JS_NewInt32(ctx,result); \
+  }
+  
+#define EGG_WEBGL_s_i(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(1) \
+    const char *a=JS_ToCString(ctx,argv[1]); \
+    if (!a) return JS_NewInt32(ctx,0); \
+    int32_t result=glFnname(a); \
+    JS_FreeCString(ctx,a); \
+    return JS_NewInt32(ctx,result); \
+  }
+  
+#define EGG_WEBGL_i_s(fnname,glFnname) \
+  static JSValue egg_webgl_##fnname(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(1) \
+    int32_t a=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    const char *result=glFnname(a); \
+    return JS_NewCString(ctx,result); \
+  }
+  
+#define EGG_WEBGL_CTOR_DTOR(tag) \
+  static JSValue egg_webgl_create##tag(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(0) \
+    int32_t result=0; \
+    glGen##tag##s(1,&result); \
+    return JS_NewInt32(ctx,result); \
+  } \
+  static JSValue egg_webgl_delete##tag(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(1) \
+    int32_t a=0; \
+    JS_ToInt32(ctx,&a,argv[0]); \
+    glDelete##tag##s(1,&a); \
+    return JS_NULL; \
+  }
+  
+EGG_WEBGL_i(activeTexture,glActiveTexture)
+EGG_WEBGL_ii(attachShader,glAttachShader)
+EGG_WEBGL_iis(bindAttribLocation,glBindAttribLocation)
+EGG_WEBGL_ii(bindFramebuffer,glBindFramebuffer)
+EGG_WEBGL_ii(bindRenderbuffer,glBindRenderbuffer)
+EGG_WEBGL_ii(bindTexture,glBindTexture)
+EGG_WEBGL_ffff(blendColor,glBlendColor)
+EGG_WEBGL_i(blendEquation,glBlendEquation)
+EGG_WEBGL_ii(blendEquationSeparate,glBlendEquationSeparate)
+EGG_WEBGL_ii(blendFunc,glBlendFunc)
+EGG_WEBGL_iiii(blendFuncSeparate,glBlendFuncSeparate)
+EGG_WEBGL_i_i(checkFramebufferStatus,glCheckFramebufferStatus)
+EGG_WEBGL_i(clear,glClear)
+EGG_WEBGL_ffff(clearColor,glClearColor)
+EGG_WEBGL_f(clearDepth,glClearDepthf)
+EGG_WEBGL_i(clearStencil,glClearStencil)
+EGG_WEBGL_iiii(colorMask,glColorMask)
+EGG_WEBGL_i(compileShader,glCompileShader)
+EGG_WEBGL_iiiiiiii(copyTexImage2D,glCopyTexImage2D)
+EGG_WEBGL_iiiiiiii(copyTexSubImage2D,glCopyTexSubImage2D)
+EGG_WEBGL__i(createProgram,glCreateProgram)
+EGG_WEBGL_i_i(createShader,glCreateShader)
+EGG_WEBGL_i(cullFace,glCullFace)
+EGG_WEBGL_i(deleteProgram,glDeleteProgram)
+EGG_WEBGL_i(deleteShader,glDeleteShader)
+
+// In WebGL, it's "createObject() => int" and "deleteObject(int)".
+// GLES for these 4 types, it's "glGenObjects(c,v)" and "glDeleteObjects(c,v)".
+EGG_WEBGL_CTOR_DTOR(Buffer)
+EGG_WEBGL_CTOR_DTOR(Framebuffer)
+EGG_WEBGL_CTOR_DTOR(Renderbuffer)
+EGG_WEBGL_CTOR_DTOR(Texture)
+
+EGG_WEBGL_i(depthFunc,glDepthFunc)
+EGG_WEBGL_i(depthMask,glDepthMask)
+EGG_WEBGL_ff(depthRange,glDepthRangef)
+EGG_WEBGL_ii(detachShader,glDetachShader)
+EGG_WEBGL_i(disable,glDisable)
+EGG_WEBGL_i(disableVertexAttribArray,glDisableVertexAttribArray)
+EGG_WEBGL_iii(drawArrays,glDrawArrays)
+EGG_WEBGL_i(enable,glEnable)
+EGG_WEBGL_i(enableVertexAttribArray,glEnableVertexAttribArray)
+EGG_WEBGL__(finish,glFinish)
+EGG_WEBGL__(flush,glFlush)
+EGG_WEBGL_iiii(framebufferRenderbuffer,glFramebufferRenderbuffer)
+EGG_WEBGL_iiiii(framebufferTexture2D,glFramebufferTexture2D)
+EGG_WEBGL_i(frontFace,glFrontFace)
+EGG_WEBGL_i(generateMipmap,glGenerateMipmap)
+EGG_WEBGL_is_i(getAttribLocation,glGetAttribLocation)
+EGG_WEBGL__i(getError,glGetError)
+EGG_WEBGL_is_i(getUniformLocation,glGetUniformLocation)
+EGG_WEBGL_ii(hint,glHint)
+EGG_WEBGL_i_i(isBuffer,glIsBuffer)
+EGG_WEBGL_i_i(isEnabled,glIsEnabled)
+EGG_WEBGL_i_i(isFramebuffer,glIsFramebuffer)
+EGG_WEBGL_i_i(isProgram,glIsProgram)
+EGG_WEBGL_i_i(isRenderbuffer,glIsRenderbuffer)
+EGG_WEBGL_i_i(isShader,glIsShader)
+EGG_WEBGL_i_i(isTexture,glIsTexture)
+EGG_WEBGL_f(lineWidth,glLineWidth)
+EGG_WEBGL_i(linkProgram,glLinkProgram)
+EGG_WEBGL_ii(pixelStorei,glPixelStorei)
+EGG_WEBGL_ff(polygonOffset,glPolygonOffset)
+EGG_WEBGL_iiii(renderbufferStorage,glRenderbufferStorage)
+EGG_WEBGL_fi(sampleCoverage,glSampleCoverage)
+EGG_WEBGL_iiii(scissor,glScissor)
+EGG_WEBGL_iii(stencilFunc,glStencilFunc)
+EGG_WEBGL_iiii(stencilFuncSeparate,glStencilFuncSeparate)
+EGG_WEBGL_i(stencilMask,glStencilMask)
+EGG_WEBGL_ii(stencilMaskSeparate,glStencilMaskSeparate)
+EGG_WEBGL_iii(stencilOp,glStencilOp)
+EGG_WEBGL_iiii(stencilOpSeparate,glStencilOpSeparate)
+EGG_WEBGL_iif(texParameterf,glTexParameterf)
+EGG_WEBGL_iii(texParameteri,glTexParameteri)
+EGG_WEBGL_if(uniform1f,glUniform1f)
+EGG_WEBGL_ii(uniform1i,glUniform1i)
+EGG_WEBGL_iff(uniform2f,glUniform2f)
+EGG_WEBGL_iii(uniform2i,glUniform2i)
+EGG_WEBGL_ifff(uniform3f,glUniform3f)
+EGG_WEBGL_iiii(uniform3i,glUniform3i)
+EGG_WEBGL_iffff(uniform4f,glUniform4f)
+EGG_WEBGL_iiiii(uniform4i,glUniform4i)
+EGG_WEBGL_i(useProgram,glUseProgram)
+EGG_WEBGL_i(validateProgram,glValidateProgram)
+EGG_WEBGL_if(vertexAttrib1f,glVertexAttrib1f)
+EGG_WEBGL_iff(vertexAttrib2f,glVertexAttrib2f)
+EGG_WEBGL_ifff(vertexAttrib3f,glVertexAttrib3f)
+EGG_WEBGL_iffff(vertexAttrib4f,glVertexAttrib4f)
+EGG_WEBGL_iiii(viewport,glViewport)
+
+static JSValue egg_webgl_bufferData(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(3)
+  int32_t target=0,usage=0;
+  JS_ToInt32(ctx,&target,argv[0]);
+  JS_ToInt32(ctx,&usage,argv[2]);
+  // argv[1] can be: int, ArrayBuffer, SharedArrayBuffer, TypedArray, DataView
+  if (JS_IsNumber(argv[1])) {
+    int32_t c=0;
+    JS_ToInt32(ctx,&c,argv[1]);
+    if (c<0) c=0;
+    glBufferData(target,c,0,usage);
+  } else {
+    size_t c=0;
+    const void *v=JS_GetArrayBuffer(ctx,&c,argv[1]);
+    if (!v) return JS_ThrowTypeError(ctx,"Expected integer or ArrayBuffer for bufferData");
+    glBufferData(target,c,v,usage);
+  }
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_bufferSubData(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(3)
+  int32_t target=0,p=0;
+  JS_ToInt32(ctx,&target,argv[0]);
+  JS_ToInt32(ctx,&p,argv[1]);
+  // MDN's docs for this one are all mixed up, but I'm guessing argv[2] is like bufferData, but not int.
+  size_t c=0;
+  const void *v=JS_GetArrayBuffer(ctx,&c,argv[2]);
+  if (!v) return JS_ThrowTypeError(ctx,"Expected ArrayBuffer for bufferSubData");
+  glBufferSubData(target,p,c,v);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_compressedTexImage2D(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  // TODO What does this call even mean, when the (data) argument is omitted?
+  JSASSERTARGRANGE(6,7)
+  int32_t target=0,level=0,ifmt=0,w=0,h=0,border=0;
+  JS_ToInt32(ctx,&target,argv[0]);
+  JS_ToInt32(ctx,&level,argv[1]);
+  JS_ToInt32(ctx,&ifmt,argv[2]);
+  JS_ToInt32(ctx,&w,argv[3]);
+  JS_ToInt32(ctx,&h,argv[4]);
+  JS_ToInt32(ctx,&border,argv[5]);
+  const void *v=0;
+  size_t c=0;
+  if (argc>=7) {
+    v=JS_GetArrayBuffer(ctx,&c,argv[6]);
+  }
+  glCompressedTexImage2D(target,level,ifmt,w,h,border,c,v);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_compressedTexSubImage2D(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(8)
+  int32_t target=0,level=0,x=0,y=0,w=0,h=0,fmt=0;
+  JS_ToInt32(ctx,&target,argv[0]);
+  JS_ToInt32(ctx,&level,argv[1]);
+  JS_ToInt32(ctx,&x,argv[2]);
+  JS_ToInt32(ctx,&y,argv[3]);
+  JS_ToInt32(ctx,&w,argv[4]);
+  JS_ToInt32(ctx,&h,argv[5]);
+  JS_ToInt32(ctx,&fmt,argv[6]);
+  size_t c=0;
+  const void *v=JS_GetArrayBuffer(ctx,&c,argv[7]);
+  glCompressedTexSubImage2D(target,level,x,y,w,h,fmt,c,v);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_bindBuffer(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  // Nothing special about this function, except we need to track the object bound to GL_ELEMENT_ARRAY_BUFFER.
+  JSASSERTARGC(2)
+  int32_t target=0,id=0;
+  JS_ToInt32(ctx,&target,argv[0]);
+  JS_ToInt32(ctx,&id,argv[1]);
+  glBindBuffer(target,id);
+  if (target==GL_ELEMENT_ARRAY_BUFFER) {
+    egg.webgl_eab_bound=id;
+  }
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_drawElements(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  if (!egg.webgl_eab_bound) return JS_ThrowInternalError(ctx,"drawElements with nothing bound to ELEMENT_ARRAY_BUFFER");
+  JSASSERTARGC(4)
+  int32_t mode=0,count=0,type=0,offset=0;
+  JS_ToInt32(ctx,&mode,argv[0]);
+  JS_ToInt32(ctx,&count,argv[1]);
+  JS_ToInt32(ctx,&type,argv[2]);
+  JS_ToInt32(ctx,&offset,argv[3]);
+  glDrawElements(mode,count,type,(void*)(uintptr_t)offset);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getActiveAttrib(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t program=0,index=0;
+  JS_ToInt32(ctx,&program,argv[0]);
+  JS_ToInt32(ctx,&index,argv[1]);
+  GLchar name[256];
+  GLsizei namec=sizeof(name);
+  GLint size=0;
+  GLenum type=0;
+  glGetActiveAttrib(program,index,namec,&namec,&size,&type,name);
+  if ((namec<0)||(namec>sizeof(name))) namec=0;
+  JSValue result=JS_NewObject(ctx);
+  JS_SetPropertyStr(ctx,result,"name",JS_NewStringLen(ctx,name,namec));
+  JS_SetPropertyStr(ctx,result,"type",JS_NewInt32(ctx,type));
+  JS_SetPropertyStr(ctx,result,"size",JS_NewInt32(ctx,size));
+  return result;
+}
+
+static JSValue egg_webgl_getActiveUniform(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t program=0,index=0;
+  JS_ToInt32(ctx,&program,argv[0]);
+  JS_ToInt32(ctx,&index,argv[1]);
+  GLchar name[256];
+  GLsizei namec=sizeof(name);
+  GLint size=0;
+  GLenum type=0;
+  glGetActiveUniform(program,index,namec,&namec,&size,&type,name);
+  if ((namec<0)||(namec>sizeof(name))) namec=0;
+  JSValue result=JS_NewObject(ctx);
+  JS_SetPropertyStr(ctx,result,"name",JS_NewStringLen(ctx,name,namec));
+  JS_SetPropertyStr(ctx,result,"type",JS_NewInt32(ctx,type));
+  JS_SetPropertyStr(ctx,result,"size",JS_NewInt32(ctx,size));
+  return result;
+}
+
+static JSValue egg_webgl_getAttachedShaders(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(1)
+  int32_t program=0;
+  JS_ToInt32(ctx,&program,argv[0]);
+  GLuint v[32]={0};
+  GLsizei c=sizeof(v)/sizeof(v[0]);
+  glGetAttachedShaders(program,c,&c,v);
+  if ((c<0)||(c>sizeof(v)/sizeof(v[0]))) c=0;
+  JSValue result=JS_NewArray(ctx);
+  int i=0; for (;i<c;i++) {
+    JS_SetPropertyUint32(ctx,result,i,JS_NewInt32(ctx,v[i]));
+  }
+  return result;
+}
+
+static JSValue egg_webgl_getContextAttributes(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  // This is a WebGL thing, no corrollary in GLES2.
+  // MDN says return null when context is lost... our context is never lost, but let's just return null, what's the worst that could happen?
+  /* In case we ever feel like doing it right: {
+    alpha: true,
+    antialias: true,
+    depth: true,
+    failIfMajorPerformanceCaveat: false,
+    powerPreference: "default",
+    premultipliedAlpha: true,
+    preserveDrawingBuffer: false,
+    stencil: false,
+    desynchronized: false
+  }*/
+  JSASSERTARGC(0)
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getExtension(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(1)
+  // argv[0] is string, the name of an extension. We don't report any at getSupportedExtensions,
+  // so our answer is always null instead of the extension object.
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getSupportedExtensions(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(0)
+  // Array of string. See https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API#extensions if we ever want to emulate some.
+  return JS_NewArray(ctx);
+}
+
+static JSValue egg_webgl_getProgramInfoLog(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(1)
+  int32_t program=0;
+  JS_ToInt32(ctx,&program,argv[0]);
+  GLint loga=0;
+  glGetProgramiv(program,GL_INFO_LOG_LENGTH,&loga);
+  if (loga<1) return JS_NewString(ctx,"");
+  loga++;
+  GLchar *log=malloc(loga);
+  if (!log) return JS_NewString(ctx,"");
+  GLsizei logc=0;
+  glGetProgramInfoLog(program,loga,&logc,log);
+  if ((logc<1)||(logc>loga)) {
+    free(log);
+    return JS_NewString(ctx,"");
+  }
+  JSValue result=JS_NewStringLen(ctx,log,logc);
+  free(log);
+  return result;
+}
+
+static JSValue egg_webgl_getShaderInfoLog(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(1)
+  int32_t program=0;
+  JS_ToInt32(ctx,&program,argv[0]);
+  GLint loga=0;
+  glGetShaderiv(program,GL_INFO_LOG_LENGTH,&loga);
+  if (loga<1) return JS_NewString(ctx,"");
+  loga++;
+  GLchar *log=malloc(loga);
+  if (!log) return JS_NewString(ctx,"");
+  GLsizei logc=0;
+  glGetShaderInfoLog(program,loga,&logc,log);
+  if ((logc<1)||(logc>loga)) {
+    free(log);
+    return JS_NewString(ctx,"");
+  }
+  JSValue result=JS_NewStringLen(ctx,log,logc);
+  free(log);
+  return result;
+}
+
+static JSValue egg_webgl_getShaderPrecisionFormat(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t a=0,b=0;
+  JS_ToInt32(ctx,&a,argv[0]);
+  JS_ToInt32(ctx,&b,argv[1]);
+  GLint range=0,precision=0;
+  glGetShaderPrecisionFormat(a,b,&range,&precision);
+  JSValue result=JS_NewObject(ctx);
+  JS_SetPropertyStr(ctx,result,"rangeMin",JS_NewInt32(ctx,range));
+  JS_SetPropertyStr(ctx,result,"rangeMax",JS_NewInt32(ctx,range));
+  JS_SetPropertyStr(ctx,result,"precision",JS_NewInt32(ctx,precision));
+  return result;
+}
+
+static JSValue egg_webgl_getShaderSource(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(1)
+  int32_t shader=0;
+  JS_ToInt32(ctx,&shader,argv[0]);
+  GLint srca=0;
+  glGetShaderiv(shader,GL_SHADER_SOURCE_LENGTH,&srca);
+  if (srca<1) return JS_NewString(ctx,"");
+  srca++;
+  GLchar *src=malloc(srca);
+  if (!src) return JS_NewString(ctx,"");
+  GLsizei srcc=0;
+  glGetShaderSource(shader,srca,&srcc,src);
+  if ((srcc<1)||(srcc>srca)) {
+    free(src);
+    return JS_NewString(ctx,"");
+  }
+  JSValue result=JS_NewStringLen(ctx,src,srcc);
+  free(src);
+  return result;
+}
+
+static JSValue egg_webgl_getUniform(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+/* TODO WebGL getUniform. In order to do this, we need the variable's type first.
+ * But that doesn't appear to be exposed by GLES2.
+ * I'm going to leave it stubbed, since honestly, I don't even understand what this function is for.
+ * (uniforms are provided by the client, why would the client read them back?)
+boolean	GLBoolean
+int	GLint
+float	GLfloat
+vec2	Float32Array (with 2 elements)
+ivec2	Int32Array (with 2 elements)
+bvec2	Array of GLBoolean (with 2 elements)
+vec3	Float32Array (with 3 elements)
+ivec3	Int32Array (with 3 elements)
+bvec3	Array of GLBoolean (with 3 elements)
+vec4	Float32Array (with 4 elements)
+ivec4	Int32Array (with 4 elements)
+bvec4	Array of GLBoolean (with 4 elements)
+mat2	Float32Array (with 4 elements)
+mat3	Float32Array (with 9 elements)
+mat4	Float32Array (with 16 elements)
+sampler2D	GLint
+samplerCube	GLint
+*/
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getVertexAttrib(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  // Same "why does this exist?" problem as getUniform, but in this case the vectors are well-defined, so we'll do it.
+  JSASSERTARGC(2)
+  int32_t index=0,pname=0;
+  JS_ToInt32(ctx,&index,argv[0]);
+  JS_ToInt32(ctx,&pname,argv[1]);
+  switch (pname) {
+    case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING:
+    case GL_VERTEX_ATTRIB_ARRAY_ENABLED:
+    case GL_VERTEX_ATTRIB_ARRAY_SIZE:
+    case GL_VERTEX_ATTRIB_ARRAY_STRIDE:
+    case GL_VERTEX_ATTRIB_ARRAY_TYPE:
+    case GL_VERTEX_ATTRIB_ARRAY_NORMALIZED: {
+        GLint v=0;
+        glGetVertexAttribiv(index,pname,&v);
+        return JS_NewInt32(ctx,v);
+      }
+    case GL_CURRENT_VERTEX_ATTRIB: {
+        GLfloat v[4]={0};
+        glGetVertexAttribfv(index,pname,v);
+        JSValue result=JS_NewArray(ctx);
+        JS_SetPropertyUint32(ctx,result,0,JS_NewFloat64(ctx,v[0]));
+        JS_SetPropertyUint32(ctx,result,1,JS_NewFloat64(ctx,v[1]));
+        JS_SetPropertyUint32(ctx,result,2,JS_NewFloat64(ctx,v[2]));
+        JS_SetPropertyUint32(ctx,result,3,JS_NewFloat64(ctx,v[3]));
+        return result;
+      }
+  }
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getVertexAttribOffset(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t index=0,pname=0;
+  JS_ToInt32(ctx,&index,argv[0]);
+  JS_ToInt32(ctx,&pname,argv[1]);
+  if (pname!=GL_VERTEX_ATTRIB_ARRAY_POINTER) return JS_NULL;
+  void *v=0;
+  glGetVertexAttribPointerv(index,pname,&v);
+  // TODO getVertexAttribOffset... so now what? We need to compare (v) to the bound vertex buffer... We're expected to record that buffer?
+  // Leaving this one unfinished because it sounds deadly, and I'm not sure what need there is for it.
+  // Client specifies the vertex format, they should already know these offsets, innit?
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_readPixels(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(7)
+  int32_t x=0,y=0,w=0,h=0,fmt=0,type=0;
+  JS_ToInt32(ctx,&x,argv[0]);
+  JS_ToInt32(ctx,&y,argv[1]);
+  JS_ToInt32(ctx,&w,argv[2]);
+  JS_ToInt32(ctx,&h,argv[3]);
+  JS_ToInt32(ctx,&fmt,argv[4]);
+  JS_ToInt32(ctx,&type,argv[5]);
+  if ((w<1)||(h<1)) return JS_NULL;
+  if ((w>4096)||(h>4096)) return JS_NULL; // safety limits
+  size_t a=0;
+  void *v=JS_GetArrayBuffer(ctx,&a,argv[6]); // TODO arg is TypedArray. Assuming that reading as ArrayBuffer is kosher.
+  if (!v) return JS_NULL;
+  
+  /* TODO !!! DANGER !!! We're asking for a potentially enormous write into some buffer without disclosing the buffer's length.
+   * I'll try to validate the required length here, but I'm not OpenGL so I don't actually know how much it's writing.
+   * We need to either:
+   *  - Not implement readPixels.
+   *  - Prevent setting of the GL_UNPACK_* globals, and ensure they're in a known state at all times.
+   *  - Find some way to ask GL how much buffer is needed -- pretty sure that doesn't exist.
+   *  - Fully understand all of the globals influencing readPixels, and properly apply them here -- I shouldn't be trusted with that.
+   */
+  int chanc;
+  switch (fmt) {
+    case GL_ALPHA: chanc=1; break;
+    case GL_RGB: chanc=3; break;
+    case GL_RGBA: chanc=4; break;
+    default: return JS_NULL;
+  }
+  int pixelsize;
+  switch (type) {
+    case GL_UNSIGNED_BYTE: pixelsize=chanc; break;
+    case GL_UNSIGNED_SHORT_5_6_5: pixelsize=chanc*2; break;
+    case GL_UNSIGNED_SHORT_4_4_4_4: pixelsize=chanc*2; break;
+    case GL_UNSIGNED_SHORT_5_5_5_1: pixelsize=chanc*2; break;
+    case GL_FLOAT: pixelsize=chanc*4; break;
+    default: return JS_NULL;
+  }
+  int stride=w*pixelsize;
+  stride=(stride+3)&~3; // Not sure about this, but I think 4-byte row alignment is the default? TODO
+  if (stride>INT_MAX/h) return JS_NULL;
+  int expectlen=stride*h; // See comments above... Taking too much on faith here.
+  if (expectlen>a) return JS_NULL;
+  
+  glReadPixels(x,y,w,h,fmt,type,v);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_texImage2D(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  if (argc==6) {
+    // This is an extremely convenient form only available to WebGL, where you supply a browser image-like object.
+    // Those classes (ImageData,HTMLImageElement,HTMLCanvasElement,HTMLVideoElement,ImageBitmap) aren't available in Egg, so we don't implement this.
+    return JS_ThrowTypeError(ctx,"Short form of texImage2D not supported by native runtimes");
+  }
+  JSASSERTARGC(9)
+  int32_t target=0,level=0,ifmt=0,w=0,h=0,border=0,fmt=0,type=0;
+  JS_ToInt32(ctx,&target,argv[0]);
+  JS_ToInt32(ctx,&level,argv[1]);
+  JS_ToInt32(ctx,&ifmt,argv[2]);
+  JS_ToInt32(ctx,&w,argv[3]);
+  JS_ToInt32(ctx,&h,argv[4]);
+  JS_ToInt32(ctx,&border,argv[5]);
+  JS_ToInt32(ctx,&fmt,argv[6]);
+  JS_ToInt32(ctx,&type,argv[7]);
+  if ((w<1)||(w>4096)) return JS_NULL;
+  if ((h<1)||(h>4096)) return JS_NULL;
+  size_t srcc=0;
+  const void *src=JS_GetArrayBuffer(ctx,&srcc,argv[8]);
+  
+  /* Same concerns here as readPixels re buffer length.
+   * But a bit less concerning since it's a read not write.
+   */
+  int chanc;
+  switch (fmt) {
+    case GL_ALPHA: chanc=1; break;
+    case GL_RGB: chanc=3; break;
+    case GL_RGBA: chanc=4; break;
+    case GL_LUMINANCE: chanc=1; break;
+    case GL_LUMINANCE_ALPHA: chanc=2; break;
+    default: return JS_NULL;
+  }
+  int pixelsize;
+  switch (type) {
+    case GL_UNSIGNED_BYTE: pixelsize=chanc; break;
+    case GL_UNSIGNED_SHORT_5_6_5: pixelsize=chanc*2; break;
+    case GL_UNSIGNED_SHORT_4_4_4_4: pixelsize=chanc*2; break;
+    case GL_UNSIGNED_SHORT_5_5_5_1: pixelsize=chanc*2; break;
+    case GL_FLOAT: pixelsize=chanc*4; break;
+    default: return JS_NULL;
+  }
+  int stride=w*pixelsize;
+  stride=(stride+3)&~3; // Not sure about this, but I think 4-byte row alignment is the default? TODO
+  if (stride>INT_MAX/h) return JS_NULL;
+  int expectlen=stride*h;
+  if (expectlen>srcc) return JS_NULL;
+  if (!src) return JS_NULL;
+  
+  glTexImage2D(target,level,ifmt,w,h,border,fmt,type,src);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_texSubImage2D(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  if (argc==7) {
+    // Same as texImage2D, we regrettably can't support the convenient image-object form.
+    return JS_ThrowTypeError(ctx,"Short form of texSubImage2D not supported by native runtimes");
+  }
+  JSASSERTARGC(9);
+  int32_t target=0,level=0,x=0,y=0,w=0,h=0,fmt=0,type=0;
+  JS_ToInt32(ctx,&target,argv[0]);
+  JS_ToInt32(ctx,&level,argv[1]);
+  JS_ToInt32(ctx,&x,argv[2]);
+  JS_ToInt32(ctx,&y,argv[3]);
+  JS_ToInt32(ctx,&w,argv[4]);
+  JS_ToInt32(ctx,&h,argv[5]);
+  JS_ToInt32(ctx,&fmt,argv[6]);
+  JS_ToInt32(ctx,&type,argv[7]);
+  if ((w<1)||(w>4096)) return JS_NULL;
+  if ((h<1)||(h>4096)) return JS_NULL;
+  size_t srcc=0;
+  const void *src=JS_GetArrayBuffer(ctx,&srcc,argv[8]);
+  
+  int chanc;
+  switch (fmt) {
+    case GL_ALPHA: chanc=1; break;
+    case GL_RGB: chanc=3; break;
+    case GL_RGBA: chanc=4; break;
+    case GL_LUMINANCE: chanc=1; break;
+    case GL_LUMINANCE_ALPHA: chanc=2; break;
+    default: return JS_NULL;
+  }
+  int pixelsize;
+  switch (type) {
+    case GL_UNSIGNED_BYTE: pixelsize=chanc; break;
+    case GL_UNSIGNED_SHORT_5_6_5: pixelsize=chanc*2; break;
+    case GL_UNSIGNED_SHORT_4_4_4_4: pixelsize=chanc*2; break;
+    case GL_UNSIGNED_SHORT_5_5_5_1: pixelsize=chanc*2; break;
+    case GL_FLOAT: pixelsize=chanc*4; break;
+    default: return JS_NULL;
+  }
+  int stride=w*pixelsize;
+  stride=(stride+3)&~3; // Not sure about this, but I think 4-byte row alignment is the default? TODO
+  if (stride>INT_MAX/h) return JS_NULL;
+  int expectlen=stride*h;
+  if (expectlen>srcc) return JS_NULL;
+  if (!src) return JS_NULL;
+  
+  glTexSubImage2D(target,level,x,y,w,h,fmt,type,src);
+  return JS_NULL;
+}
+
+#define EGG_WEBGL_UNIFORMV(vecsize,scalartype,ctype,rtype,rfn) \
+  static JSValue egg_webgl_uniform##vecsize##scalartype##v(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(2) \
+    int32_t k=0; \
+    JS_ToInt32(ctx,&k,argv[0]); \
+    if (!JS_IsArray(ctx,argv[1])) return JS_NULL; \
+    JSValue lenobj=JS_GetPropertyStr(ctx,argv[1],"length"); \
+    int32_t len=0; \
+    JS_ToInt32(ctx,&len,lenobj); \
+    if (len%vecsize) return JS_NULL; \
+    int32_t count=len/vecsize; \
+    if (count<1) return JS_NULL; \
+    ctype *localv=malloc(sizeof(ctype)*len); \
+    if (!localv) return JS_NULL; \
+    int i=0; for (;i<len;i++) { \
+      rtype tmp=0; \
+      JSValue srcvalue=JS_GetPropertyUint32(ctx,argv[1],i); \
+      rfn(ctx,&tmp,srcvalue); \
+      JS_FreeValue(ctx,srcvalue); \
+      localv[i]=tmp; \
+    } \
+    glUniform##vecsize##scalartype##v(k,count,localv); \
+    free(localv); \
+    return JS_NULL; \
+  }
+  
+EGG_WEBGL_UNIFORMV(1,f,GLfloat,double,JS_ToFloat64)
+EGG_WEBGL_UNIFORMV(1,i,GLint,int32_t,JS_ToInt32)
+EGG_WEBGL_UNIFORMV(2,f,GLfloat,double,JS_ToFloat64)
+EGG_WEBGL_UNIFORMV(2,i,GLint,int32_t,JS_ToInt32)
+EGG_WEBGL_UNIFORMV(3,f,GLfloat,double,JS_ToFloat64)
+EGG_WEBGL_UNIFORMV(3,i,GLint,int32_t,JS_ToInt32)
+EGG_WEBGL_UNIFORMV(4,f,GLfloat,double,JS_ToFloat64)
+EGG_WEBGL_UNIFORMV(4,i,GLint,int32_t,JS_ToInt32)
+
+#define EGG_WEBGL_VATTV(vecsize,scalartype,ctype,rtype,rfn) \
+  static JSValue egg_webgl_vertexAttrib##vecsize##scalartype##v(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) { \
+    JSASSERTARGC(2) \
+    int32_t k=0; \
+    JS_ToInt32(ctx,&k,argv[0]); \
+    if (!JS_IsArray(ctx,argv[1])) return JS_NULL; \
+    JSValue lenobj=JS_GetPropertyStr(ctx,argv[1],"length"); \
+    int32_t len=0; \
+    JS_ToInt32(ctx,&len,lenobj); \
+    if (len%vecsize) return JS_NULL; \
+    int32_t count=len/vecsize; \
+    if (count<1) return JS_NULL; \
+    ctype *localv=malloc(sizeof(ctype)*len); \
+    if (!localv) return JS_NULL; \
+    int i=0; for (;i<len;i++) { \
+      rtype tmp=0; \
+      JSValue srcvalue=JS_GetPropertyUint32(ctx,argv[1],i); \
+      rfn(ctx,&tmp,srcvalue); \
+      JS_FreeValue(ctx,srcvalue); \
+      localv[i]=tmp; \
+    } \
+    glVertexAttrib##vecsize##scalartype##v(k,localv); \
+    free(localv); \
+    return JS_NULL; \
+  }
+  
+EGG_WEBGL_VATTV(1,f,GLfloat,double,JS_ToFloat64)
+EGG_WEBGL_VATTV(2,f,GLfloat,double,JS_ToFloat64)
+EGG_WEBGL_VATTV(3,f,GLfloat,double,JS_ToFloat64)
+EGG_WEBGL_VATTV(4,f,GLfloat,double,JS_ToFloat64)
+
+static JSValue egg_webgl_uniformMatrix2fv(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(3)
+  int32_t k=0,transpose=0;
+  JS_ToInt32(ctx,&k,argv[0]);
+  JS_ToInt32(ctx,&transpose,argv[1]);
+  if (!JS_IsArray(ctx,argv[2])) return JS_NULL;//TODO Can also be Float32Array
+  JSValue lenobj=JS_GetPropertyStr(ctx,argv[1],"length");
+  int32_t len=0;
+  JS_ToInt32(ctx,&len,lenobj);
+  if (len%4) return JS_NULL;
+  int32_t count=len/4;
+  if (count<1) return JS_NULL;
+  GLfloat *localv=malloc(sizeof(GLfloat)*len);
+  if (!localv) return JS_NULL;
+  int i=0; for (;i<len;i++) {
+    double tmp=0;
+    JSValue srcvalue=JS_GetPropertyUint32(ctx,argv[1],i);
+    JS_ToFloat64(ctx,&tmp,srcvalue);
+    JS_FreeValue(ctx,srcvalue);
+    localv[i]=tmp;
+  }
+  glUniformMatrix2fv(k,count,transpose,localv);
+  free(localv);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_uniformMatrix3fv(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(3)
+  int32_t k=0,transpose=0;
+  JS_ToInt32(ctx,&k,argv[0]);
+  JS_ToInt32(ctx,&transpose,argv[1]);
+  if (!JS_IsArray(ctx,argv[2])) return JS_NULL;//TODO Can also be Float32Array
+  JSValue lenobj=JS_GetPropertyStr(ctx,argv[1],"length");
+  int32_t len=0;
+  JS_ToInt32(ctx,&len,lenobj);
+  if (len%9) return JS_NULL;
+  int32_t count=len/9;
+  if (count<1) return JS_NULL;
+  GLfloat *localv=malloc(sizeof(GLfloat)*len);
+  if (!localv) return JS_NULL;
+  int i=0; for (;i<len;i++) {
+    double tmp=0;
+    JSValue srcvalue=JS_GetPropertyUint32(ctx,argv[1],i);
+    JS_ToFloat64(ctx,&tmp,srcvalue);
+    JS_FreeValue(ctx,srcvalue);
+    localv[i]=tmp;
+  }
+  glUniformMatrix3fv(k,count,transpose,localv);
+  free(localv);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_uniformMatrix4fv(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(3)
+  int32_t k=0,transpose=0;
+  JS_ToInt32(ctx,&k,argv[0]);
+  JS_ToInt32(ctx,&transpose,argv[1]);
+  if (!JS_IsArray(ctx,argv[2])) return JS_NULL;//TODO Can also be Float32Array
+  JSValue lenobj=JS_GetPropertyStr(ctx,argv[1],"length");
+  int32_t len=0;
+  JS_ToInt32(ctx,&len,lenobj);
+  if (len%16) return JS_NULL;
+  int32_t count=len/16;
+  if (count<1) return JS_NULL;
+  GLfloat *localv=malloc(sizeof(GLfloat)*len);
+  if (!localv) return JS_NULL;
+  int i=0; for (;i<len;i++) {
+    double tmp=0;
+    JSValue srcvalue=JS_GetPropertyUint32(ctx,argv[1],i);
+    JS_ToFloat64(ctx,&tmp,srcvalue);
+    JS_FreeValue(ctx,srcvalue);
+    localv[i]=tmp;
+  }
+  glUniformMatrix4fv(k,count,transpose,localv);
+  free(localv);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_vertexAttribPointer(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  //if (!egg.webgl_eab_bound) return JS_NULL;
+  JSASSERTARGC(6)
+  int32_t index=0,size=0,type=0,norm=0,stride=0,offset=0;
+  JS_ToInt32(ctx,&index,argv[0]);
+  JS_ToInt32(ctx,&size,argv[1]);
+  JS_ToInt32(ctx,&type,argv[2]);
+  JS_ToInt32(ctx,&norm,argv[3]);
+  JS_ToInt32(ctx,&stride,argv[4]);
+  JS_ToInt32(ctx,&offset,argv[5]);
+  if (offset<0) return JS_NULL;
+  glVertexAttribPointer(index,size,type,norm,stride,(void*)(uintptr_t)offset);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_isContextLost(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  return JS_NewInt32(ctx,0);
+}
+
+static JSValue egg_webgl_shaderSource(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t shaderid=0;
+  JS_ToInt32(ctx,&shaderid,argv[0]);
+  const char *src=JS_ToCString(ctx,argv[1]);
+  if (!src) return JS_NULL;
+  GLint srcc=0; while (src[srcc]) srcc++;
+  glShaderSource(shaderid,1,&src,&srcc);
+  JS_FreeCString(ctx,src);
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getParameter(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(1)
+  int32_t k=0;
+  JS_ToInt32(ctx,&k,argv[0]);
+  switch (k) {
+    case GL_DEPTH_CLEAR_VALUE:
+    case GL_LINE_WIDTH:
+    case GL_POLYGON_OFFSET_FACTOR:
+    case GL_POLYGON_OFFSET_UNITS:
+    case GL_SAMPLE_COVERAGE_VALUE: { // float
+        GLfloat v=0.0f;
+        glGetFloatv(k,&v);
+        return JS_NewFloat64(ctx,v);
+      }
+    case GL_ALIASED_LINE_WIDTH_RANGE:
+    case GL_ALIASED_POINT_SIZE_RANGE:
+    case GL_DEPTH_RANGE: { // float[2]
+        GLfloat v[2]={0};
+        glGetFloatv(k,v);
+        JSValue result=JS_NewArray(ctx);
+        JS_SetPropertyUint32(ctx,result,0,JS_NewFloat64(ctx,v[0]));
+        JS_SetPropertyUint32(ctx,result,1,JS_NewFloat64(ctx,v[1]));
+        return result;
+      }
+    case GL_BLEND_COLOR:
+    case GL_COLOR_CLEAR_VALUE: { // float[4]
+        GLfloat v[4]={0};
+        glGetFloatv(k,v);
+        JSValue result=JS_NewArray(ctx);
+        JS_SetPropertyUint32(ctx,result,0,JS_NewFloat64(ctx,v[0]));
+        JS_SetPropertyUint32(ctx,result,1,JS_NewFloat64(ctx,v[1]));
+        JS_SetPropertyUint32(ctx,result,2,JS_NewFloat64(ctx,v[2]));
+        JS_SetPropertyUint32(ctx,result,3,JS_NewFloat64(ctx,v[3]));
+        return result;
+      }
+    case GL_COMPRESSED_TEXTURE_FORMATS: {
+        JSValue result=JS_NewArray(ctx);
+        GLint fmtc=0;
+        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS,&fmtc);
+        GLint *fmtv=0;
+        if ((fmtc>0)&&(fmtv=calloc(sizeof(GLint),fmtc))) {
+          glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS,fmtv);
+          int i=0; for (;i<fmtc;i++) {
+            JS_SetPropertyUint32(ctx,result,i,JS_NewInt32(ctx,fmtv[i]));
+          }
+          free(fmtv);
+        }
+        return result;
+      }
+    case GL_MAX_VIEWPORT_DIMS: { // int[2]
+        GLint v[2]={0};
+        glGetIntegerv(k,v);
+        JSValue result=JS_NewArray(ctx);
+        JS_SetPropertyUint32(ctx,result,0,JS_NewInt32(ctx,v[0]));
+        JS_SetPropertyUint32(ctx,result,1,JS_NewInt32(ctx,v[1]));
+        return result;
+      }
+    case GL_COLOR_WRITEMASK: { // boolean[4]
+        GLboolean v[4]={0};
+        glGetBooleanv(k,v);
+        JSValue result=JS_NewArray(ctx);
+        JS_SetPropertyUint32(ctx,result,0,JS_NewInt32(ctx,v[0]));
+        JS_SetPropertyUint32(ctx,result,1,JS_NewInt32(ctx,v[1]));
+        JS_SetPropertyUint32(ctx,result,2,JS_NewInt32(ctx,v[2]));
+        JS_SetPropertyUint32(ctx,result,3,JS_NewInt32(ctx,v[3]));
+        return result;
+      }
+    case GL_SCISSOR_BOX:
+    case GL_VIEWPORT: { // int[4]
+        GLint v[4]={0};
+        glGetIntegerv(k,v);
+        JSValue result=JS_NewArray(ctx);
+        JS_SetPropertyUint32(ctx,result,0,JS_NewInt32(ctx,v[0]));
+        JS_SetPropertyUint32(ctx,result,1,JS_NewInt32(ctx,v[1]));
+        JS_SetPropertyUint32(ctx,result,2,JS_NewInt32(ctx,v[2]));
+        JS_SetPropertyUint32(ctx,result,3,JS_NewInt32(ctx,v[3]));
+        return result;
+      }
+    case GL_RENDERER:
+    case GL_SHADING_LANGUAGE_VERSION:
+    case GL_VENDOR:
+    case GL_VERSION: {
+        const char *src=glGetString(k);
+        if (!src) return JS_NULL;
+        return JS_NewString(ctx,src);
+      }
+    // It would be great to just say "anything else is scalar int", but then if we missed a vector int param, it's a security problem.
+    #if GL_BLEND_EQUATION_RGB!=GL_BLEND_EQUATION
+      case GL_BLEND_EQUATION_RGB:
+    #endif
+    case GL_BLEND_EQUATION: case GL_BLEND_EQUATION_ALPHA: case GL_BLEND_SRC_ALPHA: case GL_BLEND_SRC_RGB:
+    case GL_BLUE_BITS: case GL_CULL_FACE: case GL_CULL_FACE_MODE: case GL_CURRENT_PROGRAM: case GL_DEPTH_BITS: case GL_DEPTH_FUNC: case GL_DEPTH_TEST:
+    case GL_DEPTH_WRITEMASK: case GL_DITHER: case GL_ELEMENT_ARRAY_BUFFER_BINDING: case GL_FRAMEBUFFER_BINDING: case GL_FRONT_FACE:
+    case GL_GENERATE_MIPMAP_HINT: case GL_GREEN_BITS: case GL_IMPLEMENTATION_COLOR_READ_FORMAT: case GL_IMPLEMENTATION_COLOR_READ_TYPE:
+    case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS: case GL_MAX_CUBE_MAP_TEXTURE_SIZE: case GL_MAX_FRAGMENT_UNIFORM_VECTORS:
+    case GL_MAX_RENDERBUFFER_SIZE: case GL_MAX_TEXTURE_IMAGE_UNITS: case GL_MAX_TEXTURE_SIZE: case GL_MAX_VARYING_VECTORS: case GL_MAX_VERTEX_ATTRIBS:
+    case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS: case GL_MAX_VERTEX_UNIFORM_VECTORS: case GL_PACK_ALIGNMENT: case GL_POLYGON_OFFSET_FILL:
+    case GL_RED_BITS: case GL_RENDERBUFFER_BINDING: case GL_SAMPLE_BUFFERS: case GL_SAMPLE_COVERAGE_INVERT: case GL_SAMPLES: case GL_SCISSOR_TEST:
+    case GL_STENCIL_BACK_FAIL: case GL_STENCIL_BACK_FUNC: case GL_STENCIL_BACK_PASS_DEPTH_FAIL: case GL_STENCIL_BACK_PASS_DEPTH_PASS:
+    case GL_STENCIL_BACK_REF: case GL_STENCIL_BACK_VALUE_MASK: case GL_STENCIL_BACK_WRITEMASK: case GL_STENCIL_BITS: case GL_STENCIL_CLEAR_VALUE:
+    case GL_STENCIL_FAIL: case GL_STENCIL_FUNC: case GL_STENCIL_PASS_DEPTH_FAIL: case GL_STENCIL_PASS_DEPTH_PASS: case GL_STENCIL_REF:
+    case GL_STENCIL_TEST: case GL_STENCIL_VALUE_MASK: case GL_STENCIL_WRITEMASK: case GL_SUBPIXEL_BITS: case GL_TEXTURE_BINDING_2D:
+    case GL_TEXTURE_BINDING_CUBE_MAP: case GL_UNPACK_ALIGNMENT: case GL_UNPACK_COLORSPACE_CONVERSION_WEBGL: case GL_UNPACK_FLIP_Y_WEBGL:
+    case GL_UNPACK_PREMULTIPLY_ALPHA_WEBGL: {
+        GLint v=0;
+        glGetIntegerv(k,&v);
+        return JS_NewInt32(ctx,v);
+      }
+  }
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getBufferParameter(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t target=0,k=0;
+  JS_ToInt32(ctx,&target,argv[0]);
+  JS_ToInt32(ctx,&k,argv[1]);
+  switch (k) { // Known keys only, to prevent stack smashing. All known keys are scalar-valued.
+    case GL_BUFFER_SIZE:
+    case GL_BUFFER_USAGE: {
+        int32_t v=0;
+        glGetBufferParameteriv(target,k,&v);
+        return JS_NewInt32(ctx,v);
+      }
+  }
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getFramebufferAttachmentParameter(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(3)
+  int32_t target=0,attachment=0,k=0;
+  JS_ToInt32(ctx,&target,argv[0]);
+  JS_ToInt32(ctx,&attachment,argv[1]);
+  JS_ToInt32(ctx,&k,argv[2]);
+  switch (k) { // All known keys are scalar-valued, but we have to check.
+    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE:
+    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME:
+    case GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL:
+    case GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE:
+    /* WebGL 2 or extensions... These are all single-integer too.
+    case GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE:
+    case GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE:
+    case GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING:
+    case GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE:
+    case GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE:
+    case GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE:
+    case GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE:
+    case GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE:
+    case GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER:
+    case GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING_EXT:
+    case GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_NUM_VIEWS_OVR:
+    case GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_BASE_VIEW_INDEX_OVR:*/ {
+        GLint v=0;
+        glGetFramebufferAttachmentParameteriv(target,attachment,k,&v);
+        return JS_NewInt32(ctx,v);
+      }
+  }
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getRenderbufferParameter(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t rb=0,k=0;
+  JS_ToInt32(ctx,&rb,argv[0]);
+  JS_ToInt32(ctx,&k,argv[1]);
+  switch (k) {
+    case GL_RENDERBUFFER_WIDTH:
+    case GL_RENDERBUFFER_HEIGHT:
+    case GL_RENDERBUFFER_INTERNAL_FORMAT:
+    case GL_RENDERBUFFER_GREEN_SIZE:
+    case GL_RENDERBUFFER_BLUE_SIZE:
+    case GL_RENDERBUFFER_RED_SIZE:
+    case GL_RENDERBUFFER_ALPHA_SIZE:
+    case GL_RENDERBUFFER_DEPTH_SIZE:
+    case GL_RENDERBUFFER_STENCIL_SIZE: {
+        GLint v=0;
+        glGetRenderbufferParameteriv(rb,k,&v);
+        return JS_NewInt32(ctx,v);
+      }
+  }
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getProgramParameter(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t program=0,k=0;
+  JS_ToInt32(ctx,&program,argv[0]);
+  JS_ToInt32(ctx,&k,argv[1]);
+  switch (k) {
+    case GL_DELETE_STATUS:
+    case GL_LINK_STATUS:
+    case GL_VALIDATE_STATUS:
+    case GL_ATTACHED_SHADERS:
+    case GL_ACTIVE_ATTRIBUTES:
+    case GL_ACTIVE_UNIFORMS:
+    /* WebGL 2, same types
+    case GL_TRANSFORM_FEEDBACK_BUFFER_MODE:
+    case GL_TRANSFORM_FEEDBACK_VARYINGS:
+    case GL_ACTIVE_UNIFORM_BLOCKS:*/ {
+        GLint v=0;
+        glGetProgramiv(program,k,&v);
+        return JS_NewInt32(ctx,v);
+      }
+  }
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getShaderParameter(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t shader=0,k=0;
+  JS_ToInt32(ctx,&shader,argv[0]);
+  JS_ToInt32(ctx,&k,argv[1]);
+  switch (k) {
+    case GL_DELETE_STATUS:
+    case GL_COMPILE_STATUS:
+    case GL_SHADER_TYPE: {
+        GLint v=0;
+        glGetShaderiv(shader,k,&v);
+        return JS_NewInt32(ctx,v);
+      }
+  }
+  return JS_NULL;
+}
+
+static JSValue egg_webgl_getTexParameter(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t texid=0,k=0;
+  JS_ToInt32(ctx,&texid,argv[0]);
+  JS_ToInt32(ctx,&k,argv[1]);
+  switch (k) {
+    case GL_TEXTURE_MAG_FILTER:
+    case GL_TEXTURE_MIN_FILTER:
+    case GL_TEXTURE_WRAP_S:
+    case GL_TEXTURE_WRAP_T: {
+        GLint v=0;
+        glGetTexParameteriv(texid,k,&v);
+        return JS_NewInt32(ctx,v);
+      }
+    /* WebGL2 / GLES3, if we ever support those:
+    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
+    case GL_TEXTURE_BASE_LEVEL:
+    case GL_TEXTURE_COMPARE_FUNC:
+    case GL_TEXTURE_COMPARE_MODE:
+    case GL_TEXTURE_IMMUTABLE_FORMAT:
+    case GL_TEXTURE_IMMUTABLE_LEVELS:
+    case GL_TEXTURE_MAX_LEVEL:
+    case GL_TEXTURE_WRAP_R: //...int
+    case GL_TEXTURE_MAX_LOD:
+    case GL_TEXTURE_MIN_LOD: {
+        GLfloat v=0.0f;
+        glGetTexParameterfv(texid,k,&v);
+        return JS_NewFloat64(ctx,v);
+      }
+    /**/
+  }
+  return JS_NULL;
+}
+ 
+static void egg_native_populate_webgl(JSContext *ctx,JSValue gl) {
+
+  // Not implemented:
+  // gl.canvas: HTMLCanvasElement
+  // gl.drawingBufferColorSpace: string
+  // gl.drawingBufferHeight: int // Could provide if we feel there's a need.
+  // gl.drawingBufferWidth: int
+  // gl.unpackColorSpace: string
+  // gl.makeXRCompatible()
+  
+  #define f(fnname,paramc) JS_SetPropertyStr(ctx,gl,#fnname,JS_NewCFunction(ctx,egg_webgl_##fnname,#fnname,paramc));
+  #define keq(key) JS_SetPropertyStr(ctx,gl,#key,JS_NewInt32(ctx,GL_##key));
+  #define kv(key,value) JS_SetPropertyStr(ctx,gl,#key,JS_NewInt32(ctx,value));
+  
+  f(activeTexture,1)
+  f(activeTexture,1)
+  f(attachShader,2)
+  f(bindAttribLocation,3)
+  f(bindBuffer,2)
+  f(bindFramebuffer,2)
+  f(bindRenderbuffer,2)
+  f(bindTexture,2)
+  f(blendColor,4)
+  f(blendEquation,1)
+  f(blendEquationSeparate,2)
+  f(blendFunc,2)
+  f(blendFuncSeparate,4)
+  f(bufferData,0)
+  f(bufferSubData,0)
+  f(checkFramebufferStatus,1)
+  f(clear,1)
+  f(clearColor,4)
+  f(clearDepth,1)
+  f(clearStencil,1)
+  f(colorMask,4)
+  f(compileShader,1)
+  f(compressedTexImage2D,0)
+  f(compressedTexSubImage2D,0)
+  f(copyTexImage2D,8)
+  f(copyTexSubImage2D,8)
+  f(createBuffer,0)
+  f(createFramebuffer,0)
+  f(createProgram,0)
+  f(createRenderbuffer,0)
+  f(createShader,1)
+  f(createTexture,0)
+  f(cullFace,1)
+  f(deleteBuffer,1)
+  f(deleteFramebuffer,1)
+  f(deleteProgram,1)
+  f(deleteRenderbuffer,1)
+  f(deleteShader,1)
+  f(deleteTexture,1)
+  f(depthFunc,1)
+  f(depthMask,1)
+  f(depthRange,2)
+  f(detachShader,2)
+  f(disable,1)
+  f(disableVertexAttribArray,1)
+  f(drawArrays,3)
+  f(drawElements,0)
+  f(enable,1)
+  f(enableVertexAttribArray,1)
+  f(finish,0)
+  f(flush,0)
+  f(framebufferRenderbuffer,4)
+  f(framebufferTexture2D,5)
+  f(frontFace,1)
+  f(generateMipmap,1)
+  f(getActiveAttrib,0)
+  f(getActiveUniform,0)
+  f(getAttachedShaders,0)
+  f(getAttribLocation,2)
+  f(getBufferParameter,2)
+  f(getContextAttributes,0)
+  f(getError,0)
+  f(getExtension,1)
+  f(getFramebufferAttachmentParameter,3)
+  f(getParameter,0)
+  f(getProgramInfoLog,0)
+  f(getProgramParameter,2)
+  f(getRenderbufferParameter,2)
+  f(getShaderInfoLog,0)
+  f(getShaderParameter,2)
+  f(getShaderPrecisionFormat,2)
+  f(getShaderSource,1)
+  f(getSupportedExtensions,0)
+  f(getTexParameter,0)
+  f(getUniform,0)
+  f(getUniformLocation,2)
+  f(getVertexAttrib,0)
+  f(getVertexAttribOffset,2)
+  f(hint,2)
+  f(isBuffer,1)
+  f(isContextLost,0)
+  f(isEnabled,1)
+  f(isFramebuffer,1)
+  f(isProgram,1)
+  f(isRenderbuffer,1)
+  f(isShader,1)
+  f(isTexture,1)
+  f(lineWidth,1)
+  f(linkProgram,1)
+  f(pixelStorei,2)
+  f(polygonOffset,2)
+  f(readPixels,0)
+  f(renderbufferStorage,4)
+  f(sampleCoverage,2)
+  f(scissor,4)
+  f(shaderSource,2)
+  f(stencilFunc,3)
+  f(stencilFuncSeparate,4)
+  f(stencilMask,1)
+  f(stencilMaskSeparate,2)
+  f(stencilOp,3)
+  f(stencilOpSeparate,4)
+  f(texImage2D,0)
+  f(texParameterf,3)
+  f(texParameteri,3)
+  f(texSubImage2D,0)
+  f(uniform1f,2)
+  f(uniform1fv,0)
+  f(uniform1i,2)
+  f(uniform1iv,0)
+  f(uniform2f,3)
+  f(uniform2fv,0)
+  f(uniform2i,3)
+  f(uniform2iv,0)
+  f(uniform3f,4)
+  f(uniform3fv,0)
+  f(uniform3i,4)
+  f(uniform3iv,0)
+  f(uniform4f,5)
+  f(uniform4fv,0)
+  f(uniform4i,5)
+  f(uniform4iv,0)
+  f(uniformMatrix2fv,0)
+  f(uniformMatrix3fv,0)
+  f(uniformMatrix4fv,0)
+  f(useProgram,1)
+  f(validateProgram,1)
+  f(vertexAttrib1f,2)
+  f(vertexAttrib1fv,0)
+  f(vertexAttrib2f,3)
+  f(vertexAttrib2fv,0)
+  f(vertexAttrib3f,4)
+  f(vertexAttrib3fv,0)
+  f(vertexAttrib4f,5)
+  f(vertexAttrib4fv,0)
+  f(vertexAttribPointer,6)
+  f(viewport,4)
+
+  keq(BROWSER_DEFAULT_WEBGL)
+  keq(CONTEXT_LOST_WEBGL)
+  keq(DEPTH_STENCIL)
+  keq(DEPTH_STENCIL_ATTACHMENT)
+  keq(RGB8)
+  keq(RGBA8)
+  keq(UNPACK_COLORSPACE_CONVERSION_WEBGL)
+  keq(UNPACK_FLIP_Y_WEBGL)
+  keq(UNPACK_PREMULTIPLY_ALPHA_WEBGL)
+
+  keq(ACTIVE_ATTRIBUTES)
+  keq(ACTIVE_TEXTURE)
+  keq(ACTIVE_UNIFORMS)
+  keq(ALIASED_LINE_WIDTH_RANGE)
+  keq(ALIASED_POINT_SIZE_RANGE)
+  keq(ALPHA)
+  keq(ALPHA_BITS)
+  keq(ALWAYS)
+  keq(ARRAY_BUFFER)
+  keq(ARRAY_BUFFER_BINDING)
+  keq(ATTACHED_SHADERS)
+  keq(BACK)
+  keq(BLEND)
+  keq(BLEND_COLOR)
+  keq(BLEND_DST_ALPHA)
+  keq(BLEND_DST_RGB)
+  keq(BLEND_EQUATION)
+  keq(BLEND_EQUATION_ALPHA)
+  keq(BLEND_EQUATION_RGB)
+  keq(BLEND_SRC_ALPHA)
+  keq(BLEND_SRC_RGB)
+  keq(BLUE_BITS)
+  keq(BOOL)
+  keq(BOOL_VEC2)
+  keq(BOOL_VEC3)
+  keq(BOOL_VEC4)
+  keq(BUFFER_SIZE)
+  keq(BUFFER_USAGE)
+  keq(BYTE)
+  keq(CCW)
+  keq(CLAMP_TO_EDGE)
+  keq(COLOR_ATTACHMENT0)
+  keq(COLOR_BUFFER_BIT)
+  keq(COLOR_CLEAR_VALUE)
+  keq(COLOR_WRITEMASK)
+  keq(COMPILE_STATUS)
+  keq(COMPRESSED_TEXTURE_FORMATS)
+  keq(CONSTANT_ALPHA)
+  keq(CONSTANT_COLOR)
+  keq(CULL_FACE)
+  keq(CULL_FACE_MODE)
+  keq(CURRENT_PROGRAM)
+  keq(CURRENT_VERTEX_ATTRIB)
+  keq(CW)
+  keq(DECR)
+  keq(DECR_WRAP)
+  keq(DELETE_STATUS)
+  keq(DEPTH_ATTACHMENT)
+  keq(DEPTH_BITS)
+  keq(DEPTH_BUFFER_BIT)
+  keq(DEPTH_CLEAR_VALUE)
+  keq(DEPTH_COMPONENT)
+  keq(DEPTH_COMPONENT16)
+  keq(DEPTH_FUNC)
+  keq(DEPTH_RANGE)
+  keq(DEPTH_TEST)
+  keq(DEPTH_WRITEMASK)
+  keq(DITHER)
+  keq(DONT_CARE)
+  keq(DST_ALPHA)
+  keq(DST_COLOR)
+  keq(DYNAMIC_DRAW)
+  keq(ELEMENT_ARRAY_BUFFER)
+  keq(ELEMENT_ARRAY_BUFFER_BINDING)
+  keq(EQUAL)
+  keq(FASTEST)
+  keq(FLOAT)
+  keq(FLOAT_MAT2)
+  keq(FLOAT_MAT3)
+  keq(FLOAT_MAT4)
+  keq(FLOAT_VEC2)
+  keq(FLOAT_VEC3)
+  keq(FLOAT_VEC4)
+  keq(FRAGMENT_SHADER)
+  keq(FRAMEBUFFER)
+  keq(FRAMEBUFFER_ATTACHMENT_OBJECT_NAME)
+  keq(FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE)
+  keq(FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE)
+  keq(FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL)
+  keq(FRAMEBUFFER_BINDING)
+  keq(FRAMEBUFFER_COMPLETE)
+  keq(FRAMEBUFFER_INCOMPLETE_ATTACHMENT)
+  keq(FRAMEBUFFER_INCOMPLETE_DIMENSIONS)
+  keq(FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT)
+  keq(FRAMEBUFFER_UNSUPPORTED)
+  keq(FRONT)
+  keq(FRONT_AND_BACK)
+  keq(FRONT_FACE)
+  keq(FUNC_ADD)
+  keq(FUNC_REVERSE_SUBTRACT)
+  keq(FUNC_SUBTRACT)
+  keq(GENERATE_MIPMAP_HINT)
+  keq(GEQUAL)
+  keq(GREATER)
+  keq(GREEN_BITS)
+  keq(HIGH_FLOAT)
+  keq(HIGH_INT)
+  keq(IMPLEMENTATION_COLOR_READ_FORMAT)
+  keq(IMPLEMENTATION_COLOR_READ_TYPE)
+  keq(INCR)
+  keq(INCR_WRAP)
+  keq(INT)
+  keq(INT_VEC2)
+  keq(INT_VEC3)
+  keq(INT_VEC4)
+  keq(INVALID_ENUM)
+  keq(INVALID_FRAMEBUFFER_OPERATION)
+  keq(INVALID_OPERATION)
+  keq(INVALID_VALUE)
+  keq(INVERT)
+  keq(KEEP)
+  keq(LEQUAL)
+  keq(LESS)
+  keq(LINEAR)
+  keq(LINEAR_MIPMAP_LINEAR)
+  keq(LINEAR_MIPMAP_NEAREST)
+  keq(LINES)
+  keq(LINE_LOOP)
+  keq(LINE_STRIP)
+  keq(LINE_WIDTH)
+  keq(LINK_STATUS)
+  keq(LOW_FLOAT)
+  keq(LOW_INT)
+  keq(LUMINANCE)
+  keq(LUMINANCE_ALPHA)
+  keq(MAX_COMBINED_TEXTURE_IMAGE_UNITS)
+  keq(MAX_CUBE_MAP_TEXTURE_SIZE)
+  keq(MAX_FRAGMENT_UNIFORM_VECTORS)
+  keq(MAX_RENDERBUFFER_SIZE)
+  keq(MAX_TEXTURE_IMAGE_UNITS)
+  keq(MAX_TEXTURE_SIZE)
+  keq(MAX_VARYING_VECTORS)
+  keq(MAX_VERTEX_ATTRIBS)
+  keq(MAX_VERTEX_TEXTURE_IMAGE_UNITS)
+  keq(MAX_VERTEX_UNIFORM_VECTORS)
+  keq(MAX_VIEWPORT_DIMS)
+  keq(MEDIUM_FLOAT)
+  keq(MEDIUM_INT)
+  keq(MIRRORED_REPEAT)
+  keq(NEAREST)
+  keq(NEAREST_MIPMAP_LINEAR)
+  keq(NEAREST_MIPMAP_NEAREST)
+  keq(NEVER)
+  keq(NICEST)
+  keq(NONE)
+  keq(NOTEQUAL)
+  keq(NO_ERROR)
+  keq(ONE)
+  keq(ONE_MINUS_CONSTANT_ALPHA)
+  keq(ONE_MINUS_CONSTANT_COLOR)
+  keq(ONE_MINUS_DST_ALPHA)
+  keq(ONE_MINUS_DST_COLOR)
+  keq(ONE_MINUS_SRC_ALPHA)
+  keq(ONE_MINUS_SRC_COLOR)
+  keq(OUT_OF_MEMORY)
+  keq(PACK_ALIGNMENT)
+  keq(POINTS)
+  keq(POLYGON_OFFSET_FACTOR)
+  keq(POLYGON_OFFSET_FILL)
+  keq(POLYGON_OFFSET_UNITS)
+  keq(RED_BITS)
+  keq(RENDERBUFFER)
+  keq(RENDERBUFFER_ALPHA_SIZE)
+  keq(RENDERBUFFER_BINDING)
+  keq(RENDERBUFFER_BLUE_SIZE)
+  keq(RENDERBUFFER_DEPTH_SIZE)
+  keq(RENDERBUFFER_GREEN_SIZE)
+  keq(RENDERBUFFER_HEIGHT)
+  keq(RENDERBUFFER_INTERNAL_FORMAT)
+  keq(RENDERBUFFER_RED_SIZE)
+  keq(RENDERBUFFER_STENCIL_SIZE)
+  keq(RENDERBUFFER_WIDTH)
+  keq(RENDERER)
+  keq(REPEAT)
+  keq(REPLACE)
+  keq(RGB)
+  keq(RGB5_A1)
+  keq(RGB565)
+  keq(RGBA)
+  keq(RGBA4)
+  keq(SAMPLER_2D)
+  keq(SAMPLER_CUBE)
+  keq(SAMPLES)
+  keq(SAMPLE_ALPHA_TO_COVERAGE)
+  keq(SAMPLE_BUFFERS)
+  keq(SAMPLE_COVERAGE)
+  keq(SAMPLE_COVERAGE_INVERT)
+  keq(SAMPLE_COVERAGE_VALUE)
+  keq(SCISSOR_BOX)
+  keq(SCISSOR_TEST)
+  keq(SHADER_TYPE)
+  keq(SHADING_LANGUAGE_VERSION)
+  keq(SHORT)
+  keq(SRC_ALPHA)
+  keq(SRC_ALPHA_SATURATE)
+  keq(SRC_COLOR)
+  keq(STATIC_DRAW)
+  keq(STENCIL_ATTACHMENT)
+  keq(STENCIL_BACK_FAIL)
+  keq(STENCIL_BACK_FUNC)
+  keq(STENCIL_BACK_PASS_DEPTH_FAIL)
+  keq(STENCIL_BACK_PASS_DEPTH_PASS)
+  keq(STENCIL_BACK_REF)
+  keq(STENCIL_BACK_VALUE_MASK)
+  keq(STENCIL_BACK_WRITEMASK)
+  keq(STENCIL_BITS)
+  keq(STENCIL_BUFFER_BIT)
+  keq(STENCIL_CLEAR_VALUE)
+  keq(STENCIL_FAIL)
+  keq(STENCIL_FUNC)
+  keq(STENCIL_INDEX8)
+  keq(STENCIL_PASS_DEPTH_FAIL)
+  keq(STENCIL_PASS_DEPTH_PASS)
+  keq(STENCIL_REF)
+  keq(STENCIL_TEST)
+  keq(STENCIL_VALUE_MASK)
+  keq(STENCIL_WRITEMASK)
+  keq(STREAM_DRAW)
+  keq(SUBPIXEL_BITS)
+  keq(TEXTURE)
+  keq(TEXTURE0)
+  keq(TEXTURE1)
+  keq(TEXTURE2)
+  keq(TEXTURE3)
+  keq(TEXTURE4)
+  keq(TEXTURE5)
+  keq(TEXTURE6)
+  keq(TEXTURE7)
+  keq(TEXTURE8)
+  keq(TEXTURE9)
+  keq(TEXTURE10)
+  keq(TEXTURE11)
+  keq(TEXTURE12)
+  keq(TEXTURE13)
+  keq(TEXTURE14)
+  keq(TEXTURE15)
+  keq(TEXTURE16)
+  keq(TEXTURE17)
+  keq(TEXTURE18)
+  keq(TEXTURE19)
+  keq(TEXTURE20)
+  keq(TEXTURE21)
+  keq(TEXTURE22)
+  keq(TEXTURE23)
+  keq(TEXTURE24)
+  keq(TEXTURE25)
+  keq(TEXTURE26)
+  keq(TEXTURE27)
+  keq(TEXTURE28)
+  keq(TEXTURE29)
+  keq(TEXTURE30)
+  keq(TEXTURE31)
+  keq(TEXTURE_2D)
+  keq(TEXTURE_BINDING_2D)
+  keq(TEXTURE_BINDING_CUBE_MAP)
+  keq(TEXTURE_CUBE_MAP)
+  keq(TEXTURE_CUBE_MAP_NEGATIVE_X)
+  keq(TEXTURE_CUBE_MAP_NEGATIVE_Y)
+  keq(TEXTURE_CUBE_MAP_NEGATIVE_Z)
+  keq(TEXTURE_CUBE_MAP_POSITIVE_X)
+  keq(TEXTURE_CUBE_MAP_POSITIVE_Y)
+  keq(TEXTURE_CUBE_MAP_POSITIVE_Z)
+  keq(TEXTURE_MAG_FILTER)
+  keq(TEXTURE_MIN_FILTER)
+  keq(TEXTURE_WRAP_S)
+  keq(TEXTURE_WRAP_T)
+  keq(TRIANGLES)
+  keq(TRIANGLE_FAN)
+  keq(TRIANGLE_STRIP)
+  keq(UNPACK_ALIGNMENT)
+  keq(UNSIGNED_BYTE)
+  keq(UNSIGNED_INT)
+  keq(UNSIGNED_SHORT)
+  keq(UNSIGNED_SHORT_4_4_4_4)
+  keq(UNSIGNED_SHORT_5_5_5_1)
+  keq(UNSIGNED_SHORT_5_6_5)
+  keq(VALIDATE_STATUS)
+  keq(VENDOR)
+  keq(VERSION)
+  keq(VERTEX_ATTRIB_ARRAY_BUFFER_BINDING)
+  keq(VERTEX_ATTRIB_ARRAY_ENABLED)
+  keq(VERTEX_ATTRIB_ARRAY_NORMALIZED)
+  keq(VERTEX_ATTRIB_ARRAY_POINTER)
+  keq(VERTEX_ATTRIB_ARRAY_SIZE)
+  keq(VERTEX_ATTRIB_ARRAY_STRIDE)
+  keq(VERTEX_ATTRIB_ARRAY_TYPE)
+  keq(VERTEX_SHADER)
+  keq(VIEWPORT)
+  keq(ZERO)
+  
+  #undef f
+  #undef keq
+  #undef kv
+}
+
+/* Main entry point, expose all the above thru QuickJS and wasm-micro-runtime.
+ */
  
 int egg_native_install_runtime_exports() {
   if (qjs_set_exports(egg.qjs,"egg",egg_native_js_exports,sizeof(egg_native_js_exports)/sizeof(egg_native_js_exports[0]))<0) return -1;
   if (wamr_set_exports(egg.wamr,egg_native_wasm_exports,sizeof(egg_native_wasm_exports)/sizeof(egg_native_wasm_exports[0]))<0) return -1;
+  
+  JSContext *jsctx=qjs_get_context(egg.qjs);
+  egg.jsgl=JS_NewObject(jsctx);
+  egg_native_populate_webgl(jsctx,egg.jsgl);
+  
   return 0;
 }

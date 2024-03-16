@@ -6,7 +6,7 @@ Game code can be in JavaScript or WebAssembly.
 
 ## TODO
 
-- [ ] OpenGL for Javascript.
+- [x] OpenGL for Javascript.
 - - Match webgl exactly, and add a context parameter to egg_client_render for js.
 - [x] Try EGL instead of GLX. We seem to not have real ES on the Wasm side. (try point sprites)
 - [x] Failing to launch with drmgx (permissions error at drmModeSetCrtc)...?
@@ -24,3 +24,6 @@ Game code can be in JavaScript or WebAssembly.
 - [ ] Can we do some kind of "warp cursor" or "trap cursor"? First-person shooters really need that.
 - [ ] Validate size of wasm gl parameters, some are probably off.
 - [x] glGetVertexAttribPointerv wasm needs rephrased; we can't pass a double-pointer in from the wasm space.
+- [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
+- [ ] Pull the WebGL stuff out of egg_native_export.c, just for cleanliness's sake. Way more of it than I expected.
+- [ ] QuickJS JS_GetArrayBuffer: Does this read TypedArray, SharedArrayBuffer, and DataView as well?

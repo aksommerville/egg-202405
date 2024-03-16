@@ -17,6 +17,7 @@
 #include "opt/serial/serial.h"
 #include "opt/localstore/localstore.h"
 #include "opt/http/http.h"
+#include "quickjs.h"
 
 #define EGG_EVENT_QUEUE_LENGTH 256
 
@@ -55,6 +56,9 @@ extern struct egg {
   struct egg_function_location loc_client_quit;
   struct egg_function_location loc_client_update;
   struct egg_function_location loc_client_render;
+  
+  // bindBuffer(GL_ELEMENT_ARRAY_BUFFER) -- we need to track this to avoid sending wild pointers to glDrawElements
+  int webgl_eab_bound;
   
   // Managed by egg_native_net.c.
   struct egg_net_op {
@@ -101,6 +105,7 @@ extern struct egg {
   struct qjs *qjs;
   struct romr romr;
   struct localstore localstore;
+  JSValue jsgl;
   
 } egg;
 

@@ -31,7 +31,10 @@ static void egg_native_quit(int status) {
   }
   hostio_del(egg.hostio);
   wamr_del(egg.wamr);
-  qjs_del(egg.qjs);
+  if (egg.qjs) {
+    JS_FreeValue(qjs_get_context(egg.qjs),egg.jsgl);
+    qjs_del(egg.qjs);
+  }
   egg_native_net_cleanup();
   egg_native_rom_cleanup();
   egg_native_input_cleanup();
@@ -129,6 +132,10 @@ static int egg_native_init() {
     fprintf(stderr,"%s: Failed to initialize video.\n",egg.exename);
     return -2;
   }
+  if (!egg.hostio->video||!egg.hostio->video->type->gx_begin||!egg.hostio->video->type->gx_end) {
+    fprintf(stderr,"%s: Video driver does not support GX.\n",egg.exename);
+    return -2;
+  }
   
   /* Initialize input drivers.
    */
@@ -195,8 +202,6 @@ static int egg_native_update() {
     }
   }
   
-  //TODO Remove drivers with no GX support; it's mandatory.
-  if (!egg.hostio->video||!egg.hostio->video->type->gx_begin||!egg.hostio->video->type->gx_end) return -1;
   if (egg.hostio->video->type->gx_begin(egg.hostio->video)<0) {
     fprintf(stderr,"%s: Error entering GX context.\n",egg.exename);
     return -2;

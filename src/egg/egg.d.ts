@@ -10,7 +10,7 @@ export interface ClientModule {
   egg_client_quit: () => void,
   egg_client_init: () => -1|0,
   egg_client_update: (elapsed: number) => void,
-  egg_client_render: () => void,
+  egg_client_render: (gl: WebGLRenderingContext) => void,
 }
 
 export declare function exportModule(mod: ClientModule): void;
@@ -86,6 +86,8 @@ export declare function input_device_disconnect(devid: number): void;
  * You'll get a RESIZE event when it does. Or you can poll this as needed.
  */
 export declare function video_get_size(): [number, number];
+
+export declare function video_get_context(): WebGLRenderingContext;
 
 /* Audio.
  * The host provides an opinionated synthesizer.

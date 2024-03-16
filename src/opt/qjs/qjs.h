@@ -32,7 +32,10 @@ int qjs_call(struct qjs *qjs,int modid,int fnid,uint32_t *argv,int argc);
  *   'f' double
  *   's' char*
  *   '*s' int,char*
+ *   'o' JSValue*
  */
 int qjs_callf(struct qjs *qjs,int modid,int fnid,const char *fmt,...);
+
+void *qjs_get_context(struct qjs *qjs); // => JSContext*
 
 #endif

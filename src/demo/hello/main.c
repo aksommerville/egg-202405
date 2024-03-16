@@ -1,6 +1,8 @@
 #include "egg/egg.h"
 #include "GLES2/gl2.h"
 
+#if 0
+
 struct vertex {
   GLfloat x,y;
   uint8_t r,g,b,a;
@@ -183,3 +185,4 @@ void egg_client_render() {
     glUseProgram(0);
   }
 }
+#endif

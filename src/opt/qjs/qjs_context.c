@@ -87,7 +87,7 @@ static JSValue qjs_exportModule(JSContext *ctx,JSValueConst this,int argc,JSValu
   struct qjs *qjs=JS_GetContextOpaque(ctx);
   if (argc!=1) return JS_ThrowTypeError(ctx,"exportModule requires 1 argument");
   if (!qjs->module_loading) return JS_ThrowTypeError(ctx,"exportModule called from outside a module's bootstrap");
-  //JS_FreeValue(qjs->jsctx,qjs->module_loading->jsmod);
+  JS_FreeValue(qjs->jsctx,qjs->module_loading->jsmod);
   qjs->module_loading->jsmod=JS_DupValue(qjs->jsctx,argv[0]);
   return JS_NULL;
 }
@@ -148,6 +148,14 @@ struct qjs *qjs_new() {
   JS_FreeValue(qjs->jsctx,globals);
   
   return qjs;
+}
+
+/* Trivial accessors.
+ */
+ 
+void *qjs_get_context(struct qjs *qjs) {
+  if (!qjs) return 0;
+  return qjs->jsctx;
 }
 
 /* Set exports.
@@ -335,6 +343,7 @@ int qjs_callf(struct qjs *qjs,int modid,int fnid,const char *fmt,...) {
           if (!src) len=0; else if (len<0) { len=0; while (src[len]) len++; }
           *dst=JS_NewStringLen(qjs->jsctx,src,len);
         } break;
+      case 'o': *dst=JS_DupValue(qjs->jsctx,*va_arg(vargs,JSValue*)); break;
       default: {
           while (argc-->0) JS_FreeValue(qjs->jsctx,qjs->tmpv[argc]);
           return -1;

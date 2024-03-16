@@ -20,7 +20,28 @@ const EGG_EVTSTATE_DISABLED   = 2;
 const EGG_EVTSTATE_ENABLED    = 3;
 const EGG_EVTSTATE_REQUIRED   = 4;
 
+let glprogram = 0;
+let posbuffer = 0;
+let colorbuffer = 0;
+
 function egg_client_quit() {
+}
+
+function compile_shader(gl, type, src) {
+  const shader=gl.createShader(type);
+  gl.shaderSource(shader,src);
+  gl.compileShader(shader);
+  const status = gl.getShaderParameter(shader,gl.COMPILE_STATUS);
+  if (!status) {
+    egg.log("GLSL COMPILE FAILED (%s)",(type==gl.VERTEX_SHADER)?"VERTEX":"FRAGMENT");
+    const infolog = gl.getShaderInfoLog(shader);
+    egg.log("%s",infolog.trim());
+    gl.deleteShader(shader);
+    return -1;
+  }
+  gl.attachShader(glprogram,shader);
+  gl.deleteShader(shader);
+  return 0;
 }
 
 function egg_client_init() {
@@ -30,6 +51,42 @@ function egg_client_init() {
   // egg.event_enable(EGG_EVENT_MBUTTON, EGG_EVTSTATE_ENABLED);
   // egg.event_enable(EGG_EVENT_MWHEEL, EGG_EVTSTATE_ENABLED);
   // egg.event_enable(EGG_EVENT_TEXT, EGG_EVTSTATE_ENABLED);
+  
+  const gl = egg.video_get_context();
+  if (!(glprogram=gl.createProgram())) return -1;
+  if (compile_shader(gl, gl.VERTEX_SHADER,
+    `precision mediump float;
+    attribute vec2 aposition;
+    attribute vec4 acolor;
+    varying vec4 vcolor;
+    void main() {
+      gl_Position=vec4(aposition,0.0,1.0);
+      vcolor=acolor;
+      gl_PointSize=32.0;
+    }
+  `)<0) return -1;
+  if (compile_shader(gl, gl.FRAGMENT_SHADER,
+    `precision mediump float;
+    varying vec4 vcolor;
+    void main() {
+      //vec2 normpos=(gl_PointCoord-0.5)*2.0;
+      //float a=1.0-sqrt(normpos.x*normpos.x+normpos.y*normpos.y);
+      //gl_FragColor=vec4(vcolor.rgb,a);
+      gl_FragColor=vcolor;
+    }
+  `)<0) return -1;
+  gl.linkProgram(glprogram);
+  const status = gl.getProgramParameter(glprogram,gl.LINK_STATUS);
+  if (!status) {
+    egg.log("GLSL LINK FAILED");
+    const infolog = gl.getProgramInfoLog(glprogram);
+    egg.log("%s",infolog.trim());
+    return -1;
+  }
+  gl.bindAttribLocation(glprogram,0,"aposition");
+  gl.bindAttribLocation(glprogram,1,"acolor");
+  if (!(posbuffer = gl.createBuffer())) return -1;
+  if (!(colorbuffer = gl.createBuffer())) return -1;
   
   return 0;
 }
@@ -104,8 +161,29 @@ function egg_client_update(elapsed) {
   }
 }
 
-function egg_client_render() {
-  //TODO
+function egg_client_render(gl) {
+  const [screenw, screenh] = egg.video_get_size();
+  gl.viewport(0,0,screenw,screenh);
+  gl.clearColor(0.5,0.25,0.0,1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  
+  {
+    gl.useProgram(glprogram);
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+    gl.enableVertexAttribArray(0);
+    gl.enableVertexAttribArray(1);
+    gl.bindBuffer(gl.ARRAY_BUFFER, posbuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0,0.5,-0.5,-0.5,0.5,-0.5]).buffer, gl.STREAM_DRAW);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorbuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array([0xff,0x00,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0x00,0xff,0xff]).buffer, gl.STREAM_DRAW);
+    gl.vertexAttribPointer(1, 4, gl.UNSIGNED_BYTE, true, 0, 0);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    gl.disableVertexAttribArray(0);
+    gl.disableVertexAttribArray(1);
+    gl.useProgram(0);
+  }
 }
 
 exportModule({
