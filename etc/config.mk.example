@@ -16,7 +16,7 @@ QJS_SDK:=path/to/quickjs-2023-12-09
 # Should select at least one audio driver: alsafd asound pulse
 # Input drivers are optional but why not:  evdev
 # Enable fake unit "xinerama" for the X11 Xinerama extension, for monitor size detection.
-linux_OPT_ENABLE:=alsafd asound pulse drmfb drmgx glx x11fb xinerama evdev
+linux_OPT_ENABLE:=alsafd asound pulse drmgx xegl xinerama evdev
 
 linux_TOOLCHAIN:=
 linux_CC_EXTRA:=

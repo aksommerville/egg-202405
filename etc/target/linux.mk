@@ -29,6 +29,9 @@ ifneq (,$(strip $(filter glx,$(linux_OPT_ENABLE))))
 else ifneq (,$(strip $(filter x11fb,$(linux_OPT_ENABLE))))
   linux_LDPOST+=-lX11
 endif
+ifneq (,$(strip $(filter xegl,$(linux_OPT_ENABLE))))
+  linux_LDPOST+=-lX11 -lEGL -lGL
+endif
 ifneq (,$(strip $(filter xinerama,$(linux_OPT_ENABLE))))
   linux_LDPOST+=-lXinerama
 endif

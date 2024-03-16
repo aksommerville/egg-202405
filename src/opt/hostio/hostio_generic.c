@@ -5,6 +5,7 @@
  */
  
 extern const struct hostio_video_type hostio_video_type_dummy;
+extern const struct hostio_video_type hostio_video_type_xegl;
 extern const struct hostio_video_type hostio_video_type_glx;
 extern const struct hostio_video_type hostio_video_type_drmgx;
 extern const struct hostio_video_type hostio_video_type_bcm;
@@ -25,6 +26,9 @@ extern const struct hostio_input_type hostio_input_type_machid;
 extern const struct hostio_input_type hostio_input_type_mshid;
 
 static const struct hostio_video_type *hostio_video_typev[]={
+#if USE_xegl
+  &hostio_video_type_xegl,
+#endif
 #if USE_glx
   &hostio_video_type_glx,
 #endif

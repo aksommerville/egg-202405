@@ -2,7 +2,7 @@
 
 struct drmgx_driver drmgx={.fd=-1};
 
-static int _drmgx_swap(const void *fb);
+static int drmgx_swap_egl(uint32_t *fbid);
 
 /* Cleanup.
  */
@@ -67,16 +67,11 @@ int drmgx_init(const char *device) {
     drmgx_quit();
     return -1;
   }
+  drmgx.crtcunset=0;
   
   // Set the CRTC pointlessly, just because this is where I usually fail if we launch with X11 running.
-  if (drmModeSetCrtc(
-    drmgx.fd,drmgx.crtcid,drmgx.fbv[0].fbid,0,0,
-    &drmgx.connid,1,&drmgx.mode
-  )<0) {
-    drmgx_quit();
-    return -1;
-  }
-  drmgx.crtcunset=0;
+  uint32_t fbid=0;
+  if (drmgx_swap_egl(&fbid)<0) return -1;
 
   return 0;
 }
@@ -122,7 +117,7 @@ static int drmgx_poll_file(int to_ms) {
 /* Swap.
  */
  
-static int drmgx_swap_egl(uint32_t *fbid) { 
+static int drmgx_swap_egl(uint32_t *fbid) {
   eglSwapBuffers(drmgx.egldisplay,drmgx.eglsurface);
   
   struct gbm_bo *bo=gbm_surface_lock_front_buffer(drmgx.gbmsurface);

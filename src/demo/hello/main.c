@@ -17,6 +17,18 @@ static int compile_shader(int type,const char *src) {
   int srcc=0; while (src[srcc]) srcc++;
   singleShaderSource(shader,1,src,srcc);
   glCompileShader(shader);
+  GLint status=0;
+  glGetShaderiv(shader,GL_COMPILE_STATUS,&status);
+  if (!status) {
+    egg_log("GLSL COMPILE FAILED (%s)",(type==GL_VERTEX_SHADER)?"VERTEX":"FRAGMENT");
+    char infolog[1024];
+    GLsizei infologa=sizeof(infolog),infologc=0;
+    glGetShaderInfoLog(shader,infologa,&infologc,infolog);
+    if ((infologc<0)||(infologc>sizeof(infolog))) infologc=0;
+    egg_log("%.*s",infologc,infolog);
+    glDeleteShader(shader);
+    return -1;
+  }
   glAttachShader(glprogram,shader);
   glDeleteShader(shader);
   return 0;
@@ -27,18 +39,23 @@ int egg_client_init() {
   
   if (!(glprogram=glCreateProgram())) return -1;
   if (compile_shader(GL_VERTEX_SHADER,
+    "precision mediump float;\n"
     "attribute vec2 aposition;\n"
     "attribute vec4 acolor;\n"
     "varying vec4 vcolor;\n"
     "void main() {\n"
       "gl_Position=vec4(aposition,0.0,1.0);\n"
       "vcolor=acolor;\n"
+      "gl_PointSize=32.0;\n"
     "}\n"
   )<0) return -1;
   if (compile_shader(GL_FRAGMENT_SHADER,
+    "precision mediump float;\n"
     "varying vec4 vcolor;\n"
     "void main() {\n"
-      "gl_FragColor=vcolor;\n"
+      "vec2 normpos=(gl_PointCoord-0.5)*2.0;\n"
+      "float a=1.0-sqrt(normpos.x*normpos.x+normpos.y*normpos.y);\n"
+      "gl_FragColor=vec4(vcolor.rgb,a);\n"
     "}\n"
   )<0) return -1;
   glLinkProgram(glprogram);
@@ -154,11 +171,13 @@ void egg_client_render() {
       {0.5f,-0.5f,0x00,0x00,0xff,0xff}, // blue lower right
     };
     glUseProgram(glprogram);
+    glEnable(GL_BLEND);
+    glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(0,2,GL_FLOAT,0,sizeof(struct vertex),&vertexv[0].x);
     glVertexAttribPointer(1,4,GL_UNSIGNED_BYTE,1,sizeof(struct vertex),&vertexv[0].r);
-    glDrawArrays(GL_TRIANGLES,0,sizeof(vertexv)/sizeof(vertexv[0]));
+    glDrawArrays(GL_POINTS,0,sizeof(vertexv)/sizeof(vertexv[0]));
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glUseProgram(0);

@@ -8,7 +8,8 @@ Game code can be in JavaScript or WebAssembly.
 
 - [ ] OpenGL for Javascript.
 - - Match webgl exactly, and add a context parameter to egg_client_render for js.
-- [ ] Failing to launch with drmgx (permissions error at drmModeSetCrtc)...?
+- [x] Try EGL instead of GLX. We seem to not have real ES on the Wasm side. (try point sprites)
+- [x] Failing to launch with drmgx (permissions error at drmModeSetCrtc)...?
 - [ ] Test each entry point in Javascript.
 - [ ] Test each entry point in WebAssembly.
 - [ ] Test each entry point natively.

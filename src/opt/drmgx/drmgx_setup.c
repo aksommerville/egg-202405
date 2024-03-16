@@ -196,7 +196,7 @@ int drmgx_init_gx() {
     EGL_GREEN_SIZE,8,
     EGL_BLUE_SIZE,8,
     EGL_ALPHA_SIZE,8,
-    EGL_RENDERABLE_TYPE,EGL_OPENGL_BIT,
+    EGL_RENDERABLE_TYPE,EGL_OPENGL_ES_BIT,
     EGL_NONE,
   };
   
@@ -225,8 +225,7 @@ int drmgx_init_gx() {
   EGLint major=0,minor=0;
   if (!eglInitialize(drmgx.egldisplay,&major,&minor)) return -1;
   
-  if (!eglBindAPI(EGL_OPENGL_API)) return -1;
-  //if (!eglBindAPI(EGL_OPENGL_ES_API)) return -1;
+  if (!eglBindAPI(EGL_OPENGL_ES_API)) return -1;
   
   EGLConfig eglconfig;
   EGLint n;
