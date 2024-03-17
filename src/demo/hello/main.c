@@ -1,7 +1,7 @@
 #include "egg/egg.h"
 #include "GLES2/gl2.h"
 
-#if 0
+#if 1
 
 struct vertex {
   GLfloat x,y;
@@ -38,8 +38,10 @@ static int compile_shader(int type,const char *src) {
 
 int egg_client_init() {
   egg_log("egg_client_init");
+  egg_log("This message has %d variadic arguments (%s:%d:%s).",4,__FILE__,__LINE__,__func__);
   
   if (!(glprogram=glCreateProgram())) return -1;
+  egg_log("%s:%d",__FILE__,__LINE__);
   if (compile_shader(GL_VERTEX_SHADER,
     "precision mediump float;\n"
     "attribute vec2 aposition;\n"
@@ -51,6 +53,7 @@ int egg_client_init() {
       "gl_PointSize=32.0;\n"
     "}\n"
   )<0) return -1;
+  egg_log("%s:%d",__FILE__,__LINE__);
   if (compile_shader(GL_FRAGMENT_SHADER,
     "precision mediump float;\n"
     "varying vec4 vcolor;\n"
@@ -60,6 +63,7 @@ int egg_client_init() {
       "gl_FragColor=vec4(vcolor.rgb,a);\n"
     "}\n"
   )<0) return -1;
+  egg_log("%s:%d",__FILE__,__LINE__);
   glLinkProgram(glprogram);
   GLint status=0;
   glGetProgramiv(glprogram,GL_LINK_STATUS,&status);
@@ -72,9 +76,11 @@ int egg_client_init() {
     egg_log("%.*s",infologc,infolog);
     return -1;
   }
+  egg_log("%s:%d",__FILE__,__LINE__);
   glBindAttribLocation(glprogram,0,"aposition");
   glBindAttribLocation(glprogram,1,"acolor");
   
+  egg_log("%s:%d",__FILE__,__LINE__);
   return 0;
 }
 

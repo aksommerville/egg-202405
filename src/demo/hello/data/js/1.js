@@ -13,6 +13,7 @@ const EGG_EVENT_MWHEEL        = 10; /* [dx,dy,x,y] */
 const EGG_EVENT_KEY           = 11; /* [hidusage,value,_,_] */
 const EGG_EVENT_TEXT          = 12; /* [codepoint,_,_,_] */
 const EGG_EVENT_RESIZE        = 13; /* [w,h,_,_] */
+const EGG_EVENT_TOUCH         = 14; /* [id,state,x,y] */
 
 const EGG_EVTSTATE_QUERY      = 0;
 const EGG_EVTSTATE_IMPOSSIBLE = 1;
@@ -54,6 +55,7 @@ function egg_client_init() {
   // egg.event_enable(EGG_EVENT_MBUTTON, EGG_EVTSTATE_ENABLED);
   // egg.event_enable(EGG_EVENT_MWHEEL, EGG_EVTSTATE_ENABLED);
   // egg.event_enable(EGG_EVENT_TEXT, EGG_EVTSTATE_ENABLED);
+  egg.event_enable(EGG_EVENT_TOUCH, EGG_EVTSTATE_ENABLED);
   
   const gl = egg.video_get_context();
   if (!(glprogram=gl.createProgram())) return -1;
@@ -91,11 +93,15 @@ function egg_client_init() {
   if (!(posbuffer = gl.createBuffer())) return -1;
   if (!(colorbuffer = gl.createBuffer())) return -1;
   
+  const reqid = egg.http_request("GET", "http://localhost:8081/ws_client.html");
+  const wsid = egg.ws_connect("ws://localhost:8081/ws");
+  console.log(`reqid=${reqid} wsid=${wsid}`);
+  
   return 0;
 }
 
 function onKey(keycode, value) {
-  //egg.log("KEY %08x=%d", keycode, value);
+  egg.log("KEY %08x=%d", keycode, value);
   // (keycode) should be USB-HID page 7.
   // Platforms are expected to translate to that space if their underlying system provides something else.
   if (value) switch (keycode) {
@@ -121,8 +127,8 @@ function onKey(keycode, value) {
   }
 }
 
-function onInputConnect(devid) {
-  egg.log("CONNECT %d", devid);
+function onInputConnect(devid, mapping) {
+  egg.log("CONNECT %d, %s mapping", devid, (mapping === 1) ? "STANDARD" : "RAW");
   const name = egg.input_device_get_name(devid);
   const ids = egg.input_device_get_ids(devid);
   egg.log(`name=${JSON.stringify(name)} vid=${ids?.vid} pid=${ids?.pid} version=${ids?.version}`);
@@ -139,12 +145,12 @@ function egg_client_update(elapsed) {
   for (const event of egg.event_next()) {
     switch (event.eventType) {
       case EGG_EVENT_INPUT: egg.log("INPUT %d.%d=%d", event.v0, event.v1, event.v2); break;
-      case EGG_EVENT_CONNECT: onInputConnect(event.v0); break;
+      case EGG_EVENT_CONNECT: onInputConnect(event.v0, event.v1); break;
       case EGG_EVENT_DISCONNECT: egg.log("DISCONNECT %d", event.v0); break;
       case EGG_EVENT_HTTP_RSP: {
           egg.log("HTTP_RSP reqid=%d status=%d length=%d zero=%d", event.v0, event.v1, event.v2, event.v3);
           const body = egg.http_get_body(event.v0);
-          egg.log(">> %s", body);
+          egg.log(">> %s...", body.substring(0,100));
         } break;
       case EGG_EVENT_WS_CONNECT: egg.log("WS_CONNECT %d", event.v0); break;
       case EGG_EVENT_WS_DISCONNECT: egg.log("WS_DISCONNECT %d", event.v0); break;
@@ -159,6 +165,7 @@ function egg_client_update(elapsed) {
       case EGG_EVENT_KEY: onKey(event.v0, event.v1); break;
       case EGG_EVENT_TEXT: egg.log("TEXT U+%x", event.v0); break;
       case EGG_EVENT_RESIZE: egg.log("RESIZE %d,%d", event.v0, event.v1); break;
+      case EGG_EVENT_TOUCH: egg.log("TOUCH #%d =%d @%d,%d", event.v0, event.v1, event.v2, event.v3); break;
       default: egg.log("UNKNOWN EVENT: %s", JSON.stringify(event));
     }
   }

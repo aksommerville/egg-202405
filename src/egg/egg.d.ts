@@ -21,7 +21,7 @@ export declare function exportModule(mod: ClientModule): void;
 // EGG_EVENT_ in the C API.
 export enum EventType {
   INPUT         =  1, /* [devid,btnid,value,_] */
-  CONNECT       =  2, /* [devid,_,_,_] */
+  CONNECT       =  2, /* [devid,mapping,_,_] */
   DISCONNECT    =  3, /* [devid,_,_,_] */
   HTTP_RSP      =  4, /* [reqid,status,length,_] */
   WS_CONNECT    =  5, /* [wsid,_,_,_] */
@@ -30,8 +30,15 @@ export enum EventType {
   MMOTION       =  8, /* [x,y,_,_] */
   MBUTTON       =  9, /* [btnid,value,x,y] */
   MWHEEL        = 10, /* [dx,dy,x,y] */
-  TEXT          = 11, /* [codepoint,_,_,_] */
-  RESIZE        = 12, /* [w,h,_,_] */
+  KEY           = 11, /* [hidusage,value,_,_] */
+  TEXT          = 12, /* [codepoint,_,_,_] */
+  RESIZE        = 13, /* [w,h,_,_] */
+  TOUCH         = 14, /* [id,state(0,1,2),x,y] */
+};
+
+export enum GamepadMapping {
+  RAW = 0,
+  STANDARD = 1, /* https://w3c.github.io/gamepad/#remapping */
 };
 
 //TODO Should I make a union type, one with each eventType?

@@ -14,5 +14,11 @@ window.addEventListener("message", e => {
   }
   const rom = new Rom(e.data.eggRunSerial, e.data.eggFileName);
   const rt = new Runtime(rom, canvas, window);
-  rt.run();
+  window.egg = rt.getClientExports();
+  console.log(`Starting platform...`);
+  rt.run().then(() => {
+    console.log(`Running`);
+  }).catch(e => {
+    console.error(`Failed to initialize platform.`, e);
+  });
 });

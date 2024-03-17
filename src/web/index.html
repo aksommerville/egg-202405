@@ -19,6 +19,7 @@ html {
 }
 canvas {
   background-color: #000;
+  cursor: none;
 }
 </style>
 <!-- TODO !!! importmap is a bad idea in any case because it's so new (standard as of 2023).
@@ -28,8 +29,14 @@ canvas {
 <script type="importmap">{ "imports": { "egg": "./js/egg_public.js" }}</script>
 <script type="module" src="./egg.js"></script>
 <script>
-//window.exportModule = mod => console.log(`fake window exportModule`, mod);
+function terminate() {
+  if (window.egg) {
+    window.egg.request_termination();
+    delete window.egg;
+  }
+}
 function loadGame(name) {
+  this.terminate();
   window.fetch("/" + name).then(rsp => {
     if (!rsp.ok) throw rsp;
     return rsp.arrayBuffer();
@@ -67,6 +74,7 @@ window.addEventListener("load", () => {
 </script>
 </head>
 <body>
+<button onclick="terminate()">Terminate</button>
 <div id="gameslist"></div>
 <canvas id="game" width="640" height="360"></canvas>
 </body>

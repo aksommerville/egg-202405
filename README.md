@@ -30,3 +30,6 @@ Game code can be in JavaScript or WebAssembly.
 - [ ] server: Capture make output and deliver to client on errors.
 - [ ] server: Non-blocking make.
 - [ ] Remove JS "import egg", use a global instead. See src/web/index.html
+- [ ] egg_native_event.c: I'm thinking RESIZE should not be required. Made it optional in JS API.
+- [ ] Terminating game in web, we probably ought to restore all state. Canvas size, page title, favicon, canvas cursor visibility.
+- [ ] Accelerometer input.
