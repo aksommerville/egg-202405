@@ -13,7 +13,6 @@ export function input_device_get_ids(devid) { return egg.input_device_get_ids(de
 export function input_device_get_button(devid, index) { return egg.input_device_get_button(devid, index); }
 export function input_device_disconnect(devid) { egg.input_device_disconnect(devid); }
 export function video_get_size() { return egg.video_get_size(); }
-export function video_get_context() { return egg.video_get_context(); }
 export function audio_play_song(songid, force, repeat) { egg.audio_play_song(songid, force, repeat); }
 export function audio_play_sound(soundid, trim, pan) { egg.audio_play_sound(soundid, trim, pan); }
 export function audio_get_playhead() { return egg.audio_get_playhead(); }

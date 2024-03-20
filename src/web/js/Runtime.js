@@ -8,7 +8,6 @@ import { Input } from "./Input.js";
 import { Audio } from "./Audio.js";
 import { Net } from "./Net.js";
 import { Wasm } from "./Wasm.js";
-import { FakeGl } from "./FakeGl.js";
  
 export class Runtime {
   constructor(rom, canvas, window) {
@@ -20,16 +19,15 @@ export class Runtime {
     this.audio = new Audio(window, this.rom);
     this.net = new Net(window, this.input);
     this.wasm = new Wasm(window);
-    this.fakeGl = new FakeGl(window, canvas, null, this.wasm);
     Runtime.singleton = this;
     
     this.pendingAnimationFrame = null;
     this.lastFrameTime = 0;
     this.terminated = false;
+    this.gl = null;
     
     this.wasm.env = {
       ...this.wasm.env,
-      ...this.fakeGl.getExports(),
       ...this.getWasmExports(),
     };
   }
@@ -50,7 +48,6 @@ export class Runtime {
   _initializeGlobals() {
     this.gl = this.canvas.getContext("webgl");
     if (!this.gl) throw new Error(`Failed to acquire WebGL context`);
-    this.fakeGl.gl = this.gl;
   }
   
   _findClientEntryPoints() {
@@ -211,7 +208,6 @@ export class Runtime {
       input_device_get_button: (devid, index) => this.input.input_device_get_button(devid, index),
       input_device_disconnect: (devid) => this.input.input_device_disconnect(devid),
       video_get_size: () => [this.canvas.width, this.canvas.height],
-      video_get_context: () => this.gl,
       audio_play_song: (songid, force, repeat) => this.audio.audio_play_song(songid, force, repeat),
       audio_play_sound: (soundid, trim, pan) => this.audio.audio_play_sound(soundid, trim, pan),
       audio_get_playhead: () => this.audio.audio_get_playhead(),
@@ -288,6 +284,7 @@ export class Runtime {
         this.wasm.memU32[v++] = evt.v2;
         this.wasm.memU32[v++] = evt.v3;
       }
+      this.input.evtq.splice(0, c);
     }
     return c;
   }

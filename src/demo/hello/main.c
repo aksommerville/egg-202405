@@ -1,84 +1,14 @@
 #include "egg/egg.h"
-#include "GLES2/gl2.h"
 
 #if 1
-
-struct vertex {
-  GLfloat x,y;
-  uint8_t r,g,b,a;
-};
-
-static GLuint glprogram=0;
 
 void egg_client_quit() {
   egg_log("egg_client_quit");
 }
 
-static int compile_shader(int type,const char *src) {
-  int shader=glCreateShader(type);
-  int srcc=0; while (src[srcc]) srcc++;
-  singleShaderSource(shader,1,src,srcc);
-  glCompileShader(shader);
-  GLint status=0;
-  glGetShaderiv(shader,GL_COMPILE_STATUS,&status);
-  if (!status) {
-    egg_log("GLSL COMPILE FAILED (%s)",(type==GL_VERTEX_SHADER)?"VERTEX":"FRAGMENT");
-    char infolog[1024];
-    GLsizei infologa=sizeof(infolog),infologc=0;
-    glGetShaderInfoLog(shader,infologa,&infologc,infolog);
-    if ((infologc<0)||(infologc>sizeof(infolog))) infologc=0;
-    egg_log("%.*s",infologc,infolog);
-    glDeleteShader(shader);
-    return -1;
-  }
-  glAttachShader(glprogram,shader);
-  glDeleteShader(shader);
-  return 0;
-}
-
 int egg_client_init() {
   egg_log("egg_client_init");
   egg_log("This message has %d variadic arguments (%s:%d:%s).",4,__FILE__,__LINE__,__func__);
-  
-  if (!(glprogram=glCreateProgram())) return -1;
-  egg_log("%s:%d",__FILE__,__LINE__);
-  if (compile_shader(GL_VERTEX_SHADER,
-    "precision mediump float;\n"
-    "attribute vec2 aposition;\n"
-    "attribute vec4 acolor;\n"
-    "varying vec4 vcolor;\n"
-    "void main() {\n"
-      "gl_Position=vec4(aposition,0.0,1.0);\n"
-      "vcolor=acolor;\n"
-      "gl_PointSize=32.0;\n"
-    "}\n"
-  )<0) return -1;
-  egg_log("%s:%d",__FILE__,__LINE__);
-  if (compile_shader(GL_FRAGMENT_SHADER,
-    "precision mediump float;\n"
-    "varying vec4 vcolor;\n"
-    "void main() {\n"
-      "vec2 normpos=(gl_PointCoord-0.5)*2.0;\n"
-      "float a=1.0-sqrt(normpos.x*normpos.x+normpos.y*normpos.y);\n"
-      "gl_FragColor=vec4(vcolor.rgb,a);\n"
-    "}\n"
-  )<0) return -1;
-  egg_log("%s:%d",__FILE__,__LINE__);
-  glLinkProgram(glprogram);
-  GLint status=0;
-  glGetProgramiv(glprogram,GL_LINK_STATUS,&status);
-  if (!status) {
-    egg_log("GLSL LINK FAILED");
-    char infolog[1024];
-    GLsizei infologa=sizeof(infolog),infologc=0;
-    glGetProgramInfoLog(glprogram,infologa,&infologc,infolog);
-    if ((infologc<0)||(infologc>sizeof(infolog))) infologc=0;
-    egg_log("%.*s",infologc,infolog);
-    return -1;
-  }
-  egg_log("%s:%d",__FILE__,__LINE__);
-  glBindAttribLocation(glprogram,0,"aposition");
-  glBindAttribLocation(glprogram,1,"acolor");
   
   egg_log("%s:%d",__FILE__,__LINE__);
   return 0;
@@ -168,27 +98,5 @@ void egg_client_update(double elapsed) {
 void egg_client_render() {
   int screenw=0,screenh=0;
   egg_video_get_size(&screenw,&screenh);
-  glViewport(0,0,screenw,screenh);
-  glClearColor(0.5f,0.25f,0.0f,1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
-  
-  {
-    static struct vertex vertexv[]={
-      {0.0f,0.5f,0xff,0x00,0x00,0xff}, // red on top
-      {-0.5f,-0.5f,0x00,0xff,0x00,0xff}, // green lower left
-      {0.5f,-0.5f,0x00,0x00,0xff,0xff}, // blue lower right
-    };
-    glUseProgram(glprogram);
-    glEnable(GL_BLEND);
-    glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0,2,GL_FLOAT,0,sizeof(struct vertex),&vertexv[0].x);
-    glVertexAttribPointer(1,4,GL_UNSIGNED_BYTE,1,sizeof(struct vertex),&vertexv[0].r);
-    glDrawArrays(GL_POINTS,0,sizeof(vertexv)/sizeof(vertexv[0]));
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glUseProgram(0);
-  }
 }
 #endif

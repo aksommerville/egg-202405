@@ -105,7 +105,6 @@ extern struct egg {
   struct qjs *qjs;
   struct romr romr;
   struct localstore localstore;
-  JSValue jsgl;
   
 } egg;
 

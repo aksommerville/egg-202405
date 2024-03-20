@@ -10,7 +10,7 @@ export interface ClientModule {
   egg_client_quit: () => void,
   egg_client_init: () => -1|0,
   egg_client_update: (elapsed: number) => void,
-  egg_client_render: (gl: WebGLRenderingContext) => void,
+  egg_client_render: () => void,
 }
 
 export declare function exportModule(mod: ClientModule): void;
@@ -85,16 +85,12 @@ export declare function input_device_get_button(devid: number, index: number): {
 export declare function input_device_disconnect(devid: number): void;
 
 /* Video.
- * I want hosts to expose an OpenGL ES 2 context.
- * If that works out, no further video API should be necessary from us.
  ****************************************************************/
 
 /* Game can not control the main video size, and it can change at any time.
  * You'll get a RESIZE event when it does. Or you can poll this as needed.
  */
 export declare function video_get_size(): [number, number];
-
-export declare function video_get_context(): WebGLRenderingContext;
 
 /* Audio.
  * The host provides an opinionated synthesizer.

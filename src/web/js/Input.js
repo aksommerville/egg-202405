@@ -72,7 +72,6 @@ export class Input {
   
   pushEvent(eventType, v0=0, v1=0, v2=0, v3=0) {
     if (!(this.evtmask & (1 << eventType))) return;
-    //console.log(`outgoing event ${eventType},${v0},${v1},${v2},${v3}`);
     this.evtq.push({ eventType, v0, v1, v2, v3 });
   }
   
@@ -375,6 +374,7 @@ export class Input {
    *******************************************************************************/
   
   event_next() {
+    // This only happens for JS clients. Wasm, Runtime reads from this.evtq directly.
     const events = this.evtq;
     this.evtq = [];
     return events;

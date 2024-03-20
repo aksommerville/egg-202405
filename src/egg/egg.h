@@ -104,18 +104,8 @@ void egg_input_device_get_button(
 void egg_input_device_disconnect(int devid);
 
 /* Video.
- * I want hosts to expose an OpenGL ES 2 context.
- * If that works out, no further video API should be necessary from us.
  ****************************************************************/
  
-#include "GLES2/gl2.h"
-
-/* These two GLES calls won't fly from WebAssembly because they pass pointers to pointers.
- * So here are alternatives.
- */
-GL_APICALL void GL_APIENTRY singleShaderSource (GLuint shader, GLsizei count, const GLchar *string, const GLint length);
-GL_APICALL void *GL_APIENTRY singleGetVertexAttribPointerv (GLuint index, GLenum pname);
-
 /* Game can not control the main video size, and it can change at any time.
  * You'll get a RESIZE event when it does. Or you can poll this as needed.
  */
