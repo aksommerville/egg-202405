@@ -87,10 +87,114 @@ export declare function input_device_disconnect(devid: number): void;
 /* Video.
  ****************************************************************/
 
+export enum TextureFormat {
+  UNSPEC = 0,
+  RGBA = 1,
+  A8 = 2,
+  A1 = 3,
+  Y8 = 4,
+  Y1 = 5,
+};
+
+export enum XferMode {
+  ALPHA = 0,
+  OPAQUE = 1,
+};
+
+export enum Xform {
+  XREV = 1,
+  YREV = 2,
+  SWAP = 4,
+};
+
+export type Texture = unknown;
+
 /* Game can not control the main video size, and it can change at any time.
  * You'll get a RESIZE event when it does. Or you can poll this as needed.
  */
 export declare function video_get_size(): [number, number];
+
+/* Create or delete a texture.
+ * Platform will have some internal limit, but it's not publically defined and may vary across hosts.
+ * The Texture type is opaque. The only thing you should do with it is test logical identity: false=invalid.
+ */
+export declare function texture_del(texid: Texture): void;
+export declare function texture_new(): Texture;
+
+/* Populate texture from an image resource or raw client-side pixels.
+ * You may upload with empty data to create the texture with all pixels zeroed.
+ * Otherwise, (srcc==stride*h).
+ * These return <0 on errors.
+ */
+export declare function texture_load_image(texid: Texture, qual: number, imageid: number): number;
+export declare function texture_upload(
+  texid: Texture,
+  w: number,
+  h: number,
+  stride: number,
+  fmt: TextureFormat,
+  src: ArrayBuffer | Uint8Array | null
+);
+
+/* Get size and format of a texture.
+ */
+export declare function texture_get_header(texid: Texture): {
+  w: number;
+  h: number;
+  fmt: TextureFormat;
+};
+
+/* Clear all pixels to zero.
+ */
+export declare function texture_clear(texid: Texture): void;
+
+/* Global state impacting egg_draw_decal and egg_draw_tile.
+ * This resets to (0,0,0xff) at the start of each render cycle.
+ * Use ALPHA, the default, for normal copying of images with transparency.
+ * Use OPAQUE if you want to force the input side to not use an alpha channel.
+ * REPLACE and REPLACE_R use the image's alpha but replace the color of every pixel.
+ * Useful for text, and odd cases like highlighting an injured sprite.
+ * The alpha channel of (replacement) is ignored.
+ * Global alpha is multiplied against input after color replacement. 0..0xff.
+ */
+export declare function draw_mode(xfermode: XferMode, tint: number, alpha: number): void;
+
+/* Draw a flat rectangle.
+ * The global alpha does apply. xfermode and replacement do not.
+ */
+export declare function draw_rect(texid: Texture, x: number, y: number, w: number, h: number, pixel: number): void;
+
+/* Copy a portion from (srctexid) to (dsttexid).
+ * In (src), the bounds are always (srcx,srcy,w,h) regardless of (xform).
+ * In (dst), output always begins at (dstx,dsty), and size is (w,h) or (h,w) depending on EGG_XFORM_SWAP.
+ * XREV and YREV always refer to the source X and Y axes.
+ * So, XREV changes your nose direction and YREV your hat direction, regardless of SWAP.
+ */
+export declare function draw_decal(
+  dsttexid: Texture,
+  srctexid: Texture,
+  dstx: number,
+  dsty: number,
+  srcx: number,
+  srcy: number,
+  w: number,
+  h: number,
+  xform: Xform
+): void;
+
+/* Copy multiple tiles cut from a 16x16-tile sheet.
+ * (x,y) are the center of the tile's output.
+ * (tileid) reads LRTB: 0x00 is top-left tile, 0x0f top-right, 0xf0 bottom-left.
+ * This is preferred over egg_draw_decal where possible; it's much more efficient.
+ * (v) is 6 bytes per tile: [x lsb, x msb, y lsb, y msb, tileid, xform]
+ * (c) is the count of tiles.
+ */
+export declare function draw_tile(
+  dsttexid: Texture,
+  srctexid: Texture,
+  v: ArrayBuffer,
+  c: number
+): void;
 
 /* Audio.
  * The host provides an opinionated synthesizer.

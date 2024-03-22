@@ -11,6 +11,9 @@ Game code can be in JavaScript or WebAssembly.
 - [x] Try EGL instead of GLX. We seem to not have real ES on the Wasm side. (try point sprites)
 - [x] Failing to launch with drmgx (permissions error at drmModeSetCrtc)...?
 - [ ] New bespoke render API. GLES2/WebGL is proving too complicated.
+- - [x] Native
+- - [ ] Web (WebGL)
+- - [ ] Web (CanvasRenderingContext2D). Are there browsers that don't support WebGL?
 - [ ] Test each entry point in Javascript.
 - [ ] Test each entry point in WebAssembly.
 - [ ] Test each entry point natively.
@@ -34,3 +37,4 @@ Game code can be in JavaScript or WebAssembly.
 - [ ] egg_native_event.c: I'm thinking RESIZE should not be required. Made it optional in JS API.
 - [ ] Terminating game in web, we probably ought to restore all state. Canvas size, page title, favicon, canvas cursor visibility.
 - [ ] Accelerometer input.
+- [ ] If we're sticking with a renderer-managed main framebuffer, remove RESIZE events and egg_video_get_size().

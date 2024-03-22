@@ -4,6 +4,8 @@
 #ifndef EGG_H
 #define EGG_H
 
+#include <stdint.h>
+
 /* Client hooks.
  * For full-native builds, you are required to implement all four, even if they're noop.
  * WebAssembly builds, it's OK to leave unneeded hooks unimplemented.
@@ -105,11 +107,90 @@ void egg_input_device_disconnect(int devid);
 
 /* Video.
  ****************************************************************/
+
+#define EGG_TEX_FMT_UNSPEC  0
+#define EGG_TEX_FMT_RGBA    1
+#define EGG_TEX_FMT_A8      2
+#define EGG_TEX_FMT_A1      3
+#define EGG_TEX_FMT_Y8      4
+#define EGG_TEX_FMT_Y1      5
+
+#define EGG_XFERMODE_ALPHA     0 /* Use alpha from source. */
+#define EGG_XFERMODE_OPAQUE    1 /* Ignore alpha, cover the entire output rectangle. */
+
+#define EGG_XFORM_XREV 1
+#define EGG_XFORM_YREV 2
+#define EGG_XFORM_SWAP 4
  
 /* Game can not control the main video size, and it can change at any time.
  * You'll get a RESIZE event when it does. Or you can poll this as needed.
  */
 void egg_video_get_size(int *w,int *h);
+
+/* Create or delete a texture.
+ * Platform will have some internal limit, but it's not publically defined and may vary across hosts.
+ * (texid) is a positive integer, zero for invalid, and never negative.
+ */
+void egg_texture_del(int texid);
+int egg_texture_new();
+
+/* Populate texture from an image resource or raw client-side pixels.
+ * You may upload with empty data to create the texture with all pixels zeroed.
+ * Otherwise, (srcc==stride*h).
+ */
+int egg_texture_load_image(int texid,int qual,int imageid);
+int egg_texture_upload(int texid,int w,int h,int stride,int fmt,const void *src,int srcc);
+
+/* Get size and format of a texture.
+ */
+void egg_texture_get_header(int *w,int *h,int *fmt,int texid);
+
+/* Clear all pixels to zero.
+ */
+void egg_texture_clear(int texid);
+
+/* Global state impacting egg_draw_decal and egg_draw_tile.
+ * This resets to (0,0,0xff) at the start of each render cycle.
+ * Use ALPHA, the default, for normal copying of images with transparency.
+ * Use OPAQUE if you want to force the input side to not use an alpha channel.
+ * (tint) is rgba; every pixel tints toward it according to tint's alpha.
+ * (alpha) is multiplied against input after color replacement.
+ */
+void egg_draw_mode(int xfermode,uint32_t tint,uint8_t alpha);
+
+/* Draw a flat rectangle.
+ * The global alpha does apply. xfermode and replacement do not.
+ */
+void egg_draw_rect(int texid,int x,int y,int w,int h,uint32_t pixel);
+
+/* Copy a portion from (srctexid) to (dsttexid).
+ * In (src), the bounds are always (srcx,srcy,w,h) regardless of (xform).
+ * In (dst), output always begins at (dstx,dsty), and size is (w,h) or (h,w) depending on EGG_XFORM_SWAP.
+ * XREV and YREV always refer to the source X and Y axes.
+ * So, XREV changes your nose direction and YREV your hat direction, regardless of SWAP.
+ */
+void egg_draw_decal(
+  int dsttexid,int srctexid,
+  int dstx,int dsty,
+  int srcx,int srcy,
+  int w,int h,
+  int xform
+);
+
+/* Copy multiple tiles cut from a 16x16-tile sheet.
+ * (x,y) are the center of the tile's output.
+ * (tileid) reads LRTB: 0x00 is top-left tile, 0x0f top-right, 0xf0 bottom-left.
+ * This is preferred over egg_draw_decal where possible; it's much more efficient.
+ */
+struct egg_draw_tile {
+  int16_t x,y;
+  uint8_t tileid;
+  uint8_t xform;
+};
+void egg_draw_tile(
+  int dsttexid,int srctexid,
+  const struct egg_draw_tile *v,int c
+);
 
 /* Audio.
  * The host provides an opinionated synthesizer.

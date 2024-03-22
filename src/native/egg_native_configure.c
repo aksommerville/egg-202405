@@ -134,10 +134,10 @@ static int egg_native_configure_kv(const char *k,int kc,const char *v,int vc) {
     return 0;
   }
   
-  #define STROPT(arg,fld) if ((kc==sizeof(#arg)-1)&&!memcmp(k,#arg,kc)) { \
+  #define STROPT(arg,fld) if ((kc==sizeof(arg)-1)&&!memcmp(k,arg,kc)) { \
     return egg_native_configure_set_string(&egg.fld,v,vc); \
   }
-  #define INTOPT(arg,fld) if ((kc==sizeof(#arg)-1)&&!memcmp(k,#arg,kc)) { \
+  #define INTOPT(arg,fld) if ((kc==sizeof(arg)-1)&&!memcmp(k,arg,kc)) { \
     int n; \
     if (sr_int_eval(&n,v,vc)<2) { \
       fprintf(stderr,"%s: Expected integer for '%.*s', found '%.*s'\n",egg.exename,kc,k,vc,v); \
@@ -146,7 +146,7 @@ static int egg_native_configure_kv(const char *k,int kc,const char *v,int vc) {
     egg.fld=n; \
     return 0; \
   }
-  #define BOOLOPT(arg,fld) if ((kc==sizeof(#arg)-1)&&!memcmp(k,#arg,kc)) { \
+  #define BOOLOPT(arg,fld) if ((kc==sizeof(arg)-1)&&!memcmp(k,arg,kc)) { \
     int n; \
     if (sr_bool_eval(&n,v,vc)<0) { \
       fprintf(stderr,"%s: Expected boolean for '%.*s', found '%.*s'\n",egg.exename,kc,k,vc,v); \

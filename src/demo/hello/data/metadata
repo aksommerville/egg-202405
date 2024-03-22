@@ -1,10 +1,6 @@
 # Metadata for my game.
 title=Hello
 author=AK Sommerville
-
-  copyright = (c) 2024 AK Sommerville
-  # Comments at start of line only, not counting whitespace.
-                 
-source:https://github.com/aksommerville/egg3
-framebuffer=320x180
+copyright=(c) 2024 AK Sommerville
+framebuffer=640x360 
 iconImage=1

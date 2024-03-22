@@ -431,6 +431,204 @@ static void egg_wasm_video_get_size(wasm_exec_env_t ee,int *w,int *h) {
   egg_video_get_size(w,h);
 }
 
+/* egg_texture_del
+ */
+ 
+static JSValue egg_js_texture_del(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(1)
+  int32_t texid=0;
+  JS_ToInt32(ctx,&texid,argv[0]);
+  render_texture_del(egg.render,texid);
+  return JS_NULL;
+}
+
+static void egg_wasm_texture_del(wasm_exec_env_t ee,int texid) {
+  render_texture_del(egg.render,texid);
+}
+
+/* egg_texture_new
+ */
+ 
+static JSValue egg_js_texture_new(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  return JS_NewInt32(ctx,render_texture_new(egg.render));
+}
+
+static int egg_wasm_texture_new(wasm_exec_env_t ee) {
+  return render_texture_new(egg.render);
+}
+
+/* egg_texture_load_image
+ */
+ 
+static JSValue egg_js_texture_load_image(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(3)
+  int32_t texid=0,qual=0,imageid=0;
+  JS_ToInt32(ctx,&texid,argv[0]);
+  JS_ToInt32(ctx,&qual,argv[1]);
+  JS_ToInt32(ctx,&imageid,argv[2]);
+  const void *serial=0;
+  int serialc=romr_get_qualified(&serial,&egg.romr,EGG_TID_image,qual,imageid);
+  if (serialc<=0) return JS_NewInt32(ctx,-1);
+  return JS_NewInt32(ctx,render_texture_load(egg.render,texid,0,0,0,0,serial,serialc));
+}
+
+static int egg_wasm_texture_load_image(wasm_exec_env_t ee,int texid,int qual,int imageid) {
+  const void *serial=0;
+  int serialc=romr_get_qualified(&serial,&egg.romr,EGG_TID_image,qual,imageid);
+  if (serialc<=0) return -1;
+  return render_texture_load(egg.render,texid,0,0,0,0,serial,serialc);
+}
+
+/* egg_texture_upload
+ */
+ 
+static JSValue egg_js_texture_upload(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(6)
+  int32_t texid=0,w=0,h=0,stride=0,fmt=0;
+  JS_ToInt32(ctx,&texid,argv[0]);
+  JS_ToInt32(ctx,&w,argv[1]);
+  JS_ToInt32(ctx,&h,argv[2]);
+  if ((w<1)||(h<1)) return JS_NewInt32(ctx,-1);
+  JS_ToInt32(ctx,&stride,argv[3]);
+  JS_ToInt32(ctx,&fmt,argv[4]);
+  const uint8_t *v=0;
+  size_t c=0;
+  if (!(v=JS_GetArrayBuffer(ctx,&c,argv[5]))) return JS_NewInt32(ctx,-1);
+  return JS_NewInt32(ctx,render_texture_load(egg.render,texid,w,h,stride,fmt,v,c));
+}
+
+static int egg_wasm_texture_upload(wasm_exec_env_t ee,int texid,int w,int h,int stride,int fmt,const void *src,int srcc) {
+  return render_texture_load(egg.render,texid,w,h,stride,fmt,src,srcc);
+}
+
+/* egg_texture_get_header
+ */
+ 
+static JSValue egg_js_texture_get_header(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(1)
+  int32_t texid=0;
+  JS_ToInt32(ctx,&texid,argv[0]);
+  int w=0,h=0,fmt=0;
+  render_texture_get_header(&w,&h,&fmt,egg.render,texid);
+  JSValue result=JS_NewObject(ctx);
+  JS_SetPropertyStr(ctx,result,"w",JS_NewInt32(ctx,w));
+  JS_SetPropertyStr(ctx,result,"h",JS_NewInt32(ctx,h));
+  JS_SetPropertyStr(ctx,result,"fmt",JS_NewInt32(ctx,fmt));
+  return result;
+}
+
+static void egg_wasm_texture_get_header(wasm_exec_env_t ee,int *w,int *h,int *fmt,int texid) {
+  render_texture_get_header(w,h,fmt,egg.render,texid);
+}
+
+/* egg_texture_clear
+ */
+ 
+static JSValue egg_js_texture_clear(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(1)
+  int32_t texid=0;
+  JS_ToInt32(ctx,&texid,argv[0]);
+  render_texture_clear(egg.render,texid);
+  return JS_NULL;
+}
+
+static void egg_wasm_texture_clear(wasm_exec_env_t ee,int texid) {
+  render_texture_clear(egg.render,texid);
+}
+
+/* egg_draw_mode
+ */
+ 
+static JSValue egg_js_draw_mode(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(3)
+  int32_t xfermode=0,replacement=0,alpha=0;
+  JS_ToInt32(ctx,&xfermode,argv[0]);
+  JS_ToInt32(ctx,&replacement,argv[1]);
+  JS_ToInt32(ctx,&alpha,argv[2]);
+  render_draw_mode(egg.render,xfermode,replacement,alpha);
+  return JS_NULL;
+}
+
+static void egg_wasm_draw_mode(wasm_exec_env_t ee,int xfermode,int replacement,int alpha) {
+  render_draw_mode(egg.render,xfermode,replacement,alpha);
+}
+
+/* egg_draw_rect
+ */
+ 
+static JSValue egg_js_draw_rect(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(6)
+  int32_t texid=0,x=0,y=0,w=0,h=0,pixel=0;
+  JS_ToInt32(ctx,&texid,argv[0]);
+  JS_ToInt32(ctx,&x,argv[1]);
+  JS_ToInt32(ctx,&y,argv[2]);
+  JS_ToInt32(ctx,&w,argv[3]);
+  JS_ToInt32(ctx,&h,argv[4]);
+  JS_ToInt32(ctx,&pixel,argv[5]);
+  render_draw_rect(egg.render,texid,x,y,w,h,pixel);
+  return JS_NULL;
+}
+
+static void egg_wasm_draw_rect(wasm_exec_env_t ee,int texid,int x,int y,int w,int h,int pixel) {
+  render_draw_rect(egg.render,texid,x,y,w,h,pixel);
+}
+
+/* egg_draw_decal
+ */
+ 
+static JSValue egg_js_draw_decal(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(9)
+  int32_t dsttexid=0,srctexid=0,dstx=0,dsty=0,srcx=0,srcy=0,w=0,h=0,xform=0;
+  JS_ToInt32(ctx,&dsttexid,argv[0]);
+  JS_ToInt32(ctx,&srctexid,argv[1]);
+  JS_ToInt32(ctx,&dstx,argv[2]);
+  JS_ToInt32(ctx,&dsty,argv[3]);
+  JS_ToInt32(ctx,&srcx,argv[4]);
+  JS_ToInt32(ctx,&srcy,argv[5]);
+  JS_ToInt32(ctx,&w,argv[6]);
+  JS_ToInt32(ctx,&h,argv[7]);
+  JS_ToInt32(ctx,&xform,argv[8]);
+  render_draw_decal(egg.render,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
+  return JS_NULL;
+}
+
+static void egg_wasm_draw_decal(
+  wasm_exec_env_t ee,
+  int dsttexid,int srctexid,
+  int dstx,int dsty,
+  int srcx,int srcy,
+  int w,int h,
+  int xform
+) {
+  render_draw_decal(egg.render,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
+}
+
+/* egg_draw_tile
+ */
+ 
+static JSValue egg_js_draw_tile(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(4)
+  int32_t dsttexid=0,srctexid=0,c=0;
+  JS_ToInt32(ctx,&dsttexid,argv[0]);
+  JS_ToInt32(ctx,&srctexid,argv[1]);
+  JS_ToInt32(ctx,&c,argv[3]);
+  if (c<1) return JS_NULL;
+  size_t a=0;
+  const void *vtxv=JS_GetArrayBuffer(ctx,&a,argv[2]);
+  if (!vtxv||(a<=0)) return JS_NULL;
+  a/=6;
+  if (c>a) return JS_NULL;
+  render_draw_tile(egg.render,dsttexid,srctexid,vtxv,c);
+  return JS_NULL;
+}
+
+static void egg_wasm_draw_tile(wasm_exec_env_t ee,int dsttexid,int srctexid,int vaddr,int c) {
+  if (c<1) return;
+  void *v=wamr_validate_pointer(egg.wamr,1,vaddr,c*sizeof(struct egg_draw_tile));
+  if (!v) return;
+  render_draw_tile(egg.render,dsttexid,srctexid,v,c);
+}
+
 /* egg_audio_play_song
  */
  
@@ -848,6 +1046,16 @@ static const JSCFunctionListEntry egg_native_js_exports[]={
   JS_CFUNC_DEF("input_device_get_button",0,egg_js_input_device_get_button),
   JS_CFUNC_DEF("input_device_disconnect",0,egg_js_input_device_disconnect),
   JS_CFUNC_DEF("video_get_size",0,egg_js_video_get_size),
+  JS_CFUNC_DEF("texture_del",0,egg_js_texture_del),
+  JS_CFUNC_DEF("texture_new",0,egg_js_texture_new),
+  JS_CFUNC_DEF("texture_load_image",0,egg_js_texture_load_image),
+  JS_CFUNC_DEF("texture_upload",0,egg_js_texture_upload),
+  JS_CFUNC_DEF("texture_get_header",0,egg_js_texture_get_header),
+  JS_CFUNC_DEF("texture_clear",0,egg_js_texture_clear),
+  JS_CFUNC_DEF("draw_mode",0,egg_js_draw_mode),
+  JS_CFUNC_DEF("draw_rect",0,egg_js_draw_rect),
+  JS_CFUNC_DEF("draw_decal",0,egg_js_draw_decal),
+  JS_CFUNC_DEF("draw_tile",0,egg_js_draw_tile),
   JS_CFUNC_DEF("audio_play_song",0,egg_js_audio_play_song),
   JS_CFUNC_DEF("audio_play_sound",0,egg_js_audio_play_sound),
   JS_CFUNC_DEF("audio_get_playhead",0,egg_js_audio_get_playhead),
@@ -871,6 +1079,10 @@ static const JSCFunctionListEntry egg_native_js_exports[]={
   JS_CFUNC_DEF("is_terminable",0,egg_js_is_terminable),
 };
 
+static int egg_wasm_rand(wasm_exec_env_t ee) {//XXX
+  return rand();
+}
+
 static NativeSymbol egg_native_wasm_exports[]={
   {"egg_log",egg_wasm_log,"($i)"},
   {"egg_event_next",egg_wasm_event_next,"(*i)i"},
@@ -880,6 +1092,16 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_input_device_get_button",egg_wasm_input_device_get_button,"(*****ii)"},
   {"egg_input_device_disconnect",egg_wasm_input_device_disconnect,"(i)"},
   {"egg_video_get_size",egg_wasm_video_get_size,"(**)"},
+  {"egg_texture_del",egg_wasm_texture_del,"(i)"},
+  {"egg_texture_new",egg_wasm_texture_new,"()i"},
+  {"egg_texture_load_image",egg_wasm_texture_load_image,"(iii)i"},
+  {"egg_texture_upload",egg_wasm_texture_upload,"(iiiii*~)i"},
+  {"egg_texture_get_header",egg_wasm_texture_get_header,"(***i)"},
+  {"egg_texture_clear",egg_wasm_texture_clear,"(i)"},
+  {"egg_draw_mode",egg_wasm_draw_mode,"(iii)"},
+  {"egg_draw_rect",egg_wasm_draw_rect,"(iiiiii)"},
+  {"egg_draw_decal",egg_wasm_draw_decal,"(iiiiiiiii)"},
+  {"egg_draw_tile",egg_wasm_draw_tile,"(iiii)"},
   {"egg_audio_play_song",egg_wasm_audio_play_song,"(iii)"},
   {"egg_audio_play_sound",egg_wasm_audio_play_sound,"(iff)"},
   {"egg_audio_get_playhead",egg_wasm_audio_get_playhead,"()i"},
@@ -901,6 +1123,9 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_get_user_languages",egg_wasm_get_user_languages,"(*i)i"},
   {"egg_request_termination",egg_wasm_request_termination,"()"},
   {"egg_is_terminable",egg_wasm_is_terminable,"()i"},
+  
+  //TODO Figure out what we want to expose from libc, and do it right.
+  {"rand",egg_wasm_rand,"()i"},
 };
 
 /* Main entry point, expose all the above thru QuickJS and wasm-micro-runtime.

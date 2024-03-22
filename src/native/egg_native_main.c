@@ -29,6 +29,7 @@ static void egg_native_quit(int status) {
   } else {
     fprintf(stderr,"%s: Abnormal exit.\n",egg.exename);
   }
+  render_del(egg.render);
   hostio_del(egg.hostio);
   wamr_del(egg.wamr);
   egg_native_net_cleanup();
@@ -132,6 +133,12 @@ static int egg_native_init() {
     fprintf(stderr,"%s: Video driver does not support GX.\n",egg.exename);
     return -2;
   }
+  if (!(egg.render=render_new())) {
+    fprintf(stderr,"%s: Failed to initialize renderer.\n",egg.exename);
+    return -2;
+  }
+  if (render_texture_new(egg.render)!=1) return -1;
+  if (render_texture_load(egg.render,1,egg.romfbw,egg.romfbh,egg.romfbw<<2,EGG_TEX_FMT_RGBA,0,0)<0) return -1;
   
   /* Initialize input drivers.
    */
@@ -202,12 +209,14 @@ static int egg_native_update() {
     fprintf(stderr,"%s: Error entering GX context.\n",egg.exename);
     return -2;
   }
+  render_draw_mode(egg.render,EGG_XFERMODE_ALPHA,0,0xff);
   
   if ((err=egg_native_call_client_render())<0) {
     if (err!=-2) fprintf(stderr,"%s: Error rendering game.\n",egg.exename);
     return -2;
   }
   
+  render_draw_to_main(egg.render,egg.hostio->video->w,egg.hostio->video->h,1);
   if (egg.hostio->video->type->gx_end(egg.hostio->video)<0) {
     fprintf(stderr,"%s: Error exiting GX context.\n",egg.exename);
     return -2;
