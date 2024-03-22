@@ -1,4 +1,4 @@
-import * as egg from "egg";
+//import * as egg from "egg";
 
 const EGG_EVENT_INPUT         =  1; /* [devid,btnid,value,_] */
 const EGG_EVENT_CONNECT       =  2; /* [devid,_,_,_] */

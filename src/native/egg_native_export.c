@@ -1132,7 +1132,18 @@ static NativeSymbol egg_native_wasm_exports[]={
  */
  
 int egg_native_install_runtime_exports() {
-  if (qjs_set_exports(egg.qjs,"egg",egg_native_js_exports,sizeof(egg_native_js_exports)/sizeof(egg_native_js_exports[0]))<0) return -1;
+  
+  JSContext *ctx=qjs_get_context(egg.qjs);
+  JSValue eggjs=JS_NewObject(ctx);
+  const JSCFunctionListEntry *func=egg_native_js_exports;
+  int i=sizeof(egg_native_js_exports)/sizeof(egg_native_js_exports[0]);
+  for (;i-->0;func++) {
+    JS_SetPropertyStr(ctx,eggjs,func->name,JS_NewCFunction(ctx,func->u.func.cfunc.generic,func->name,func->u.func.length));
+  }
+  JSValue globals=JS_GetGlobalObject(ctx);
+  JS_SetPropertyStr(ctx,globals,"egg",eggjs);
+  JS_FreeValue(ctx,globals);
+  
   if (wamr_set_exports(egg.wamr,egg_native_wasm_exports,sizeof(egg_native_wasm_exports)/sizeof(egg_native_wasm_exports[0]))<0) return -1;
   return 0;
 }

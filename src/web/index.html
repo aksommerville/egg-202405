@@ -22,11 +22,6 @@ canvas {
   cursor: none;
 }
 </style>
-<!-- TODO !!! importmap is a bad idea in any case because it's so new (standard as of 2023).
-     And in our case it is particularly unworkable: We want to ultimately pack everything into one HTML file, that's a non-negotiable design goal.
-     We need to restructure the JS API with a global "egg" instead of an import.
--->
-<script type="importmap">{ "imports": { "egg": "./js/egg_public.js" }}</script>
 <script type="module" src="./egg.js"></script>
 <script>
 function terminate() {

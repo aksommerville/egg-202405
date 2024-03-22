@@ -29,11 +29,11 @@ Game code can be in JavaScript or WebAssembly.
 - [ ] Validate size of wasm gl parameters, some are probably off.
 - [x] glGetVertexAttribPointerv wasm needs rephrased; we can't pass a double-pointer in from the wasm space.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
-- [ ] Pull the WebGL stuff out of egg_native_export.c, just for cleanliness's sake. Way more of it than I expected.
+- [x] Pull the WebGL stuff out of egg_native_export.c, just for cleanliness's sake. Way more of it than I expected.
 - [ ] QuickJS JS_GetArrayBuffer: Does this read TypedArray, SharedArrayBuffer, and DataView as well?
 - [ ] server: Capture make output and deliver to client on errors.
 - [ ] server: Non-blocking make.
-- [ ] Remove JS "import egg", use a global instead. See src/web/index.html
+- [x] Remove JS "import egg", use a global instead. See src/web/index.html
 - [ ] egg_native_event.c: I'm thinking RESIZE should not be required. Made it optional in JS API.
 - [ ] Terminating game in web, we probably ought to restore all state. Canvas size, page title, favicon, canvas cursor visibility.
 - [ ] Accelerometer input.
