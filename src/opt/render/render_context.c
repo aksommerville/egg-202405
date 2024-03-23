@@ -151,12 +151,14 @@ static int render_texture_upload(struct render_texture *texture,int w,int h,int 
  */
 
 int render_texture_load(struct render *render,int texid,int w,int h,int stride,int fmt,const void *src,int srcc) {
-  if ((texid<0)||(texid>render->texturec)) return -1;
+  if ((texid<1)||(texid>render->texturec)) return -1;
   struct render_texture *texture=render->texturev+texid-1;
   
   /* If format is completely unspecified, (src) may be an encoded image.
+   * Not permitted for texid 1.
    */
   if (!w&&!h&&!stride&&!fmt) {
+    if (texid==1) return -1;
     struct rawimg *rawimg=rawimg_decode(src,srcc);
     if (!rawimg) return -1;
     if (!(fmt=render_texture_fmt_from_rawimg(rawimg))) {
@@ -169,6 +171,14 @@ int render_texture_load(struct render *render,int texid,int w,int h,int stride,i
     }
     rawimg_del(rawimg);
     return 0;
+  }
+  
+  /* Texid 1, dimensions must not change, except the first call.
+   */
+  if (texid==1) {
+    if (texture->w&&texture->h) {
+      if ((w!=texture->w)||(h!=texture->h)) return -1;
+    }
   }
   
   /* Validate length, then upload.

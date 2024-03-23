@@ -21,19 +21,6 @@
 static void egg_js_dummy_free(JSRuntime *rt,void *opaque,void *ptr) {}
 static void egg_js_basic_free(JSRuntime *rt,void *opaque,void *ptr) { if (ptr) free(ptr); }
 
-/* Video driver.
- */
- 
-void egg_video_get_size(int *w,int *h) {
-  if (egg.hostio->video) {
-    if (w) *w=egg.hostio->video->w;
-    if (h) *h=egg.hostio->video->h;
-  } else {
-    if (w) *w=0;
-    if (h) *h=0;
-  }
-}
-
 /* Synthesizer.
  */
  
@@ -145,6 +132,13 @@ void egg_time_get(int *year,int *month,int *day,int *hour,int *minute,int *secon
  */
 
 int egg_get_user_languages(int *dst,int dsta) {
+  if (dsta<1) return 0;
+  /* If we were launched with --lang, that's the one and only answer.
+   */
+  if (egg.lang) {
+    dst[0]=egg.lang;
+    return 1;
+  }
   /* POSIX systems typically have LANG as the single preferred locale, which starts with a language code.
    * There can also be LANGUAGE, which is multiple language codes separated by colons.
    */
@@ -415,22 +409,6 @@ static void egg_wasm_input_device_disconnect(wasm_exec_env_t ee,int devid) {
   egg_input_device_disconnect(devid);
 }
 
-/* egg_video_get_size
- */
- 
-static JSValue egg_js_video_get_size(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
-  int w=0,h=0;
-  egg_video_get_size(&w,&h);
-  JSValue dst=JS_NewArray(ctx);
-  JS_SetPropertyUint32(ctx,dst,0,JS_NewInt32(ctx,w));
-  JS_SetPropertyUint32(ctx,dst,1,JS_NewInt32(ctx,h));
-  return dst;
-}
- 
-static void egg_wasm_video_get_size(wasm_exec_env_t ee,int *w,int *h) {
-  egg_video_get_size(w,h);
-}
-
 /* egg_texture_del
  */
  
@@ -615,6 +593,7 @@ static JSValue egg_js_draw_tile(JSContext *ctx,JSValueConst this,int argc,JSValu
   if (c<1) return JS_NULL;
   size_t a=0;
   const void *vtxv=JS_GetArrayBuffer(ctx,&a,argv[2]);
+  fprintf(stderr,"%s a=%d vtxv=%p\n",__func__,(int)a,vtxv);
   if (!vtxv||(a<=0)) return JS_NULL;
   a/=6;
   if (c>a) return JS_NULL;
@@ -1045,7 +1024,6 @@ static const JSCFunctionListEntry egg_native_js_exports[]={
   JS_CFUNC_DEF("input_device_get_ids",0,egg_js_input_device_get_ids),
   JS_CFUNC_DEF("input_device_get_button",0,egg_js_input_device_get_button),
   JS_CFUNC_DEF("input_device_disconnect",0,egg_js_input_device_disconnect),
-  JS_CFUNC_DEF("video_get_size",0,egg_js_video_get_size),
   JS_CFUNC_DEF("texture_del",0,egg_js_texture_del),
   JS_CFUNC_DEF("texture_new",0,egg_js_texture_new),
   JS_CFUNC_DEF("texture_load_image",0,egg_js_texture_load_image),
@@ -1091,7 +1069,6 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_input_device_get_ids",egg_wasm_input_device_get_ids,"(***i)"},
   {"egg_input_device_get_button",egg_wasm_input_device_get_button,"(*****ii)"},
   {"egg_input_device_disconnect",egg_wasm_input_device_disconnect,"(i)"},
-  {"egg_video_get_size",egg_wasm_video_get_size,"(**)"},
   {"egg_texture_del",egg_wasm_texture_del,"(i)"},
   {"egg_texture_new",egg_wasm_texture_new,"()i"},
   {"egg_texture_load_image",egg_wasm_texture_load_image,"(iii)i"},

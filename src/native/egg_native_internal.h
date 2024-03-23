@@ -44,6 +44,7 @@ extern struct egg {
   char *input_device;
   char *rompath;
   char *storepath;
+  int lang; // Big-endian ISO 631, or zero for default.
   
   // From ROM file.
   char *romtitle;

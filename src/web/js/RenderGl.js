@@ -93,7 +93,7 @@ export class RenderGl {
   }
   
   texture_load_image(texid, qual, imageid) {
-    if ((texid < 1) || (texid > this.textures.length)) return -1;
+    if ((texid < 2) || (texid > this.textures.length)) return -1;
     const texture = this.textures[texid - 1];
     if (!texture) return -1;
     const serial = this.rom.getResource(Rom.TID_image, qual, imageid);
@@ -107,6 +107,11 @@ export class RenderGl {
     if ((texid < 1) || (texid > this.textures.length)) return -1;
     const texture = this.textures[texid - 1];
     if (!texture) return -1;
+    if (texid === 1) { // Allowed to upload to texid 1, but not allowed to resize it.
+      if (texture.w && texture.h) {
+        if ((w !== texture.w) || (h !== texture.h)) return -1;
+      }
+    }
     if (src instanceof Uint8Array) {
       if (src.byteOffset) {
         const nsrc = new Uint8Array(src.length);

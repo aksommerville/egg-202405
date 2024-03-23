@@ -12,8 +12,7 @@ const EGG_EVENT_MBUTTON       =  9; /* [btnid,value,x,y] */
 const EGG_EVENT_MWHEEL        = 10; /* [dx,dy,x,y] */
 const EGG_EVENT_KEY           = 11; /* [hidusage,value,_,_] */
 const EGG_EVENT_TEXT          = 12; /* [codepoint,_,_,_] */
-const EGG_EVENT_RESIZE        = 13; /* [w,h,_,_] */
-const EGG_EVENT_TOUCH         = 14; /* [id,state,x,y] */
+const EGG_EVENT_TOUCH         = 13; /* [id,state,x,y] */
 
 const EGG_EVTSTATE_QUERY      = 0;
 const EGG_EVTSTATE_IMPOSSIBLE = 1;
@@ -181,7 +180,6 @@ function egg_client_update(elapsed) {
       case EGG_EVENT_MWHEEL: egg.log("MWHEEL +%d,%d @%d,%d", event.v0, event.v1, event.v2, event.v3); break;
       case EGG_EVENT_KEY: onKey(event.v0, event.v1); break;
       case EGG_EVENT_TEXT: egg.log("TEXT U+%x", event.v0); break;
-      case EGG_EVENT_RESIZE: egg.log("RESIZE %d,%d", event.v0, event.v1); break;
       case EGG_EVENT_TOUCH: egg.log("TOUCH #%d =%d @%d,%d", event.v0, event.v1, event.v2, event.v3); break;
       default: egg.log("UNKNOWN EVENT: %s", JSON.stringify(event));
     }

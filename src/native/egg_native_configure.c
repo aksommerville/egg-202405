@@ -56,6 +56,7 @@ static void egg_native_configure_print_help(const char *topic,int topicc) {
     "  --input-driver=LIST      Input drivers. Will try to load all. See below.\n"
     "  --input-device=NAME      If required by driver.\n"
     "  --store=PATH             File for persistent data, per-game.\n"
+    "  --lang=NAME              ISO 631 eg \"en\"=English. Overrides LANG variable.\n"
     "\n"
   );
   {
@@ -131,6 +132,18 @@ static int egg_native_configure_kv(const char *k,int kc,const char *v,int vc) {
     }
     egg.video_w=w;
     egg.video_h=h;
+    return 0;
+  }
+  
+  if ((kc==4)&&!memcmp(k,"lang",4)) {
+    if (!vc) {
+      egg.lang=0;
+    } else if ((vc!=2)||(v[0]<'a')||(v[0]>'z')||(v[1]<'a')||(v[1]>'z')) {
+      fprintf(stderr,"%s: Expected two lowercase letters for --lang, found '%.*s'\n",egg.exename,vc,v);
+      return -2;
+    } else {
+      egg.lang=(v[0]<<8)|v[1];
+    }
     return 0;
   }
   

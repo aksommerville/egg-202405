@@ -72,6 +72,8 @@ int egg_client_init() {
     spritec=SPRITEA;
   }
   
+  egg_audio_play_song(1,0,1);
+  
   egg_log("%s:%d",__FILE__,__LINE__);
   return 0;
 }
@@ -151,7 +153,6 @@ void egg_client_update(double elapsed) {
     case EGG_EVENT_MWHEEL: egg_log("MWHEEL +%d,%d @%d,%d",event->v[0],event->v[1],event->v[2],event->v[3]); break;
     case EGG_EVENT_KEY: on_key(event->v[0],event->v[1]); break;
     case EGG_EVENT_TEXT: egg_log("TEXT U+%x",event->v[0]); break;
-    case EGG_EVENT_RESIZE: egg_log("RESIZE %d,%d",event->v[0],event->v[1]); break;
     default: egg_log("UNKNOWN EVENT: %d[%d,%d,%d,%d]",event->type,event->v[0],event->v[1],event->v[2],event->v[3]);
   }
   

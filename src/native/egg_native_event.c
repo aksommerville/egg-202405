@@ -49,11 +49,9 @@ static int egg_event_get_hard_state(int evttype) {
   switch (evttype) {
 
     /* Network message-received events are required; failure to react to them is a serious warning.
-     * Resize too, but that's debatable.
      */
     case EGG_EVENT_HTTP_RSP: return EGG_EVTSTATE_REQUIRED;
     case EGG_EVENT_WS_MESSAGE: return EGG_EVTSTATE_REQUIRED;
-    case EGG_EVENT_RESIZE: return EGG_EVTSTATE_REQUIRED;
     
     /* Mouse and keyboard events are available if the video driver provides input.
      * Otherwise IMPOSSIBLE.
@@ -126,8 +124,6 @@ int egg_event_enable(int evttype,int evtstate) {
     case EGG_EVENT_KEY: ACCEPT RETURN
     case EGG_EVENT_TEXT: ACCEPT RETURN
     
-    case EGG_EVENT_RESIZE: return EGG_EVTSTATE_REQUIRED;
-    
     case EGG_EVENT_TOUCH: ACCEPT RETURN
     
   }
@@ -149,7 +145,6 @@ int egg_native_event_init() {
     (1<<EGG_EVENT_WS_DISCONNECT)|
     (1<<EGG_EVENT_WS_MESSAGE)|
     (1<<EGG_EVENT_KEY)|
-    (1<<EGG_EVENT_RESIZE)|
     // MMOTION, MBUTTON, MWHEEL, TEXT, TOUCH: off by default
   0;
   return 0;
@@ -167,10 +162,7 @@ void egg_native_cb_focus(struct hostio_video *driver,int focus) {
 }
 
 void egg_native_cb_resize(struct hostio_video *driver,int w,int h) {
-  struct egg_event *event=egg_native_push_event();
-  event->type=EGG_EVENT_RESIZE;
-  event->v[0]=w;
-  event->v[1]=h;
+  // Client never sees the real output size, and renderer polls for it.
 }
 
 /* Keyboard.

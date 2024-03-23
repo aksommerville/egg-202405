@@ -32,8 +32,7 @@ export enum EventType {
   MWHEEL        = 10, /* [dx,dy,x,y] */
   KEY           = 11, /* [hidusage,value,_,_] */
   TEXT          = 12, /* [codepoint,_,_,_] */
-  RESIZE        = 13, /* [w,h,_,_] */
-  TOUCH         = 14, /* [id,state(0,1,2),x,y] */
+  TOUCH         = 13, /* [id,state(0,1,2),x,y] */
 };
 
 export enum GamepadMapping {
@@ -107,26 +106,20 @@ export enum Xform {
   SWAP = 4,
 };
 
-export type Texture = unknown;
-
-/* Game can not control the main video size, and it can change at any time.
- * You'll get a RESIZE event when it does. Or you can poll this as needed.
- */
-export declare function video_get_size(): [number, number];
-
 /* Create or delete a texture.
  * Platform will have some internal limit, but it's not publically defined and may vary across hosts.
- * The Texture type is opaque. The only thing you should do with it is test logical identity: false=invalid.
+ * (texid) is a positive integer or zero for errors (never negative).
+ * Texid One is the main output. It always exists and can't be resized.
  */
-export declare function texture_del(texid: Texture): void;
-export declare function texture_new(): Texture;
+export declare function texture_del(texid: number): void;
+export declare function texture_new(): number;
 
 /* Populate texture from an image resource or raw client-side pixels.
  * You may upload with empty data to create the texture with all pixels zeroed.
  * Otherwise, (srcc==stride*h).
  * These return <0 on errors.
  */
-export declare function texture_load_image(texid: Texture, qual: number, imageid: number): number;
+export declare function texture_load_image(texid: number, qual: number, imageid: number): number;
 export declare function texture_upload(
   texid: Texture,
   w: number,
@@ -138,7 +131,7 @@ export declare function texture_upload(
 
 /* Get size and format of a texture.
  */
-export declare function texture_get_header(texid: Texture): {
+export declare function texture_get_header(texid: number): {
   w: number;
   h: number;
   fmt: TextureFormat;
@@ -146,7 +139,7 @@ export declare function texture_get_header(texid: Texture): {
 
 /* Clear all pixels to zero.
  */
-export declare function texture_clear(texid: Texture): void;
+export declare function texture_clear(texid: number): void;
 
 /* Global state impacting egg_draw_decal and egg_draw_tile.
  * This resets to (0,0,0xff) at the start of each render cycle.
@@ -162,7 +155,7 @@ export declare function draw_mode(xfermode: XferMode, tint: number, alpha: numbe
 /* Draw a flat rectangle.
  * The global alpha does apply. xfermode and replacement do not.
  */
-export declare function draw_rect(texid: Texture, x: number, y: number, w: number, h: number, pixel: number): void;
+export declare function draw_rect(texid: number, x: number, y: number, w: number, h: number, pixel: number): void;
 
 /* Copy a portion from (srctexid) to (dsttexid).
  * In (src), the bounds are always (srcx,srcy,w,h) regardless of (xform).
@@ -171,8 +164,8 @@ export declare function draw_rect(texid: Texture, x: number, y: number, w: numbe
  * So, XREV changes your nose direction and YREV your hat direction, regardless of SWAP.
  */
 export declare function draw_decal(
-  dsttexid: Texture,
-  srctexid: Texture,
+  dsttexid: number,
+  srctexid: number,
   dstx: number,
   dsty: number,
   srcx: number,
@@ -190,8 +183,8 @@ export declare function draw_decal(
  * (c) is the count of tiles.
  */
 export declare function draw_tile(
-  dsttexid: Texture,
-  srctexid: Texture,
+  dsttexid: number,
+  srctexid: number,
   v: ArrayBuffer,
   c: number
 ): void;

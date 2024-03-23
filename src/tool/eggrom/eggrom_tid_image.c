@@ -31,6 +31,54 @@ static int eggrom_image_try_encode(struct sr_encoder *dst,struct rawimg *rawimg,
   return 1;
 }
 
+/* Preprocess image.
+ * Returns the input image, or deletes that and returns a new one.
+ * No errors.
+ */
+ 
+static struct rawimg *eggrom_image_preprocess(struct rawimg *input) {
+
+  /* If pixelsize is greater than 1, but it contains no more than 2 colors, force to 1-bit.
+   */
+  if (input->pixelsize>1) {
+    int pixelv[2];
+    int pixelc=0;
+    struct rawimg_iterator iter={0};
+    if (rawimg_iterate(&iter,input,0,0,input->w,input->h,0)<0) return input;
+    do {
+      int pixel=rawimg_iterator_read(&iter);
+      if ((pixelc>=1)&&(pixel==pixelv[0])) ;
+      else if ((pixelc>=2)&&(pixel==pixelv[1])) ;
+      else if (pixelc>=2) { pixelc=3; break; }
+      else pixelv[pixelc++]=pixel;
+    } while (rawimg_iterator_next(&iter));
+    if (pixelc<=2) {
+      if ((pixelc==2)&&(pixelv[1]<pixelv[0])) {
+        int tmp=pixelv[0];
+        pixelv[0]=pixelv[1];
+        pixelv[1]=tmp;
+      }
+      struct rawimg *y1image=rawimg_new_alloc(input->w,input->h,1);
+      if (y1image) {
+        struct rawimg_iterator dstiter={0};
+        rawimg_iterate(&dstiter,y1image,0,0,input->w,input->h,0);
+        rawimg_iterate(&iter,input,0,0,input->w,input->h,0);
+        do {
+          int pixel=rawimg_iterator_read(&iter);
+          if (pixel==pixelv[0]) ; // no need to write zeroes
+          else rawimg_iterator_write(&dstiter,1);
+        } while (rawimg_iterator_next(&iter)&&rawimg_iterator_next(&dstiter));
+        rawimg_del(input);
+        input=y1image;
+      }
+    }
+  }
+  
+  // Opportunity for additional preprocessing steps.
+
+  return input;
+}
+
 /* Reencode image if necessary.
  */
  
@@ -38,6 +86,7 @@ int eggrom_image_compile(struct sr_encoder *dst,const struct romw_res *res) {
   int err;
 
   // Already in an acceptable output format? Keep it, don't even decode.
+  // The acceptable formats are all kind of exotic, so this case is rare.
   const char *fmt=rawimg_detect_format(res->serial,res->serialc);
   if (eggrom_image_fmt_valid(fmt)) return 0;
   
@@ -48,10 +97,11 @@ int eggrom_image_compile(struct sr_encoder *dst,const struct romw_res *res) {
     return -2;
   }
   
-  //TODO Detect 1-bit images that were encoded larger. eg it's hard to convince GIMP to save a 1-bit PNG.
-  // (well, it's not *hard*, it's just easy to forget...)
+  // Preprocessing, eg force to 1-bit.
+  rawimg=eggrom_image_preprocess(rawimg);
   
   // If PNG is allowed, it's always the best choice.
+  // Spoiler alert: It's not allowed.
   if (eggrom_image_try_encode(dst,rawimg,"png")>0) return 0;
   
   // For pixel sizes 24 and 32, QOI is usually good.

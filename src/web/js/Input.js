@@ -18,7 +18,6 @@ export class Input {
       (1<<Input.EVENT_WS_MESSAGE)|
       // MMOTION, MBUTTON, MWHEEL, TEXT: off by default
       (1<<Input.EVENT_KEY)|
-      (1<<Input.EVENT_RESIZE)|
     0;
     
     this.cursorVisible = false;
@@ -92,10 +91,30 @@ export class Input {
       case Input.EVENT_MWHEEL: return 0;
       case Input.EVENT_KEY: return 0;
       case Input.EVENT_TEXT: return 0;
-      case Input.EVENT_RESIZE: return 0;
       case Input.EVENT_TOUCH: return 0;
     }
     return Input.EVTSTATE_IMPOSSIBLE;
+  }
+  
+  reset() {
+    this.evtq = [];
+    const initialMask =
+      (1<<Input.EVENT_INPUT)|
+      (1<<Input.EVENT_CONNECT)|
+      (1<<Input.EVENT_DISCONNECT)|
+      (1<<Input.EVENT_HTTP_RSP)|
+      (1<<Input.EVENT_WS_CONNECT)|
+      (1<<Input.EVENT_WS_DISCONNECT)|
+      (1<<Input.EVENT_WS_MESSAGE)|
+      (1<<Input.EVENT_KEY)|
+    0;
+    if (initialMask !== this.evtmask) {
+      for (let i=0; i<30; i++) {
+        if ((initialMask & (1 << i)) !== (this.evtmask & (1 << i))) {
+          this.event_enable(i, (initialMask & (1 << i)) ? 3 : 2);
+        }
+      }
+    }
   }
   
   /* Touch.
@@ -502,8 +521,7 @@ Input.EVENT_MBUTTON       =  9; /* [btnid,value,x,y] */
 Input.EVENT_MWHEEL        = 10; /* [dx,dy,x,y] */
 Input.EVENT_KEY           = 11; /* [hidusage,value,_,_] */
 Input.EVENT_TEXT          = 12; /* [codepoint,_,_,_] */
-Input.EVENT_RESIZE        = 13; /* [w,h,_,_] */
-Input.EVENT_TOUCH         = 14; /* [id,state,x,y] */
+Input.EVENT_TOUCH         = 13; /* [id,state,x,y] */
   
 Input.EVTSTATE_QUERY = 0;
 Input.EVTSTATE_IMPOSSIBLE = 1;

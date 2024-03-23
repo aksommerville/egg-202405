@@ -27,6 +27,9 @@ export class Runtime {
     this.lastFrameTime = 0;
     this.terminated = false;
     this.gl = null;
+    this.initialCanvasWidth = this.canvas.width;
+    this.initialCanvasHeight = this.canvas.height;
+    this.originalTitle = this.window.document.title;
     
     this.wasm.env = {
       ...this.wasm.env,
@@ -100,7 +103,6 @@ export class Runtime {
   _loadClientWasm() {
     const wasmbin = this.rom.getResource(Rom.TID_wasm, 0, 1);
     if (!wasmbin) return Promise.resolve();
-    console.log(`TODO wasm:1 ${wasmbin.length} bytes`);
     return this.wasm.load(wasmbin);
   }
   
@@ -125,7 +127,7 @@ export class Runtime {
       case "title": this.window.document.title = v; break;
       case "framebuffer": {
           const match = v.match(/^(\d+)x(\d+)$/);
-          if (match) this._resizeCanvas(+match[1] *2, +match[2] *2);//XXX TEMP scale up 2x
+          if (match) this._resizeCanvas(+match[1], +match[2]);
         } break;
       case "iconImage": {
           const serial = this.rom.getResource(Rom.TID_image, 0, +v);
@@ -142,21 +144,29 @@ export class Runtime {
   }
   
   _setFavicon(serial) {
-    const crop = new Uint8Array(serial.length);
-    crop.set(serial);
-    const mimeType = "image/gif"; // TODO service to guess format from serial
-    const blob = new Blob([crop.buffer], { type: mimeType });
-    const url = URL.createObjectURL(blob);
+    let url = null, mimeType = "";
+    if (serial && serial.length) {
+      const crop = new Uint8Array(serial.length);
+      crop.set(serial);
+      if ((crop[0] === 0) && (crop[1] === 0) && (crop[2] === 1) && (crop[3] === 0)) mimeType = "image/x-icon";
+      else if ((crop[0] === 0x47) && (crop[1] === 0x49) && (crop[2] === 0x46)) mimeType = "image/gif";
+      const blob = new Blob([crop.buffer], { type: mimeType });
+      url = URL.createObjectURL(blob);
+    }
     for (const link of this.window.document.querySelectorAll("link[rel='icon']")) link.remove();
-    const link = this.window.document.createElement("LINK");
-    link.setAttribute("rel", "icon");
-    link.setAttribute("type", mimeType);
-    link.setAttribute("href", url);
-    this.window.document.head.appendChild(link);
+    if (url) {
+      const link = this.window.document.createElement("LINK");
+      link.setAttribute("data-egg-favicon", "");
+      link.setAttribute("rel", "icon");
+      link.setAttribute("type", mimeType);
+      link.setAttribute("href", url);
+      this.window.document.head.appendChild(link);
+    }
   }
   
   terminate() {
     if (this.terminated) return;
+    this.input.reset();
     this.input.detach();
     this.audio.stop();
     this.net.detach();
@@ -174,6 +184,10 @@ export class Runtime {
       this.gl.clear(this.gl.COLOR_BUFFER_BIT);
       this.gl.flush();
     }
+    this.canvas.width = this.initialCanvasWidth;
+    this.canvas.height = this.initialCanvasHeight;
+    this._setFavicon(null);
+    this.window.document.title = this.originalTitle;
   }
   
   update() {
@@ -211,7 +225,6 @@ export class Runtime {
       input_device_get_ids: (devid) => this.input.input_device_get_ids(devid),
       input_device_get_button: (devid, index) => this.input.input_device_get_button(devid, index),
       input_device_disconnect: (devid) => this.input.input_device_disconnect(devid),
-      video_get_size: () => [this.canvas.width, this.canvas.height],
       texture_del: (texid) => this.render.texture_del(texid),
       texture_new: () => this.render.texture_new(),
       texture_load_image: (texid, qual, imageid) => this.render.texture_load_image(texid, qual, imageid),
@@ -256,7 +269,6 @@ export class Runtime {
       egg_input_device_get_ids: (vid, pid, ver, id) => this.wasm_input_device_get_ids(vid, pid, ver, id),
       egg_input_device_get_button: (a, b, c, d, e, id, p) => this.wasm_input_device_get_button(a, b, c, d, e, id, p),
       egg_input_device_disconnect: (id) => this.input.input_device_disconnect(id),
-      egg_video_get_size: (w, h) => this.wasm_video_get_size(w, h),
       egg_texture_del: (texid) => this.render.texture_del(texid),
       egg_texture_new: () => this.render.texture_new(),
       egg_texture_load_image: (texid, qual, imageid) => this.render.texture_load_image(texid, qual, imageid),
@@ -336,11 +348,6 @@ export class Runtime {
       if (hi) this.wasm.memU32[hi >> 2] = btn.hi;
       if (value) this.wasm.memU32[value >> 2] = btn.value;
     }
-  }
-  
-  wasm_video_get_size(w, h) {
-    if (w) this.wasm.memU32[w >> 2] = this.canvas.width;
-    if (h) this.wasm.memU32[h >> 2] = this.canvas.height;
   }
   
   wasm_texture_upload(texid, w, h, stride, fmt, src, srcc) {

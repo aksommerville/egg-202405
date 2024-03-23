@@ -53,8 +53,7 @@ void egg_client_render();
 #define EGG_EVENT_MWHEEL       10 /* [dx,dy,x,y] */
 #define EGG_EVENT_KEY          11 /* [hidusage,value,_,_] */
 #define EGG_EVENT_TEXT         12 /* [codepoint,_,_,_] */
-#define EGG_EVENT_RESIZE       13 /* [w,h,_,_] */
-#define EGG_EVENT_TOUCH        14 /* [id,state(0,1,2),x,y] */
+#define EGG_EVENT_TOUCH        13 /* [id,state(0,1,2),x,y] */
 
 /* Native platforms will usually only be able to use RAW here.
  * But if we become able to canonicalize gamepad layouts, eventually we may do so.
@@ -121,15 +120,11 @@ void egg_input_device_disconnect(int devid);
 #define EGG_XFORM_XREV 1
 #define EGG_XFORM_YREV 2
 #define EGG_XFORM_SWAP 4
- 
-/* Game can not control the main video size, and it can change at any time.
- * You'll get a RESIZE event when it does. Or you can poll this as needed.
- */
-void egg_video_get_size(int *w,int *h);
 
 /* Create or delete a texture.
  * Platform will have some internal limit, but it's not publically defined and may vary across hosts.
  * (texid) is a positive integer, zero for invalid, and never negative.
+ * Texid One is the main output. It exists before init, and can't be replaced.
  */
 void egg_texture_del(int texid);
 int egg_texture_new();
