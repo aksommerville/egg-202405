@@ -5,7 +5,7 @@ tools_MIDDIR:=mid/tool
 tools_OUTDIR:=out/tool
 
 tools_OPT_ENABLE+=fs serial romr romw midi wav http
-tools_OPT_ENABLE+=qoi rlead rawimg bmp gif ico
+tools_OPT_ENABLE+=qoi rlead rawimg bmp gif ico png
 
 tools_CCWARN:=-Werror -Wimplicit
 tools_CCINC:=-Isrc -I$(tools_MIDDIR)

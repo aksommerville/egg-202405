@@ -28,6 +28,7 @@ export class Wasm {
       atan2f: (x, y) => Math.atan2(x, y),
       modff: (x, yp) => { const fract = x % 1; this.memF32[yp >> 2] = x - fract; return fract; },
       fmodf: (x, y) => x % y,
+      memcpy: (dst, src, c) => this.memcpy(dst, src, c),
     };
   }
   
@@ -117,5 +118,11 @@ export class Wasm {
       return srcc;
     }
     throw new Error(`Expected string, ArrayBuffer, or TypedArray`);
+  }
+  
+  memcpy(dst, src, c) {
+    dst = this.getMemoryView(dst, c);
+    src = this.getMemoryView(src, c);
+    dst.set(src);
   }
 }

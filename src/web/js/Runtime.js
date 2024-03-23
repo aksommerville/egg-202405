@@ -8,6 +8,7 @@ import { Input } from "./Input.js";
 import { Audio } from "./Audio.js";
 import { Net } from "./Net.js";
 import { Wasm } from "./Wasm.js";
+import { RenderGl } from "./RenderGl.js";
  
 export class Runtime {
   constructor(rom, canvas, window) {
@@ -19,6 +20,7 @@ export class Runtime {
     this.audio = new Audio(window, this.rom);
     this.net = new Net(window, this.input);
     this.wasm = new Wasm(window);
+    this.render = new RenderGl(canvas, this.rom);
     Runtime.singleton = this;
     
     this.pendingAnimationFrame = null;
@@ -123,7 +125,7 @@ export class Runtime {
       case "title": this.window.document.title = v; break;
       case "framebuffer": {
           const match = v.match(/^(\d+)x(\d+)$/);
-          if (match) this._resizeCanvas(+match[1], +match[2]);
+          if (match) this._resizeCanvas(+match[1] *2, +match[2] *2);//XXX TEMP scale up 2x
         } break;
       case "iconImage": {
           const serial = this.rom.getResource(Rom.TID_image, 0, +v);
@@ -190,7 +192,9 @@ export class Runtime {
       return;
     }
     if (this.egg_client_render) {
+      this.render.draw_mode(0, 0, 0xff);
       this.egg_client_render(this.gl);
+      this.render.draw_to_main();
     }
     this.pendingAnimationFrame = this.window.requestAnimationFrame(() => this.update());
   }
@@ -208,6 +212,16 @@ export class Runtime {
       input_device_get_button: (devid, index) => this.input.input_device_get_button(devid, index),
       input_device_disconnect: (devid) => this.input.input_device_disconnect(devid),
       video_get_size: () => [this.canvas.width, this.canvas.height],
+      texture_del: (texid) => this.render.texture_del(texid),
+      texture_new: () => this.render.texture_new(),
+      texture_load_image: (texid, qual, imageid) => this.render.texture_load_image(texid, qual, imageid),
+      texture_upload: (texid, w, h, stride, fmt, src) => this.render.texture_upload(texid, w, h, stride, fmt, src),
+      texture_get_header: (texid) => this.render.texture_get_header(texid),
+      texture_clear: (texid) => this.render.texture_clear(texid),
+      draw_mode: (xfermode, tint, alpha) => this.render.draw_mode(xfermode, tint, alpha),
+      draw_rect: (dsttexid, x, y, w, h, pixel) => this.render.draw_rect(dsttexid, x, y, w, h, pixel),
+      draw_decal: (dsttexid, srctexid, dstx, dsty, srcx, srcy, w, h, xform) => this.render.draw_decal(dsttexid, srctexid, dstx, dsty, srcx, srcy, w, h, xform),
+      draw_tile: (dsttexid, srctexid, v, c) => this.render.draw_tile(dsttexid, srctexid, v, c),
       audio_play_song: (songid, force, repeat) => this.audio.audio_play_song(songid, force, repeat),
       audio_play_sound: (soundid, trim, pan) => this.audio.audio_play_sound(soundid, trim, pan),
       audio_get_playhead: () => this.audio.audio_get_playhead(),
@@ -243,6 +257,16 @@ export class Runtime {
       egg_input_device_get_button: (a, b, c, d, e, id, p) => this.wasm_input_device_get_button(a, b, c, d, e, id, p),
       egg_input_device_disconnect: (id) => this.input.input_device_disconnect(id),
       egg_video_get_size: (w, h) => this.wasm_video_get_size(w, h),
+      egg_texture_del: (texid) => this.render.texture_del(texid),
+      egg_texture_new: () => this.render.texture_new(),
+      egg_texture_load_image: (texid, qual, imageid) => this.render.texture_load_image(texid, qual, imageid),
+      egg_texture_upload: (texid, w, h, stride, fmt, src, srcc) => this.wasm_texture_upload(texid, w, h, stride, fmt, src, srcc),
+      egg_texture_get_header: (wp, hp, fmtp, texid) => this.wasm_texture_get_header(wp, hp, fmtp, texid),
+      egg_texture_clear: (texid) => this.render.texture_clear(texid),
+      egg_draw_mode: (xfermode, tint, alpha) => this.render.draw_mode(xfermode, tint, alpha),
+      egg_draw_rect: (dsttexid, x, y, w, h, pixel) => this.render.draw_rect(dsttexid, x, y, w, h, pixel),
+      egg_draw_decal: (dsttexid, srctexid, dstx, dsty, srcx, srcy, w, h, xform) => this.render.draw_decal(dsttexid, srctexid, dstx, dsty, srcx, srcy, w, h, xform),
+      egg_draw_tile: (dsttexid, srctexid, v, c) => this.wasm_draw_tile(dsttexid, srctexid, v, c),
       egg_audio_play_song: (id, f, r) => this.audio.audio_play_song(id, f, r),
       egg_audio_play_sound: (id, t, p) => this.audio.audio_play_sound(id, t, p),
       egg_audio_get_playhead: () => this.audio.audio_get_playhead(),
@@ -317,6 +341,25 @@ export class Runtime {
   wasm_video_get_size(w, h) {
     if (w) this.wasm.memU32[w >> 2] = this.canvas.width;
     if (h) this.wasm.memU32[h >> 2] = this.canvas.height;
+  }
+  
+  wasm_texture_upload(texid, w, h, stride, fmt, src, srcc) {
+    src = this.wasm.getMemoryView(src, srcc);
+    return this.render.texture_upload(texid, w, h, stride, fmt, src);
+  }
+  
+  wasm_texture_get_header(wp, hp, fmtp, texid) {
+    const header = this.render.texture_get_header(texid);
+    if (header) {
+      if (wp) this.wasm.memU32[wp >> 2] = header.w;
+      if (hp) this.wasm.memU32[hp >> 2] = header.h;
+      if (fmtp) this.wasm.memU32[fmtp >> 2] = header.fmt;
+    }
+  }
+  
+  wasm_draw_tile(dsttexid, srctexid, vtxp, vtxc) {
+    const src = this.wasm.getMemoryView(vtxp, vtxc * 6);
+    return this.render.draw_tile(dsttexid, srctexid, src, vtxc);
   }
   
   wasm_res_get(dst, dsta, tid, qual, rid) {

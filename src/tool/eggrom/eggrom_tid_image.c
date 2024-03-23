@@ -2,13 +2,19 @@
 #include "opt/rawimg/rawimg.h"
 
 /* Nonzero if (fmt) is permissible in ROM files.
- * TODO Decide which we're going to allow. This I think is going to hinge on whether we can borrow browser facilities in the web runner.
- * I don't want to implement png or gif in the browser, and jpeg would be right out of the question.
- * rawimg, rlead, and qoi should always be acceptable, since those decoders are easy to write.
+ * We could support all formats for native runners, but on the web side it's either 
+ * write the decoder ourselves or have the browser do it asynchronously.
+ * Async is pretty much out of the question.
+ * So we're only supporting the formats we can easily write decoders for: rawimg, qoi, rlead
+ * I'm also calling ico valid so it can be used for the app icon. These will fail at runtime if you try to load them as is.
  */
  
 static int eggrom_image_fmt_valid(const char *fmt) {
-  return 1;
+  if (!strcmp(fmt,"rawimg")) return 1;
+  if (!strcmp(fmt,"qoi")) return 1;
+  if (!strcmp(fmt,"rlead")) return 1;
+  if (!strcmp(fmt,"ico")) return 1;
+  return 0;
 }
 
 /* Try encoding to a given format, if it is valid for output.
@@ -19,9 +25,9 @@ static int eggrom_image_fmt_valid(const char *fmt) {
 static int eggrom_image_try_encode(struct sr_encoder *dst,struct rawimg *rawimg,const char *fmt) {
   dst->c=0;
   if (!eggrom_image_fmt_valid(fmt)) return 0;
-  if (!strcmp(rawimg->encfmt,fmt)) return 1;
   rawimg->encfmt=fmt;
   if (rawimg_encode(dst,rawimg)<0) return -1;
+  rawimg_del(rawimg);
   return 1;
 }
 

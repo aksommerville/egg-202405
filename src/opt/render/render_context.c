@@ -40,34 +40,44 @@ struct render *render_new() {
  */
 
 void render_texture_del(struct render *render,int texid) {
-  if ((texid<1)||(texid>render->texturec)) return;
+  if ((texid<2)||(texid>render->texturec)) return; // sic "<2", no deleting the main
   texid--;
   struct render_texture *texture=render->texturev+texid;
   render_texture_cleanup(texture);
-  render->texturec--;
-  memmove(texture,texture+1,sizeof(struct render_texture)*(render->texturec-texid));
+  memset(texture,0,sizeof(struct render_texture));
 }
 
 /* New texture.
  */
  
 int render_texture_new(struct render *render) {
-  if (render->texturec>=render->texturea) {
-    int na=render->texturea+16;
-    if (na>INT_MAX/sizeof(struct render_texture)) return 0;
-    void *nv=realloc(render->texturev,sizeof(struct render_texture)*na);
-    if (!nv) return 0;
-    render->texturev=nv;
-    render->texturea=na;
+  struct render_texture *texture=0;
+  if (render->texturec<render->texturea) {
+    texture=render->texturev+render->texturec++;
+  } else {
+    int i=render->texturec;
+    struct render_texture *q=render->texturev;
+    for (;i-->0;q++) {
+      if (q->texid) continue;
+      texture=q;
+      break;
+    }
+    if (!texture) {
+      int na=render->texturea+16;
+      if (na>INT_MAX/sizeof(struct render_texture)) return 0;
+      void *nv=realloc(render->texturev,sizeof(struct render_texture)*na);
+      if (!nv) return 0;
+      render->texturev=nv;
+      render->texturea=na;
+      texture=render->texturev+render->texturec++;
+    }
   }
-  struct render_texture *texture=render->texturev+render->texturec++;
   memset(texture,0,sizeof(struct render_texture));
   
   glGenTextures(1,&texture->texid);
   if (!texture->texid) {
     glGenTextures(1,&texture->texid);
     if (!texture->texid) {
-      render->texturec--;
       return 0;
     }
   }
@@ -78,7 +88,7 @@ int render_texture_new(struct render *render) {
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
   
-  return render->texturec;
+  return (texture-render->texturev)+1;
 }
 
 /* Return one EGG_TEX_FMT_* if this image is uploadable, zero if invalid.

@@ -10,10 +10,11 @@ Game code can be in JavaScript or WebAssembly.
 - - Match webgl exactly, and add a context parameter to egg_client_render for js.
 - [x] Try EGL instead of GLX. We seem to not have real ES on the Wasm side. (try point sprites)
 - [x] Failing to launch with drmgx (permissions error at drmModeSetCrtc)...?
-- [ ] New bespoke render API. GLES2/WebGL is proving too complicated.
-- - [x] Native
-- - [ ] Web (WebGL)
+- [x] New bespoke render API. GLES2/WebGL is proving too complicated.
+- - [x] Native (GLES2)
+- - [x] Web (WebGL)
 - - [ ] Web (CanvasRenderingContext2D). Are there browsers that don't support WebGL?
+- - [ ] Native (soft)
 - [ ] Test each entry point in Javascript.
 - [ ] Test each entry point in WebAssembly.
 - [ ] Test each entry point natively.
@@ -25,8 +26,9 @@ Game code can be in JavaScript or WebAssembly.
 - [ ] Synthesizer.
 - [ ] User-supplied HTTP permissions.
 - [ ] User-supplied storage permissions.
-- [ ] Can we do some kind of "warp cursor" or "trap cursor"? First-person shooters really need that.
-- [ ] Validate size of wasm gl parameters, some are probably off.
+- [x] Can we do some kind of "warp cursor" or "trap cursor"? First-person shooters really need that.
+- - No 3d graphics anymore, so I don't think there's a need for this. (whew)
+- [x] Validate size of wasm gl parameters, some are probably off.
 - [x] glGetVertexAttribPointerv wasm needs rephrased; we can't pass a double-pointer in from the wasm space.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
 - [x] Pull the WebGL stuff out of egg_native_export.c, just for cleanliness's sake. Way more of it than I expected.
@@ -38,3 +40,5 @@ Game code can be in JavaScript or WebAssembly.
 - [ ] Terminating game in web, we probably ought to restore all state. Canvas size, page title, favicon, canvas cursor visibility.
 - [ ] Accelerometer input.
 - [ ] If we're sticking with a renderer-managed main framebuffer, remove RESIZE events and egg_video_get_size().
+- [x] Image decoder for web. Then document more clearly which formats are allowed.
+- [ ] eggrom: Check for 1-bit images encoded at a higher depth, output as 1-bit.

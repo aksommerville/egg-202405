@@ -292,6 +292,7 @@ function egg_client_render() {
     egg.draw_decal(1,texid_rotate,228,150,8,8,24,16,6); // SWAP|YREV
     egg.draw_decal(1,texid_rotate,258,150,8,8,24,16,7); // SWAP|XREV|YREV
   }
+  
 }
 
 exportModule({

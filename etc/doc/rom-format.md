@@ -60,7 +60,7 @@ Length of individual resources is limited to 1 MB.
 | 0x01 | metadata  | ---       | General data about the game, for indexing tools. metadata:1 must be the first resource, if present. |
 | 0x02 | wasm      | ---       | Executable WebAssembly module. wasm:1 should contain main, if present. |
 | 0x03 | js        | ---       | Executable Javascript module. js:1 should contain main, if present. |
-| 0x04 | image     | lang      | Image, in any of several formats. (qual) is usually zero but can be used for pictures of text. |
+| 0x04 | image     | lang      | Image, in QOI, Rawimg, or RLEAD. (qual) is usually zero but can be used for pictures of text. |
 | 0x05 | string    | lang      | Loose text. string:1 should be the language's own name. |
 | 0x06 | song      | ---       | Sourced from MIDI but encoded here in our own format. |
 | 0x07 | sound     | lang      | PCM or synth data for one sound effect. |
