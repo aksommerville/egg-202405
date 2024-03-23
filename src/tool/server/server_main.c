@@ -114,37 +114,49 @@ static int server_serve_file(struct http_xfer *req,struct http_xfer *rsp,const c
   return http_xfer_set_status(rsp,200,"OK");
 }
 
-/* Run make on a file, then serve it.
- * It's OK to block while make runs; we are kind of a single-user deal.
- * Obviously that would be unacceptable in a more realistic setting.
+/* Strip working directory from an absolute path.
+ */
+ 
+static const char *server_strip_wd(const char *src) {
+  char *wd=getcwd(0,0);
+  if (!wd) return 0;
+  int wdc=0; while (wd[wdc]) wdc++;
+  int srcc=0; while (src[srcc]) srcc++;
+  if ((srcc<wdc)||memcmp(wd,src,wdc)) {
+    free(wd);
+    return 0;
+  }
+  free(wd);
+  src+=wdc;
+  while (src[0]=='/') src++;
+  return src;
+}
+
+/* Run make on a file, and we'll serve it when that finishes.
  */
  
 static int server_make_then_serve_file(struct http_xfer *req,struct http_xfer *rsp,const char *path) {
-  int i=0; for (;path[i];i++) {
-    // We're not secure at all, but let's not be ridiculous...
-    if ((path[i]=='\'')||(path[i]=='\\')) return http_xfer_set_status(rsp,404,"Not found");
+  
+  const char *path0=path;
+  if (!(path=server_strip_wd(path))) return http_xfer_set_status(rsp,404,"Not found");
+  int fd=process_spawn(server.proc,"make",path);
+  if (fd<0) return http_xfer_set_status(rsp,500,"Failed to launch child process");
+  
+  if (server.pendingc>=server.pendinga) {
+    int na=server.pendinga+8;
+    if (na>INT_MAX/sizeof(struct pending)) return -1;
+    void *nv=realloc(server.pendingv,sizeof(struct pending)*na);
+    if (!nv) return -1;
+    server.pendingv=nv;
+    server.pendinga=na;
   }
-  int pathc=i;
-  char *cwd=getcwd(0,0);
-  if (!cwd) return http_xfer_set_status(rsp,500,"Internal server error");
-  int cwdc=0; while (cwd[cwdc]) cwdc++;
-  if ((cwdc<pathc)&&!memcmp(cwd,path,cwdc)) {
-    free(cwd);
-    const char *lpath=path+cwdc;
-    while (lpath[0]=='/') lpath++;
-    char cmd[1024];
-    int cmdc=snprintf(cmd,sizeof(cmd),"make '%s'",lpath);
-    if ((cmdc<1)||(cmdc>=sizeof(cmd))) return http_xfer_set_status(rsp,404,"Not found");
-    int err=system(cmd);
-    if (err) {
-      //TODO Would be nicer to capture make's output and send that as the response body here (still with a 5xx status).
-      // If we're doing that, might as well also make it non-blocking.
-      return http_xfer_set_status(rsp,599,"Make failed, please see server log.");
-    }
-  } else {
-    free(cwd);
-  }
-  return server_serve_file(req,rsp,path);
+  struct pending *pending=server.pendingv+server.pendingc++;
+  memset(pending,0,sizeof(struct pending));
+  if (!(pending->path=strdup(path0))) return -1;
+  
+  pending->procfd=fd;
+  pending->rsp=rsp;
+  return 0;
 }
 
 /* Return real local path to a file based on htdocs and request path.
@@ -251,6 +263,41 @@ static int server_cb_serve(struct http_xfer *req,struct http_xfer *rsp,void *use
   );
 }
 
+/* Child process callbacks.
+ */
+ 
+static void server_cb_term(void *userdata,int pid,int fd,int status) {
+  
+  struct pending *pending=0;
+  struct pending *q=server.pendingv;
+  int i=server.pendingc;
+  for (;i-->0;q++) if (q->procfd==fd) { pending=q; break; }
+  if (!pending) return;
+  
+  if (status) {
+    http_xfer_set_status(pending->rsp,500,"Process status %d",status);
+  } else {
+    http_xfer_get_body(pending->rsp)->c=0; // drop any log output
+    server_serve_file(0,pending->rsp,pending->path);
+  }
+  
+  i=pending-server.pendingv;
+  server.pendingc--;
+  free(pending->path);
+  memmove(pending,pending+1,sizeof(struct pending)*(server.pendingc-i));
+}
+
+static void server_cb_process_output(void *userdata,int pid,int fd,const void *v,int c) {
+  
+  struct pending *pending=0;
+  struct pending *q=server.pendingv;
+  int i=server.pendingc;
+  for (;i-->0;q++) if (q->procfd==fd) { pending=q; break; }
+  if (!pending) return;
+  
+  sr_encode_raw(http_xfer_get_body(pending->rsp),v,c);
+}
+
 /* Command line.
  */
  
@@ -289,6 +336,32 @@ static int server_arg_makeable_dir(const char *src) {
   return 0;
 }
 
+/* Rebuild pollfdv.
+ */
+ 
+static int server_rebuild_pollfdv() {
+  int pollfdc=0;
+  #define GATHER(fn,ctx) \
+    for (;;) { \
+      int err=fn(server.pollfdv+pollfdc,server.pollfda-pollfdc,ctx); \
+      if (err<0) return -1; \
+      if (pollfdc<=server.pollfda-err) { \
+        pollfdc+=err; \
+        break; \
+      } \
+      int na=(pollfdc+err+16)&~15; \
+      if (na>INT_MAX/sizeof(struct pollfd)) return -1; \
+      void *nv=realloc(server.pollfdv,sizeof(struct pollfd)*na); \
+      if (!nv) return -1; \
+      server.pollfdv=nv; \
+      server.pollfda=na; \
+    }
+  GATHER(http_get_files,server.http)
+  GATHER(process_get_files,server.proc)
+  #undef GATHER
+  return pollfdc;
+}
+
 /* Main.
  */
  
@@ -314,6 +387,12 @@ int main(int argc,char **argv) {
     return 1;
   }
   
+  struct process_delegate process_delegate={
+    .cb_term=server_cb_term,
+    .cb_output=server_cb_process_output,
+  };
+  if (!(server.proc=process_context_new(&process_delegate))) return 1;
+  
   struct http_context_delegate http_delegate={
     .cb_serve=server_cb_serve,
   };
@@ -326,12 +405,25 @@ int main(int argc,char **argv) {
   fprintf(stderr,"%s: Serving on %d. SIGINT to quit.\n",server.exename,server.port);
   int status=0;
   while (!server.sigc) {
-    if (http_update(server.http,100)<0) {
-      status=1;
-      break;
+    int pollfdc=server_rebuild_pollfdv();
+    if (pollfdc<0) { status=1; break; }
+    int err=poll(server.pollfdv,pollfdc,100);
+    if (err>0) {
+      struct pollfd *pollfd=server.pollfdv;
+      int i=pollfdc;
+      for (;i-->0;pollfd++) {
+        if (!pollfd->revents) continue;
+        // http and process both fail safely for unknown fd, and never otherwise. So we don't have to track who owns which file.
+        if (http_update_file(server.http,pollfd->fd)<0) {
+          if (process_update_file(server.proc,pollfd->fd)<0) {
+            // huh
+          }
+        }
+      }
     }
   }
   
   http_context_del(server.http);
+  process_context_del(server.proc);
   return status;
 }

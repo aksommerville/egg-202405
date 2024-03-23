@@ -21,6 +21,20 @@ canvas {
   background-color: #000;
   cursor: none;
 }
+.hidden {
+  display: none;
+}
+#error {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #400;
+  color: #fff;
+  font-family: monospace;
+  white-space: pre;
+}
 </style>
 <script type="module" src="./egg.js"></script>
 <script>
@@ -29,6 +43,7 @@ function terminate() {
     window.egg.request_termination();
     delete window.egg;
   }
+  document.getElementById("error").classList.add("hidden");
 }
 function loadGame(name) {
   this.terminate();
@@ -43,6 +58,19 @@ function loadGame(name) {
     });
   }).catch(e => {
     console.error(`failed to download ${JSON.stringify(name)}`, e);
+    if (e.text) {
+      e.text().then(text => {
+        const errorElement = document.getElementById("error");
+        errorElement.innerHTML = "";
+        errorElement.innerText = e.status + " " + e.statusText + "\n" + text;
+        errorElement.classList.remove("hidden");
+      });
+    } else {
+      const errorElement = document.getElementById("error");
+      errorElement.innerHTML = "";
+      errorElement.innerText = e.status + " " + e.statusText;
+      errorElement.classList.remove("hidden");
+    }
   });
 }
 function populateGamesList(names) {
@@ -72,5 +100,6 @@ window.addEventListener("load", () => {
 <button onclick="terminate()">Terminate</button>
 <div id="gameslist"></div>
 <canvas id="game" width="640" height="360"></canvas>
+<div id="error" class="hidden"></div>
 </body>
 </html>

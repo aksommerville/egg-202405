@@ -259,7 +259,7 @@ int http_update_file(struct http_context *ctx,int fd) {
     }
     return 0;
   }
-  return 0;
+  return -1;
 }
 
 /* Find websocket.
