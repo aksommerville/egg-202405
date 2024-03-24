@@ -255,3 +255,13 @@ int hostio_audio_play(struct hostio *hostio,int play) {
   }
   return hostio->audio->playing;
 }
+
+int hostio_audio_lock(struct hostio *hostio) {
+  if (!hostio||!hostio->audio||!hostio->audio->type->lock) return 0;
+  return hostio->audio->type->lock(hostio->audio);
+}
+
+void hostio_audio_unlock(struct hostio *hostio) {
+  if (!hostio||!hostio->audio||!hostio->audio->type->unlock) return;
+  hostio->audio->type->unlock(hostio->audio);
+}

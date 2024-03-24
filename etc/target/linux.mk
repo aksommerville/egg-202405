@@ -1,6 +1,6 @@
 # The truly optional things should be set by config.mk:
 #   glx x11fb xinerama drmgx drmfb alsafd asound pulse evdev
-linux_OPT_ENABLE+=hostio fs serial qjs wamr timer romr romw strfmt localstore http render
+linux_OPT_ENABLE+=hostio fs serial qjs wamr timer romr romw strfmt localstore http render synth midi
 linux_OPT_ENABLE+=qoi rlead rawimg gif jpeg bmp ico png
 
 linux_CCWARN:=-Werror -Wimplicit

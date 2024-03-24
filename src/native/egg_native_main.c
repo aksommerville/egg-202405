@@ -31,6 +31,7 @@ static void egg_native_quit(int status) {
   }
   render_del(egg.render);
   hostio_del(egg.hostio);
+  synth_del(egg.synth);
   wamr_del(egg.wamr);
   egg_native_net_cleanup();
   egg_native_rom_cleanup();
@@ -160,6 +161,10 @@ static int egg_native_init() {
   };
   if (hostio_init_audio(egg.hostio,egg.audio_driver,&audio_setup)<0) {
     fprintf(stderr,"%s: Failed to initialize audio.\n",egg.exename);
+    return -2;
+  }
+  if (!(egg.synth=synth_new(egg.hostio->audio->rate,egg.hostio->audio->chanc,&egg.romr))) {
+    fprintf(stderr,"%s: Failed to initialize synthesizer.\n",egg.exename);
     return -2;
   }
   

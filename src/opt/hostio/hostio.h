@@ -76,5 +76,7 @@ int hostio_update(struct hostio *hostio);
  */
 int hostio_toggle_fullscreen(struct hostio *hostio); // => (0,1)=(window,fullscreen) new state.
 int hostio_audio_play(struct hostio *hostio,int play); // => (0,1) new state
+int hostio_audio_lock(struct hostio *hostio);
+void hostio_audio_unlock(struct hostio *hostio);
 
 #endif

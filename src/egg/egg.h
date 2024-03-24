@@ -197,12 +197,12 @@ void egg_draw_tile(
  * (repeat) is usually nonzero. Zero to stop music at the end of the song.
  * (songid) zero is legal, to play no music, and that's the default.
  */
-void egg_audio_play_song(int songid,int force,int repeat);
+void egg_audio_play_song(int qual,int songid,int force,int repeat);
 
 /* Play a one-off sound effect.
  * (trim) in 0..1, (pan) in -1..1.
  */
-void egg_audio_play_sound(int soundid,double trim,double pan);
+void egg_audio_play_sound(int qual,int soundid,double trim,double pan);
 
 /* Estimate the current song position in milliseconds from song start.
  * Our songs do not provide any tempo information, so digesting this is up to you.

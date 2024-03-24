@@ -233,7 +233,7 @@ void egg_native_cb_mwheel(struct hostio_video *driver,int dx,int dy) {
  */
  
 void egg_native_cb_pcm_out(int16_t *v,int c,struct hostio_audio *driver) {
-  memset(v,0,c<<1);//TODO synthesizer
+  synth_updatei(v,c,egg.synth);
 }
 
 /* Joystick.

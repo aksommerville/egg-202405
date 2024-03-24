@@ -199,12 +199,12 @@ export declare function draw_tile(
  * (repeat) is usually nonzero. Zero to stop music at the end of the song.
  * (songid) zero is legal, to play no music, and that's the default.
  */
-export declare function audio_play_song(songid: number, force: boolean, repeat: boolean): void;
+export declare function audio_play_song(qual: number, songid: number, force: boolean, repeat: boolean): void;
 
 /* Play a one-off sound effect.
  * (trim) in 0..1, (pan) in -1..1.
  */
-export declare function audio_play_sound(soundid: number, trim: number, pan: number): void;
+export declare function audio_play_sound(qual: number, soundid: number, trim: number, pan: number): void;
 
 /* Estimate the current song position in milliseconds from song start.
  * Our songs do not provide any tempo information, so digesting this is up to you.

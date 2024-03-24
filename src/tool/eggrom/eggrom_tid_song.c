@@ -165,7 +165,7 @@ static int eggrom_song_emit_events(struct eggrom_song_context *ctx) {
       if (duration>63) duration=63;
       if (duration) { // NOTE
         if (sr_encode_u8(ctx->dst,0x80|(event->b>>3))<0) return -1;
-        if (sr_encode_u8(ctx->dst,(event->chid>>5)|(event->a>>2))<0) return -1;
+        if (sr_encode_u8(ctx->dst,(event->chid<<5)|(event->a>>2))<0) return -1;
         if (sr_encode_u8(ctx->dst,(event->a<<6)|duration)<0) return -1;
       } else { // FIREFORGET
         if (sr_encode_u8(ctx->dst,0x90|((event->b>>3)&0x0c)|(event->chid>>1))<0) return -1;

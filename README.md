@@ -18,10 +18,12 @@ Game code can be in JavaScript or WebAssembly.
 - - [ ] Windows.
 - - [ ] Preferred language for Mac and Windows.
 - [ ] Call JS from Wasm and vice-versa.
-- [ ] Synthesizer.
+- [ ] Synthesizer, native.
+- [ ] Synthesizer, web.
 - [ ] User-supplied HTTP permissions.
 - [ ] User-supplied storage permissions.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
 - [x] server: Capture make output and deliver to client on errors.
 - [x] server: Non-blocking make.
 - [ ] Accelerometer input.
+- [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.

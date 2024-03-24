@@ -1,7 +1,7 @@
 #include "egg/egg.h"
 #include <stdlib.h>
 
-#if 0
+#if 1
 
 static int screenw=0,screenh=0;
 
@@ -72,7 +72,7 @@ int egg_client_init() {
     spritec=SPRITEA;
   }
   
-  egg_audio_play_song(1,0,1);
+  egg_audio_play_song(0,2,0,1);
   
   egg_log("%s:%d",__FILE__,__LINE__);
   return 0;

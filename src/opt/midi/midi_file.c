@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <math.h>
 
 /* Delete.
  */
@@ -184,7 +185,7 @@ static int midi_track_acquire_delay(struct midi_file *file,struct midi_track *tr
   if (!tickc) {
     track->delay=0;
   } else if (file->rate>0) {
-    track->delay=(int)(tickc*file->framespertick);
+    track->delay=(int)lround(tickc*file->framespertick);
     if (track->delay<1) track->delay=1;
   } else {
     track->delay=tickc;

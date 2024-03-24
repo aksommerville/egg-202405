@@ -19,12 +19,12 @@ export class Audio {
   /* Public API.
    *****************************************************************/
   
-  audio_play_song(songid, force, repeat) {
-    console.log(`TODO Audio.audio_play_song(${songid},${force},${repeat})`);
+  audio_play_song(qual, songid, force, repeat) {
+    console.log(`TODO Audio.audio_play_song(${qual},${songid},${force},${repeat})`);
   }
   
-  audio_play_sound(soundid, trim, pan) {
-    console.log(`TODO Audio.audio_play_sound(${soundid},${trim},${pan})`);
+  audio_play_sound(qual, soundid, trim, pan) {
+    console.log(`TODO Audio.audio_play_sound(${qual},${soundid},${trim},${pan})`);
   }
   
   audio_get_playhead() {

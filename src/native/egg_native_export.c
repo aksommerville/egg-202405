@@ -24,17 +24,26 @@ static void egg_js_basic_free(JSRuntime *rt,void *opaque,void *ptr) { if (ptr) f
 /* Synthesizer.
  */
  
-void egg_audio_play_song(int songid,int force,int repeat) {
-  fprintf(stderr,"%s %d %d %d\n",__func__,songid,force,repeat);//TODO
+void egg_audio_play_song(int qual,int songid,int force,int repeat) {
+  fprintf(stderr,"%s %d:%d %d %d\n",__func__,qual,songid,force,repeat);//TODO
+  if (hostio_audio_lock(egg.hostio)>=0) {
+    synth_play_song(egg.synth,qual,songid,force,repeat);
+    hostio_audio_unlock(egg.hostio);
+  }
 }
 
-void egg_audio_play_sound(int soundid,double trim,double pan) {
-  fprintf(stderr,"%s %d %f %f\n",__func__,soundid,trim,pan);//TODO
+void egg_audio_play_sound(int qual,int soundid,double trim,double pan) {
+  fprintf(stderr,"%s %d:%d %f %f\n",__func__,qual,soundid,trim,pan);//TODO
+  if (hostio_audio_lock(egg.hostio)>=0) {
+    synth_play_sound(egg.synth,qual,soundid,trim,pan);
+    hostio_audio_unlock(egg.hostio);
+  }
 }
 
 int egg_audio_get_playhead() {
   fprintf(stderr,"%s\n",__func__);//TODO
-  return -1;
+  // Do not lock driver.
+  return synth_get_playhead(egg.synth);//TODO also ask the audio driver its buffer position
 }
 
 /* Resource store.
@@ -593,7 +602,6 @@ static JSValue egg_js_draw_tile(JSContext *ctx,JSValueConst this,int argc,JSValu
   if (c<1) return JS_NULL;
   size_t a=0;
   const void *vtxv=JS_GetArrayBuffer(ctx,&a,argv[2]);
-  fprintf(stderr,"%s a=%d vtxv=%p\n",__func__,(int)a,vtxv);
   if (!vtxv||(a<=0)) return JS_NULL;
   a/=6;
   if (c>a) return JS_NULL;
@@ -612,35 +620,37 @@ static void egg_wasm_draw_tile(wasm_exec_env_t ee,int dsttexid,int srctexid,int 
  */
  
 static JSValue egg_js_audio_play_song(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
-  JSASSERTARGC(3)
-  int32_t songid=0,force=0,repeat=0;
-  JS_ToInt32(ctx,&songid,argv[0]);
-  JS_ToInt32(ctx,&force,argv[1]);
-  JS_ToInt32(ctx,&repeat,argv[2]);
-  egg_audio_play_song(songid,force,repeat);
+  JSASSERTARGC(4)
+  int32_t qual=0,songid=0,force=0,repeat=0;
+  JS_ToInt32(ctx,&qual,argv[0]);
+  JS_ToInt32(ctx,&songid,argv[1]);
+  JS_ToInt32(ctx,&force,argv[2]);
+  JS_ToInt32(ctx,&repeat,argv[3]);
+  egg_audio_play_song(qual,songid,force,repeat);
   return JS_NULL;
 }
  
-static void egg_wasm_audio_play_song(wasm_exec_env_t ee,int songid,int force,int repeat) {
-  egg_audio_play_song(songid,force,repeat);
+static void egg_wasm_audio_play_song(wasm_exec_env_t ee,int qual,int songid,int force,int repeat) {
+  egg_audio_play_song(qual,songid,force,repeat);
 }
 
 /* egg_audio_play_sound
  */
  
 static JSValue egg_js_audio_play_sound(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
-  JSASSERTARGC(3)
-  int32_t soundid=0;
+  JSASSERTARGC(4)
+  int32_t qual=0,soundid=0;
   double trim=0.0,pan=0.0;
-  JS_ToInt32(ctx,&soundid,argv[0]);
-  JS_ToFloat64(ctx,&trim,argv[1]);
-  JS_ToFloat64(ctx,&pan,argv[2]);
-  egg_audio_play_sound(soundid,trim,pan);
+  JS_ToInt32(ctx,&qual,argv[0]);
+  JS_ToInt32(ctx,&soundid,argv[1]);
+  JS_ToFloat64(ctx,&trim,argv[2]);
+  JS_ToFloat64(ctx,&pan,argv[3]);
+  egg_audio_play_sound(qual,soundid,trim,pan);
   return JS_NULL;
 }
  
-static void egg_wasm_audio_play_sound(wasm_exec_env_t ee,int soundid,double trim,double pan) {
-  egg_audio_play_sound(soundid,trim,pan);
+static void egg_wasm_audio_play_sound(wasm_exec_env_t ee,int qual,int soundid,double trim,double pan) {
+  egg_audio_play_sound(qual,soundid,trim,pan);
 }
 
 /* egg_audio_get_playhead
@@ -1079,8 +1089,8 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_draw_rect",egg_wasm_draw_rect,"(iiiiii)"},
   {"egg_draw_decal",egg_wasm_draw_decal,"(iiiiiiiii)"},
   {"egg_draw_tile",egg_wasm_draw_tile,"(iiii)"},
-  {"egg_audio_play_song",egg_wasm_audio_play_song,"(iii)"},
-  {"egg_audio_play_sound",egg_wasm_audio_play_sound,"(iff)"},
+  {"egg_audio_play_song",egg_wasm_audio_play_song,"(iiii)"},
+  {"egg_audio_play_sound",egg_wasm_audio_play_sound,"(iiff)"},
   {"egg_audio_get_playhead",egg_wasm_audio_get_playhead,"()i"},
   {"egg_res_get",egg_wasm_res_get,"(*~iii)i"},
   {"egg_res_id_by_index",egg_wasm_res_id_by_index,"(***i)"},

@@ -18,6 +18,7 @@
 #include "opt/localstore/localstore.h"
 #include "opt/http/http.h"
 #include "opt/render/render.h"
+#include "opt/synth/synth.h"
 #include "quickjs.h"
 
 #define EGG_EVENT_QUEUE_LENGTH 256
@@ -108,6 +109,7 @@ extern struct egg {
   struct romr romr;
   struct localstore localstore;
   struct render *render;
+  struct synth *synth;
   
 } egg;
 
