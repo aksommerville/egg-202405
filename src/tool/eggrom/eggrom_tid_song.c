@@ -71,9 +71,10 @@ static int eggrom_song_should_keep_event(struct eggrom_song_context *ctx,const s
  
 static int eggrom_song_emit_channel_header(struct eggrom_song_context *ctx,int chid) {
   // pid, volume, pan, zero
-  uint8_t tmp[4]={0,0x40,0x40,0};
+  uint8_t tmp[4]={0,0x80,0x80,0};
   const struct eggrom_song_event *event=ctx->eventv;
   int i=ctx->eventc;
+  int notec=0;
   for (;i-->0;event++) {
     if (event->chid!=chid) continue;
     if (event->opcode==MIDI_OPCODE_PROGRAM) {
@@ -83,7 +84,12 @@ static int eggrom_song_emit_channel_header(struct eggrom_song_context *ctx,int c
       case MIDI_CONTROL_VOLUME_MSB: tmp[1]=event->b<<1; break;
       case MIDI_CONTROL_PAN_MSB: tmp[2]=event->b<<1; break;
       case MIDI_CONTROL_BANK_LSB: if (event->b&1) tmp[0]|=0x80; else tmp[0]&=~0x80; break;
+    } else if (event->opcode==MIDI_OPCODE_NOTE_ON) {
+      notec++;
     }
+  }
+  if (!notec) { // No notes, the channel is not in use. Emit zeroes so runtime knows not to instantiate it.
+    memset(tmp,0,sizeof(tmp));
   }
   return sr_encode_raw(ctx->dst,tmp,sizeof(tmp));
 }

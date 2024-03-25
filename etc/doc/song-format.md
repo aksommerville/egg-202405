@@ -22,7 +22,7 @@ Begins with a fixed header:
 0006   2 Repeat position.
 0008  32 Channel initializers. 8 of:
            0000   1 Program ID. First 128 are General MIDI.
-           0001   1 Volume.
+           0001   1 Volume 0..255.
            0002   1 Pan. 0..128..255 = left..center..right
            0003   1 reserved
 0028

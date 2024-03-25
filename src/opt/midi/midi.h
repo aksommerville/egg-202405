@@ -60,7 +60,7 @@ struct midi_file {
     int c;
     int p;
     uint8_t status;
-    int delay; // Pending delay in frames, <0 if unset.
+    int delay; // Pending delay in ticks, <0 if unset.
   } *trackv;
   int trackc,tracka;
 };

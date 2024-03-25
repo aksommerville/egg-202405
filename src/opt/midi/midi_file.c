@@ -16,14 +16,16 @@ void midi_file_del(struct midi_file *file) {
 
 /* Populate (framespertick) based on (rate,usperqnote).
  */
- 
+
 static void midi_file_recalculate_tempo(struct midi_file *file) {
   if (file->rate>0) {
     double sperqnote=(double)file->usperqnote/1000000.0;
     double fperqnote=(double)file->rate*sperqnote;
     file->framespertick=fperqnote/(double)file->division;
-    // Should come out in the hundreds or thousands. As a safety measure, don't let it fall below one.
-    if (file->framespertick<1.0) file->framespertick=1.0;
+    // Should come out in the hundreds or thousands. As a safety measure, keep it above zero.
+    // If I'm calling the rate 1000, to get timing in milliseconds, and using a Logic MIDI with the default division 480, 
+    // it does sometimes drop below 1.
+    if (file->framespertick<0.1) file->framespertick=0.1;
   } else {
     file->framespertick=1.0; // we won't use it, but just to be consistent
   }
@@ -156,7 +158,7 @@ static int midi_track_read_event(struct midi_event *event,struct midi_file *file
         event->opcode=lead;
         event->chid=0xff;
         switch (event->opcode) {
-          case 0xff: A // Meta. Identical to Sysex except we get a "type" byte first, outputting as (a).
+          case 0xff: event->opcode=MIDI_OPCODE_META; A // Meta. Identical to Sysex except we get a "type" byte first, outputting as (a).
           case 0xf0: case 0xf7: { // Sysex, or Meta payload
               int paylen,seqlen;
               if ((seqlen=sr_vlq_decode(&paylen,track->v+track->p,track->c-track->p))<1) return -1;
@@ -182,6 +184,8 @@ static int midi_track_acquire_delay(struct midi_file *file,struct midi_track *tr
   int tickc,seqlen;
   if ((seqlen=sr_vlq_decode(&tickc,track->v+track->p,track->c-track->p))<1) return -1;
   track->p+=seqlen;
+  track->delay=tickc;
+  /*XXX Don't convert to frames here, that would allow tracks to slip away from each other over time.
   if (!tickc) {
     track->delay=0;
   } else if (file->rate>0) {
@@ -190,6 +194,7 @@ static int midi_track_acquire_delay(struct midi_file *file,struct midi_track *tr
   } else {
     track->delay=tickc;
   }
+  /**/
   return 0;
 }
 
@@ -238,7 +243,9 @@ int midi_file_next(struct midi_event *event,struct midi_file *file) {
     }
   }
   if (finished) return -1;
-  return shortest_delay;
+  int delay_frames=(int)lround(shortest_delay*file->framespertick);
+  if (delay_frames<1) return 1;
+  return delay_frames;
 }
 
 /* Advance clock.
@@ -246,11 +253,13 @@ int midi_file_next(struct midi_event *event,struct midi_file *file) {
 
 int midi_file_advance(struct midi_file *file,int framec) {
   if (framec<1) return 0;
+  int tickc=(int)lround(framec/file->framespertick);
+  if (tickc<1) tickc=1;
   struct midi_track *track=file->trackv;
   int i=file->trackc;
   for (;i-->0;track++) {
     if (track->p>=track->c) continue;
-    if ((track->delay-=framec)<0) {
+    if ((track->delay-=tickc)<0) {
       track->delay=0;
     }
   }
