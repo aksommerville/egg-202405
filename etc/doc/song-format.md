@@ -18,14 +18,15 @@ Begins with a fixed header:
 
 ```
 0000   4 Signature: "\xbe\xee\xeeP"
-0004   2 Start position.
-0006   2 Repeat position.
-0008  32 Channel initializers. 8 of:
+0004   2 Tempo, ms/qnote. Not required for event processing, but instruments might use it.
+0006   2 Start position.
+0008   2 Repeat position.
+000a  32 Channel initializers. 8 of:
            0000   1 Program ID. First 128 are General MIDI.
            0001   1 Volume 0..255.
            0002   1 Pan. 0..128..255 = left..center..right
            0003   1 reserved
-0028
+002a
 ```
 
 Start Position and Repeat Position are in bytes from the start of the file.

@@ -204,11 +204,10 @@ void egg_audio_play_song(int qual,int songid,int force,int repeat);
  */
 void egg_audio_play_sound(int qual,int soundid,double trim,double pan);
 
-/* Estimate the current song position in milliseconds from song start.
- * Our songs do not provide any tempo information, so digesting this is up to you.
+/* Estimate the current song position in fractional beats from song start.
  * <0 if no song is playing.
  */
-int egg_audio_get_playhead();
+double egg_audio_get_playhead();
 
 /* Storage.
  ***************************************************************/

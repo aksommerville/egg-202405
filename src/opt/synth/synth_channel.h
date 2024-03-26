@@ -48,18 +48,17 @@ extern const struct synth_builtin {
       uint8_t level; // Envelope, tiny form.
     } sub;
     struct {
+      uint16_t rangeenv; // u4,4,4,4
       uint8_t rangelfo; // u4.4, beats
+      uint8_t rangelfo_depth; // u4.4
       uint8_t rate; // u4.4
       uint8_t scale; // u4.4, fm range
       uint8_t level; // Envelope, tiny form.
-      uint8_t tremolo_rate; // u4.4, beats
-      uint8_t tremolo_depth;
       uint8_t detune_rate; // u4.4, beats
       uint8_t detune_depth;
       uint8_t overdrive;
       uint8_t delay_rate; // u4.4, beats
       uint8_t delay_depth;
-      //TODO We are going to need tempo from the song. Can we store it as u16 ms?
     } fx;
   };
 } synth_builtin[0x80];

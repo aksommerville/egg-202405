@@ -12,6 +12,7 @@ struct synth_song {
   int srcp;
   int delay; // frames
   float frames_per_ms;
+  int tempo; // ms/qnote, advisory only
   int qual,songid;
   int startp,loopp;
   int playhead_ms; // We make an effort to keep current at each advance.
@@ -32,8 +33,8 @@ static inline int synth_song_is_resource(const struct synth_song *song,int qual,
   return ((song->qual==qual)&&(song->songid==songid));
 }
 
-static inline int synth_song_get_playhead(const struct synth *synth,const struct synth_song *song) {
-  return song->playhead_ms;
+static inline double synth_song_get_playhead(const struct synth *synth,const struct synth_song *song) {
+  return (double)song->playhead_ms/(double)song->tempo;
 }
 
 /* Commit new channels and procs to (synth), make ready to play (song).

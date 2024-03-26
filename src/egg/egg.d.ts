@@ -206,8 +206,7 @@ export declare function audio_play_song(qual: number, songid: number, force: boo
  */
 export declare function audio_play_sound(qual: number, soundid: number, trim: number, pan: number): void;
 
-/* Estimate the current song position in milliseconds from song start.
- * Our songs do not provide any tempo information, so digesting this is up to you.
+/* Estimate the current song position in fractional beats from song start.
  * <0 if no song is playing.
  */
 export declare function audio_get_playhead(): number;

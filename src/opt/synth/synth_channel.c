@@ -49,26 +49,18 @@ static int synth_channel_init_builtin(struct synth *synth,struct synth_channel *
         channel->sv[0]=(float)builtin->sub.width1/(float)synth->rate;
         channel->sv[1]=(float)builtin->sub.width2/(float)synth->rate;
         channel->sv[2]=(float)builtin->sub.gain;
-        fprintf(stderr,"sub: %f %f %f\n",channel->sv[0],channel->sv[1],channel->sv[2]);
       } break;
       
-    /*struct {
-      uint8_t rangelfo; // u4.4, beats
-      uint8_t rate; // u4.4
-      uint8_t scale; // u4.4, fm range
-      uint8_t tremolo_rate; // u4.4, beats
-      uint8_t tremolo_depth;
-      uint8_t detune_rate; // u4.4, beats
-      uint8_t detune_depth;
-      uint8_t overdrive;
-      uint8_t delay_rate; // u4.4, beats
-      uint8_t delay_depth;
-      //TODO These probably need "depth" parameters in addition to "rate".
-      //TODO We are going to need tempo from the song. Can we store it as u16 ms?
-    } fx; TODO */
     case SYNTH_CHANNEL_MODE_FX: {
         synth_env_config_init_tiny(synth,&channel->level,builtin->fx.level);
-        return -1;//TODO
+        struct synth_proc *proc=synth_proc_new(synth);
+        synth_proc_init(synth,proc);
+        proc->chid=channel->chid;
+        proc->origin=SYNTH_ORIGIN_SONG;//TODO
+        if (synth_proc_fx_init(synth,proc,channel,builtin)<0) {
+          proc->update=0;
+          return -1;
+        }
       } break;
       
     default: {
@@ -141,7 +133,9 @@ void synth_channel_note_on(struct synth *synth,struct synth_channel *channel,uin
       } break;
       
     case SYNTH_CHANNEL_MODE_FX: {
-        //TODO Dispatch to proc
+        struct synth_proc *proc=synth_find_proc_by_chid(synth,channel->chid);
+        if (!proc||!proc->note_on) return;
+        proc->note_on(synth,proc,noteid,velocity);
       } break;
       
     // Everything else starts a voice.
@@ -170,7 +164,14 @@ void synth_channel_note_once(struct synth *synth,struct synth_channel *channel,u
     case SYNTH_CHANNEL_MODE_DRUM: synth_channel_note_on(synth,channel,noteid,velocity); return;
     
     case SYNTH_CHANNEL_MODE_FX: {
-        //TODO Dispatch to proc
+        struct synth_proc *proc=synth_find_proc_by_chid(synth,channel->chid);
+        if (!proc) return;
+        if (proc->note_once) {
+          proc->note_once(synth,proc,noteid,velocity,dur);
+        } else if (proc->note_on) {
+          proc->note_on(synth,proc,noteid,velocity);
+          if (proc->note_on) proc->note_off(synth,proc,noteid,velocity);
+        }
       } break;
       
     default: {
@@ -189,9 +190,16 @@ void synth_channel_control(struct synth *synth,struct synth_channel *channel,uin
   switch (k) {
     case MIDI_CONTROL_VOLUME_MSB: {
         channel->trim=v/127.0f;
-      } break;
+      } return;
     case MIDI_CONTROL_PAN_MSB: {
         channel->pan=v/64.0f-1.0f;
+      } return;
+  }
+  switch (channel->mode) {
+    case SYNTH_CHANNEL_MODE_FX: {
+        struct synth_proc *proc=synth_find_proc_by_chid(synth,channel->chid);
+        if (!proc||!proc->control) return;
+        proc->control(synth,proc,k,v);
       } break;
   }
 }
@@ -207,7 +215,9 @@ void synth_channel_wheel(struct synth *synth,struct synth_channel *channel,uint1
     case SYNTH_CHANNEL_MODE_DRUM: break;
   
     case SYNTH_CHANNEL_MODE_FX: {
-        //TODO Dispatch to proc
+        struct synth_proc *proc=synth_find_proc_by_chid(synth,channel->chid);
+        if (!proc||!proc->wheel) return;
+        proc->wheel(synth,proc,v);
       } break;
       
     default: {

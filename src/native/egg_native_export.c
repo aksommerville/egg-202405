@@ -40,7 +40,7 @@ void egg_audio_play_sound(int qual,int soundid,double trim,double pan) {
   }
 }
 
-int egg_audio_get_playhead() {
+double egg_audio_get_playhead() {
   fprintf(stderr,"%s\n",__func__);//TODO
   // Do not lock driver.
   return synth_get_playhead(egg.synth);//TODO also ask the audio driver its buffer position
@@ -657,10 +657,10 @@ static void egg_wasm_audio_play_sound(wasm_exec_env_t ee,int qual,int soundid,do
  */
  
 static JSValue egg_js_audio_get_playhead(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
-  return JS_NewInt32(ctx,egg_audio_get_playhead());
+  return JS_NewFloat64(ctx,egg_audio_get_playhead());
 }
  
-static int egg_wasm_audio_get_playhead(wasm_exec_env_t ee) {
+static double egg_wasm_audio_get_playhead(wasm_exec_env_t ee) {
   return egg_audio_get_playhead();
 }
 
@@ -1091,7 +1091,7 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_draw_tile",egg_wasm_draw_tile,"(iiii)"},
   {"egg_audio_play_song",egg_wasm_audio_play_song,"(iiii)"},
   {"egg_audio_play_sound",egg_wasm_audio_play_sound,"(iiff)"},
-  {"egg_audio_get_playhead",egg_wasm_audio_get_playhead,"()i"},
+  {"egg_audio_get_playhead",egg_wasm_audio_get_playhead,"()f"},
   {"egg_res_get",egg_wasm_res_get,"(*~iii)i"},
   {"egg_res_id_by_index",egg_wasm_res_id_by_index,"(***i)"},
   {"egg_store_set",egg_wasm_store_set,"(*~*~)i"},

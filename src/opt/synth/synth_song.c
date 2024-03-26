@@ -12,14 +12,16 @@ void synth_song_del(struct synth_song *song) {
 /* Validate.
  */
  
-static int synth_song_validate(int *startp,int *loopp,const uint8_t *src,int srcc) {
-  const int hdrlen=40;
-  if (hdrlen!=8+4*SYNTH_SONG_CHANNEL_COUNT) return -1;
+static int synth_song_validate(int *tempo,int *startp,int *loopp,const uint8_t *src,int srcc) {
+  const int hdrlen=42;
+  if (hdrlen!=10+4*SYNTH_SONG_CHANNEL_COUNT) return -1;
   if (!src) return -1;
   if (srcc<hdrlen) return -1;
   if (memcmp(src,"\xbe\xee\xeeP",4)) return -1;
-  *startp=(src[4]<<8)|src[5];
-  *loopp=(src[6]<<8)|src[7];
+  *tempo=(src[4]<<8)|src[5];
+  *startp=(src[6]<<8)|src[7];
+  *loopp=(src[8]<<8)|src[9];
+  if (!*tempo) return -1;
   if (*startp<hdrlen) return -1;
   if (*loopp<*startp) return -1;
   if (*loopp>=srcc) return -1;
@@ -36,11 +38,12 @@ struct synth_song *synth_song_new(
   int repeat,
   int qual,int songid
 ) {
-  int startp,loopp;
-  if (synth_song_validate(&startp,&loopp,src,srcc)<0) return 0;
+  int tempo,startp,loopp;
+  if (synth_song_validate(&tempo,&startp,&loopp,src,srcc)<0) return 0;
   struct synth_song *song=calloc(1,sizeof(struct synth_song));
   if (!song) return 0;
   song->frames_per_ms=(float)synth->rate/1000.0f;
+  song->tempo=tempo;
   song->startp=startp;
   song->loopp=loopp;
   song->repeat=repeat;
@@ -64,7 +67,7 @@ struct synth_song *synth_song_new(
  */
 
 int synth_song_init_channels(struct synth *synth,struct synth_song *song) {
-  const uint8_t *src=song->src+8;
+  const uint8_t *src=song->src+10;
   struct synth_channel **chanp=synth->channelv;
   int *pidv=synth->pidv;
   int chid=0;

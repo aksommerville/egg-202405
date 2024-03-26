@@ -14,6 +14,11 @@ struct synth_proc {
   void (*del)(struct synth_proc *proc);
   void (*update)(float *v,int c,struct synth *synth,struct synth_proc *proc);
   void (*release)(struct synth *synth,struct synth_proc *proc);
+  void (*control)(struct synth *synth,struct synth_proc *proc,uint8_t k,uint8_t v);
+  void (*wheel)(struct synth *synth,struct synth_proc *proc,uint16_t v);
+  void (*note_on)(struct synth *synth,struct synth_proc *proc,uint8_t noteid,uint8_t velocity);
+  void (*note_off)(struct synth *synth,struct synth_proc *proc,uint8_t noteid,uint8_t velocity);
+  void (*note_once)(struct synth *synth,struct synth_proc *proc,uint8_t noteid,uint8_t velocity,int dur);
 };
 
 static inline void synth_proc_cleanup(struct synth_proc *proc) {
@@ -34,6 +39,10 @@ static inline void synth_proc_update(float *v,int c,struct synth *synth,struct s
   if (proc->update) proc->update(v,c,synth,proc);
 }
 
+static inline void synth_proc_wheel(struct synth *synth,struct synth_proc *proc,uint16_t v) {
+  if (proc->wheel) proc->wheel(synth,proc,v);
+}
+
 static inline int synth_proc_is_channel(const struct synth_proc *proc,uint8_t chid) {
   return (proc->chid==chid);
 }
@@ -52,5 +61,10 @@ static inline int synth_proc_compare(
 ) {
   return a->birthday-b->birthday;
 }
+
+/* Implementations.
+ ***************************************************/
+ 
+int synth_proc_fx_init(struct synth *synth,struct synth_proc *proc,struct synth_channel *channel,const struct synth_builtin *builtin);
 
 #endif

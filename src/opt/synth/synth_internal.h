@@ -8,6 +8,7 @@
 #include "synth.h"
 #include "synth_env.h"
 #include "synth_filter.h"
+#include "synth_delay.h"
 #include "synth_cache.h"
 #include "synth_song.h"
 #include "synth_channel.h"
@@ -94,7 +95,10 @@ struct synth_voice *synth_voice_new(struct synth *synth);
 struct synth_proc *synth_proc_new(struct synth *synth);
 struct synth_playback *synth_playback_new(struct synth *synth);
 struct synth_voice *synth_find_voice_by_chid_noteid(struct synth *synth,uint8_t chid,uint8_t noteid);
+struct synth_proc *synth_find_proc_by_chid(struct synth *synth,uint8_t chid);
 
 float *synth_wave_new_harmonics(const struct synth *synth,const uint8_t *coefv,int coefc);
+
+int synth_frames_per_beat(const struct synth *synth);
 
 #endif

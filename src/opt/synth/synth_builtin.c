@@ -21,17 +21,33 @@
 #define FX(pid,...) [pid]={.mode=SYNTH_CHANNEL_MODE_FX,.fx={__VA_ARGS__}},
 
 const struct synth_builtin synth_builtin[0x80]={
-  SUB(0x00,
-    .width1=10,
-    .width2=10,
-    .gain=30,
-    .level=PLUCK|ATTACK(2)|RELEASE(4),
+  //WAVE(0x00,.wave={0})
+  FX(0x00,
+    .rangeenv=0x8fc4,
+    .rangelfo=0x20,
+    .rangelfo_depth=0x10,
+    .rate=0x10,
+    .scale=0x30,
+    .level=PLUCK|ATTACK(1)|RELEASE(1),
+    .detune_rate=0x40,
+    .detune_depth=0x10,
+    .overdrive=0x40,
+    .delay_rate=0x08,
+    .delay_depth=0x80,
   )
-  SUB(0x01,
-    .width1=10,
-    .width2=20,
-    .gain=50,
-    .level=TONE|ATTACK(3)|RELEASE(4),
+  //BLIP(0x01)
+  FX(0x01,
+    .rangeenv=0x0f80,
+    .rangelfo=0x10,
+    .rangelfo_depth=0x08,
+    .rate=0x08,
+    .scale=0x30,
+    .level=PLUCK|ATTACK(2)|RELEASE(3),
+    .detune_rate=0x10,
+    .detune_depth=0x08,
+    .overdrive=0x00,
+    .delay_rate=0x00,
+    .delay_depth=0x00,
   )
   BLIP(0x02)
   BLIP(0x03)
@@ -103,12 +119,11 @@ const struct synth_builtin synth_builtin[0x80]={
     .level=BOW|ATTACK(7)|RELEASE(6),
   )
   FX(0x76,
+    .rangeenv=0x0f80,
     .rangelfo=0x10,
     .rate=0x20,
     .scale=0x30,
     .level=PLUCK|ATTACK(1)|RELEASE(5),
-    .tremolo_rate=0x10,
-    .tremolo_depth=0x40,
     .detune_rate=0x10,
     .detune_depth=0x40,
     .overdrive=0x80,

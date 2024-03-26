@@ -255,12 +255,12 @@ void synth_play_sound_serial(
 /* Get playhead.
  */
  
-int synth_get_playhead(struct synth *synth) {
+double synth_get_playhead(struct synth *synth) {
   // Use "next" if present, so we're discussing the new song as soon as the user asks for it.
   // Its playhead will linger at zero for a little while, until it starts playing for real.
   if (synth->song_next) return synth_song_get_playhead(synth,synth->song_next);
   if (synth->song) return synth_song_get_playhead(synth,synth->song);
-  return -1;
+  return -1.0;
 }
 
 /* Drop any voice or proc that might refer to the given channel.
@@ -326,4 +326,24 @@ struct synth_voice *synth_find_voice_by_chid_noteid(struct synth *synth,uint8_t 
     return voice;
   }
   return 0;
+}
+
+struct synth_proc *synth_find_proc_by_chid(struct synth *synth,uint8_t chid) {
+  struct synth_proc *proc=synth->procv;
+  int i=synth->procc;
+  for (;i-->0;proc++) {
+    if (synth_proc_is_defunct(proc)) continue;
+    if (proc->chid!=chid) continue;
+    return proc;
+  }
+  return 0;
+}
+
+/* Global tempo.
+ */
+ 
+int synth_frames_per_beat(const struct synth *synth) {
+  if (!synth->song) return synth->rate>>1;
+  if (synth->song->tempo<1) return synth->rate>>1;
+  return (synth->song->tempo*synth->rate)/1000;
 }

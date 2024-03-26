@@ -15,6 +15,9 @@ struct eggrom_song_context {
   int eventc,eventa;
   int time;
   int hichidc;
+  int usperqnote;
+  int hasdrums;
+  int drumchid;
 };
 
 static void eggrom_song_context_cleanup(struct eggrom_song_context *ctx) {
@@ -41,14 +44,26 @@ static struct eggrom_song_event *eggrom_song_add_event(struct eggrom_song_contex
 
 /* Initial event filter.
  * Throw out anything we definitely won't need.
+ * It's fair to manage timeless things here too (eg yoinking tempo).
  */
  
 static int eggrom_song_should_keep_event(struct eggrom_song_context *ctx,const struct midi_event *event) {
+  if ((event->opcode==MIDI_OPCODE_META)&&(event->a==MIDI_META_SET_TEMPO)) {
+    if (event->c==3) {
+      const uint8_t *v=event->v;
+      ctx->usperqnote=(v[0]<<16)|(v[1]<<8)|v[2];
+    }
+    return 0;
+  }
   if ((event->opcode==MIDI_OPCODE_META)&&(event->a==MIDI_META_EOT)) {
     // Preserve Meta EOT. We don't need the event per se, but we do want its timestamp, to avoid trimming a little at the end.
     return 1;
   }
   if (event->chid>=0x10) return 0; // Other Meta or Sysex, not interested.
+  if ((event->chid==0x09)||(event->chid==0x0f)) { // Do keep MIDI channels 10 and 15, that's where drums conventionally go. We'll find a home for them.
+    ctx->hasdrums=1;
+    return 0;
+  }
   if (event->chid>=0x08) { // We only get 8 channels in output. Flag this for a warning and discard.
     ctx->hichidc++;
     return 0;
@@ -79,7 +94,7 @@ static int eggrom_song_emit_channel_header(struct eggrom_song_context *ctx,int c
     if (event->chid!=chid) continue;
     if (event->opcode==MIDI_OPCODE_PROGRAM) {
       if (tmp[0]) fprintf(stderr,"%s:WARNING: Multiple Program Change on channel %d. We will apply pid %d to the entire channel.\n",ctx->res->path,chid,event->a);
-      tmp[0]=event->a;
+      tmp[0]|=event->a;
     } else if (event->opcode==MIDI_OPCODE_CONTROL) switch (event->a) {
       case MIDI_CONTROL_VOLUME_MSB: tmp[1]=event->b<<1; break;
       case MIDI_CONTROL_PAN_MSB: tmp[2]=event->b<<1; break;
@@ -88,8 +103,24 @@ static int eggrom_song_emit_channel_header(struct eggrom_song_context *ctx,int c
       notec++;
     }
   }
-  if (!notec) { // No notes, the channel is not in use. Emit zeroes so runtime knows not to instantiate it.
-    memset(tmp,0,sizeof(tmp));
+  if (!notec) { // No notes, the channel is not in use.
+    if (ctx->hasdrums) { // And we have events on 0x09, so put them here instead.
+      for (i=ctx->eventc,event=ctx->eventv;i-->0;event++) {
+        if ((event->chid!=0x09)&&(event->chid!=0x0f)) continue;
+        if (event->opcode==MIDI_OPCODE_PROGRAM) {
+          tmp[0]=event->a;
+        } else if (event->opcode==MIDI_OPCODE_CONTROL) switch (event->a) {
+          case MIDI_CONTROL_VOLUME_MSB: tmp[1]=event->b<<1; break;
+          case MIDI_CONTROL_PAN_MSB: tmp[2]=event->b<<1; break;
+          case MIDI_CONTROL_BANK_LSB: if (event->b&1) tmp[0]|=0x80; else tmp[0]&=~0x80; break;
+        }
+      }
+      if (!tmp[0]) tmp[0]=0x80;
+      ctx->hasdrums=0;
+      ctx->drumchid=chid;
+    } else { // Really empty. Make sure the volume is zero so runtime knows it's unused.
+      memset(tmp,0,sizeof(tmp));
+    }
   }
   return sr_encode_raw(ctx->dst,tmp,sizeof(tmp));
 }
@@ -97,13 +128,14 @@ static int eggrom_song_emit_channel_header(struct eggrom_song_context *ctx,int c
 static int eggrom_song_emit_header(struct eggrom_song_context *ctx) {
   int err;
   if (sr_encode_raw(ctx->dst,"\xbe\xee\xeeP",4)<0) return -1;
-  if (sr_encode_intbe(ctx->dst,40,2)<0) return -1; // Start Position
-  if (sr_encode_intbe(ctx->dst,40,2)<0) return -1; // Loop Position
+  if (sr_encode_intbe(ctx->dst,(ctx->usperqnote+500)/1000,2)<0) return -1; // Tempo
+  if (sr_encode_intbe(ctx->dst,42,2)<0) return -1; // Start Position
+  if (sr_encode_intbe(ctx->dst,42,2)<0) return -1; // Loop Position
   int chid=0; for (;chid<8;chid++) {
     if ((err=eggrom_song_emit_channel_header(ctx,chid))<0) return err;
   }
-  if (ctx->dst->c!=40) {
-    fprintf(stderr,"%s: %s:%d: ctx->dst->c==%d, expected 40\n",ctx->res->path,__FILE__,__LINE__,ctx->dst->c);
+  if (ctx->dst->c!=42) {
+    fprintf(stderr,"%s: %s:%d: ctx->dst->c==%d, expected 42\n",ctx->res->path,__FILE__,__LINE__,ctx->dst->c);
     return -2;
   }
   return 0;
@@ -160,7 +192,15 @@ static int eggrom_song_emit_events(struct eggrom_song_context *ctx) {
       continue;
     }
     
-    /* NOTE_ON, we need to find the corresponding NOTE_OFF, and then there's two options:
+    /* NOTE_ON for drums becomes FIREFORGET on a channel we discovered earlier.
+     */
+    if ((event->opcode==MIDI_OPCODE_NOTE_ON)&&((event->chid==0x09)||(event->chid==0x0f))) {
+      if (sr_encode_u8(ctx->dst,0x90|((event->b>>3)&0x0c)|(ctx->drumchid>>1))<0) return -1;
+      if (sr_encode_u8(ctx->dst,(ctx->drumchid<<7)|event->a)<0) return -1;
+      continue;
+    }
+    
+    /* NOTE_ON normally, we need to find the corresponding NOTE_OFF, and then there's two options:
      * 1000vvvv cccnnnnn nntttttt NOTE. duration=(t<<5)ms (~2s max)
      * 1001vvcc cnnnnnnn          FIREFORGET. Same as NOTE but duration zero (and coarser velocity).
      */
@@ -237,7 +277,12 @@ static int eggrom_song_compile_midi_inner(struct eggrom_song_context *ctx) {
  */
  
 static int eggrom_song_compile_midi(struct sr_encoder *dst,const struct romw_res *res) {
-  struct eggrom_song_context ctx={.dst=dst,.res=res};
+  struct eggrom_song_context ctx={
+    .dst=dst,
+    .res=res,
+    .usperqnote=500000,
+    .drumchid=-1,
+  };
   if (!(ctx.midi=midi_file_new(res->serial,res->serialc,1000))) {
     fprintf(stderr,"%s: Error decoding %d-byte MIDI file.\n",res->path,res->serialc);
     eggrom_song_context_cleanup(&ctx);

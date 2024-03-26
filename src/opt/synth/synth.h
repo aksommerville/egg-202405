@@ -55,12 +55,12 @@ void synth_play_sound_serial(
   float trim,float pan
 );
 
-/* Current song time in milliseconds, or -1 if no song.
+/* Current song time in beats, or -1 if no song.
  * This counter does return to zero when the song repeats.
  * Beware that this is not the whole picture, for reporting to the game: 
  * You should try to estimate how far into its last buffer the PCM driver is.
  */
-int synth_get_playhead(struct synth *synth);
+double synth_get_playhead(struct synth *synth);
 
 /* You may push events into the system at any time.
  * Beware that this is the same event bus the song is using.

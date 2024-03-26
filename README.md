@@ -27,7 +27,7 @@ Game code can be in JavaScript or WebAssembly.
 - [x] server: Non-blocking make.
 - [ ] Accelerometer input.
 - [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.
-- [ ] Store tempo in songs, and reshape egg_audio_get_playhead().
+- [x] Store tempo in songs, and reshape egg_audio_get_playhead().
 - [x] midi file: tracks are going out of sync over time. Evident in 3-toil_and_trouble
 - [x] Actually, tempos are haywire all over the place! Compare 1-tangled_vine (fast) to 13-nearer_the_sky
 - [ ] x11 app icon broken, after i changed from GIF to ICO
