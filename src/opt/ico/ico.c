@@ -171,6 +171,8 @@ static int ico_file_decode(struct ico_file *ico,const uint8_t *src,int srcc) {
     image->planec=planec;
     image->pixelsize=pixelsize;
     // (stride,v) do not get populated yet
+    
+    fprintf(stderr,"ico %dx%d ctc=%d planec=%d pixelsize=%d paylen=%d\n",w,h,ctc,planec,pixelsize,paylen);
   }
   return 0;
 }

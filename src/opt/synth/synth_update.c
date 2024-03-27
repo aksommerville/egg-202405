@@ -9,7 +9,7 @@ static void synth_update_printers(struct synth *synth,int framec) {
   for (;i-->0;p--) {
     struct pcmprint *pcmprint=*p;
     int err=pcmprint_update(pcmprint,framec);
-    if (err<=0) {
+    if (err) {
       pcmprint_del(pcmprint);
       synth->pcmprintc--;
       memmove(p,p+1,sizeof(void*)*(synth->pcmprintc-i));

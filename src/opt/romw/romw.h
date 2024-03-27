@@ -18,6 +18,7 @@ struct romw {
     uint16_t rid;
     char *path;
     int pathc;
+    int lineno; // For resources extract from multi-resource text files (string,sound).
     char *name;
     int namec;
     void *serial;

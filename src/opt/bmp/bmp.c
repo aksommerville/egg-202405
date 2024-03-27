@@ -128,6 +128,10 @@ static int bmp_decode_BITMAPINFOHEADER(struct bmp_image *image,const uint8_t *sr
   if (srcc<36) return 0;
   image->ctabc=src[32]|(src[33]<<8)|(src[34]<<16)|(src[35]<<24);
   
+  if (!image->ctabc) { // no idea what i'm doing
+    if (image->pixelsize==4) image->ctabc=16;
+  }
+  
   if (srcc<56) return 0;
   // Read masks in the native byte order, because we're not byte-swapping individual pixels either.
   image->rmask=*(uint32_t*)(src+40);
@@ -209,6 +213,7 @@ struct bmp_image *bmp_decode(const void *src,int srcc) {
   
   // https://en.wikipedia.org/wiki/BMP_file_format
   int err=-1;
+  fprintf(stderr,"bmp hdrlen %d\n",hdrlen);
   switch (hdrlen) {
     case 12: err=bmp_decode_BITMAPCOREHEADER(image,SRC+srcp,hdrlen); break;
     case 64: err=bmp_decode_OS22XBITMAPHEADER(image,SRC+srcp,hdrlen); break;
@@ -261,14 +266,18 @@ struct bmp_image *bmp_decode(const void *src,int srcc) {
    * Per Wikipedia, it's more complicated than following the stated (ctabc). Because of course it bloody is.
    * I'm going to assume that (ctabc) is always set correctly.
    */
+  fprintf(stderr,"bmp ctabc %d\n",image->ctabc);
+  image->h>>=1;// need this for ico.... what the hell? figure this out
   if (image->ctabc) {
     int ctablen=image->ctabc<<2;
     if (srcp>srcc-ctablen) {
       bmp_image_del(image);
+      fprintf(stderr,"ctab overrun\n");
       return 0;
     }
     if (bmp_decode_ctab(image,SRC+srcp,image->ctabc)<0) {
       bmp_image_del(image);
+      fprintf(stderr,"ctab error\n");
       return 0;
     }
     srcp+=ctablen;
@@ -290,10 +299,12 @@ struct bmp_image *bmp_decode(const void *src,int srcc) {
   image->stride=((image->w*image->pixelsize+31)>>3)&~3;
   if ((image->stride<1)||(image->stride>INT_MAX/image->h)) {
     bmp_image_del(image);
+      fprintf(stderr,"pixels too long\n");
     return 0;
   }
   int pixelslen=image->stride*image->h;
   if ((srcp>srcc-pixelslen)||!(image->v=malloc(pixelslen))) {
+      fprintf(stderr,"pixels overrun stride=%d srcp=%d/%d w=%d h=%d\n",image->stride,srcp,srcc,image->w,image->h);
     bmp_image_del(image);
     return 0;
   }

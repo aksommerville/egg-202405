@@ -384,6 +384,7 @@ static struct rawimg *rawimg_decode_ico(const uint8_t *src,int srcc) {
     ico_file_del(file);
     return 0;
   }
+  fprintf(stderr,"ico image: %dx%d\n",image->w,image->h);
   struct rawimg *rawimg=rawimg_new_handoff(image->v,image->w,image->h,image->stride,image->pixelsize);
   if (!rawimg) {
     ico_file_del(file);

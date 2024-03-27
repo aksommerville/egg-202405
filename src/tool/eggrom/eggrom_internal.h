@@ -38,6 +38,7 @@ int eggrom_infer_ids(struct romw_res *res);
 /* "expand" handlers should create new resources in (eggrom.romw).
  */
 int eggrom_string_expand(const char *src,int srcc,uint16_t qual,const char *path);
+int eggrom_sound_expand(const char *src,int srcc,uint16_t qual,const char *path);
 
 /* "compile" handlers should put rewritten serial content in (dst).
  * If you leave (dst) untouched, the original (res->serial) will be kept.

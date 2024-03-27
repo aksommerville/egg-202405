@@ -54,6 +54,16 @@ static int egg_native_rom_load_iconImage(const char *v,int vc) {
       rawimg->v=0;
       egg.romiconw=rawimg->w;
       egg.romiconh=rawimg->h;
+      
+      fprintf(stderr,"egg.romicon:\n");
+      const uint8_t *row=egg.romicon;
+      int yi=egg.romiconh;
+      for (;yi-->0;row+=rawimg->stride) {
+        const uint8_t *p=row;
+        int xi=egg.romiconw;
+        for (;xi-->0;p+=4) fprintf(stderr," %02x",*p);
+        fprintf(stderr,"\n");
+      }
     }
   }
   rawimg_del(rawimg);

@@ -55,7 +55,6 @@ float synth_detune_update(struct synth_delay *delay,float src,float phase) {
   else if (r>=delay->c) r=delay->c-1;
   r=delay->p-r;
   if (r<0) r+=delay->c;
-  //float result=delay->v[r];
   delay->v[delay->p]=src;
   if (++(delay->p)>=delay->c) delay->p=0;
   return delay->v[r];

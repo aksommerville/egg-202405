@@ -2,7 +2,6 @@
 
 /* Any resource types where multiple resources come out of one file,
  * find them, create the multiple resources, and delete the original.
- * Probably just string.
  */
  
 int eggrom_expand_resources() {
@@ -17,6 +16,15 @@ int eggrom_expand_resources() {
           if ((err=eggrom_string_expand(res->serial,res->serialc,res->qual,res->path))<0) {
             res=eggrom.romw->resv+i;
             if (err!=-2) fprintf(stderr,"%s: Unspecified error processing strings.\n",res->path);
+            return -2;
+          }
+          romw_res_remove(eggrom.romw,i);
+        } break;
+        
+      case EGG_TID_sound: {
+          if ((err=eggrom_sound_expand(res->serial,res->serialc,res->qual,res->path))<0) {
+            res=eggrom.romw->resv+i;
+            if (err!=-2) fprintf(stderr,"%s: Unspecified error processing sounds.\n",res->path);
             return -2;
           }
           romw_res_remove(eggrom.romw,i);

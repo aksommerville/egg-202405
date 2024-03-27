@@ -62,7 +62,7 @@ static int eggrom_song_should_keep_event(struct eggrom_song_context *ctx,const s
   if (event->chid>=0x10) return 0; // Other Meta or Sysex, not interested.
   if ((event->chid==0x09)||(event->chid==0x0f)) { // Do keep MIDI channels 10 and 15, that's where drums conventionally go. We'll find a home for them.
     ctx->hasdrums=1;
-    return 0;
+    return 1;
   }
   if (event->chid>=0x08) { // We only get 8 channels in output. Flag this for a warning and discard.
     ctx->hichidc++;

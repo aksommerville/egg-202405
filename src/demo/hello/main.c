@@ -72,7 +72,7 @@ int egg_client_init() {
     spritec=SPRITEA;
   }
   
-  egg_audio_play_song(0,15,0,1);
+  egg_audio_play_song(0,4,0,1);
   
   egg_log("%s:%d",__FILE__,__LINE__);
   return 0;
@@ -81,6 +81,15 @@ int egg_client_init() {
 /**/
 static void on_key(int keycode,int value) {
   if (value) switch (keycode) {
+    case 0x0007001e: egg_audio_play_sound(0,35,1.0,0.0); break;
+    case 0x0007001f: egg_audio_play_sound(0,36,1.0,0.0); break;
+    case 0x00070020: egg_audio_play_sound(0,37,1.0,0.0); break;
+    case 0x00070021: egg_audio_play_sound(0,38,1.0,0.0); break;
+    case 0x00070022: egg_audio_play_sound(0,39,1.0,0.0); break;
+    case 0x00070023: egg_audio_play_sound(0,40,1.0,0.0); break;
+    case 0x00070024: egg_audio_play_sound(0,41,1.0,0.0); break;
+    case 0x00070025: egg_audio_play_sound(0,42,1.0,0.0); break;
+    case 0x00070026: egg_audio_play_sound(0,43,1.0,0.0); break;
     case 0x00070029: egg_request_termination(); break; // ESC
     case 0x0007003a: { // F1
         if (egg_event_enable(EGG_EVENT_MMOTION,EGG_EVTSTATE_QUERY)==EGG_EVTSTATE_ENABLED) {

@@ -17,6 +17,7 @@ int eggrom_string_expand(const char *src,int srcc,uint16_t qual,const char *path
     if (!res) return -1;
     res->tid=EGG_TID_string;
     res->qual=qual;
+    res->lineno=lineno;
     
     int linep=0;
     const char *k=line+linep;

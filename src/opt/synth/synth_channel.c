@@ -75,7 +75,7 @@ static int synth_channel_init_builtin(struct synth *synth,struct synth_channel *
  */
  
 static int synth_channel_init_drums(struct synth *synth,struct synth_channel *channel,int soundid0) {
-  fprintf(stderr,"%s %d\n",__func__,soundid0);
+  //fprintf(stderr,"%s soundid=%d chid=%d\n",__func__,soundid0,channel->chid);
   channel->mode=SYNTH_CHANNEL_MODE_DRUM;
   channel->drumbase=soundid0;
   return 0;
@@ -99,6 +99,7 @@ struct synth_channel *synth_channel_new(struct synth *synth,uint8_t chid,int pid
     
   // pid 0..127 are General MIDI, defined in synth_builtin.
   if (pid<0x80) {
+    pid&=1;
     if (synth_channel_init_builtin(synth,channel,synth_builtin+pid)<0) {
       synth_channel_del(channel);
       return 0;
@@ -127,6 +128,7 @@ void synth_channel_note_on(struct synth *synth,struct synth_channel *channel,uin
   switch (channel->mode) {
   
     case SYNTH_CHANNEL_MODE_DRUM: {
+        //fprintf(stderr,"drum %02x %02x\n",noteid,velocity);
         int soundid=channel->drumbase+noteid;
         float trim=0.200f+(channel->trim*velocity)/100.0f;
         synth_play_sound(synth,0,soundid,trim,channel->pan);

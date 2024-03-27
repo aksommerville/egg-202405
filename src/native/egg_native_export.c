@@ -25,7 +25,6 @@ static void egg_js_basic_free(JSRuntime *rt,void *opaque,void *ptr) { if (ptr) f
  */
  
 void egg_audio_play_song(int qual,int songid,int force,int repeat) {
-  fprintf(stderr,"%s %d:%d %d %d\n",__func__,qual,songid,force,repeat);//TODO
   if (hostio_audio_lock(egg.hostio)>=0) {
     synth_play_song(egg.synth,qual,songid,force,repeat);
     hostio_audio_unlock(egg.hostio);
@@ -33,7 +32,6 @@ void egg_audio_play_song(int qual,int songid,int force,int repeat) {
 }
 
 void egg_audio_play_sound(int qual,int soundid,double trim,double pan) {
-  fprintf(stderr,"%s %d:%d %f %f\n",__func__,qual,soundid,trim,pan);//TODO
   if (hostio_audio_lock(egg.hostio)>=0) {
     synth_play_sound(egg.synth,qual,soundid,trim,pan);
     hostio_audio_unlock(egg.hostio);
@@ -1090,8 +1088,8 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_draw_decal",egg_wasm_draw_decal,"(iiiiiiiii)"},
   {"egg_draw_tile",egg_wasm_draw_tile,"(iiii)"},
   {"egg_audio_play_song",egg_wasm_audio_play_song,"(iiii)"},
-  {"egg_audio_play_sound",egg_wasm_audio_play_sound,"(iiff)"},
-  {"egg_audio_get_playhead",egg_wasm_audio_get_playhead,"()f"},
+  {"egg_audio_play_sound",egg_wasm_audio_play_sound,"(iiFF)"},
+  {"egg_audio_get_playhead",egg_wasm_audio_get_playhead,"()F"},
   {"egg_res_get",egg_wasm_res_get,"(*~iii)i"},
   {"egg_res_id_by_index",egg_wasm_res_id_by_index,"(***i)"},
   {"egg_store_set",egg_wasm_store_set,"(*~*~)i"},
@@ -1105,7 +1103,7 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_ws_disconnecct",egg_wasm_ws_disconnect,"(i)"},
   {"egg_ws_get_message",egg_wasm_ws_get_message,"(*~ii)i"},
   {"egg_ws_send",egg_wasm_ws_send,"(ii*~)"},
-  {"egg_time_real",egg_wasm_time_real,"()f"},
+  {"egg_time_real",egg_wasm_time_real,"()F"},
   {"egg_time_get",egg_wasm_time_get,"(*******)"},
   {"egg_get_user_languages",egg_wasm_get_user_languages,"(*i)i"},
   {"egg_request_termination",egg_wasm_request_termination,"()"},

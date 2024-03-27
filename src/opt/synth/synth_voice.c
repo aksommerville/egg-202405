@@ -23,7 +23,7 @@ void synth_voice_begin(struct synth *synth,struct synth_voice *voice,struct synt
         voice->ttl=dur;
         int mindur=synth->rate>>4;
         if (voice->ttl<mindur) voice->ttl=mindur;
-        voice->bliplevel=(channel->trim*(velocity+10))/500.0f; // denominator should be about 140, but square waves are really loud
+        voice->bliplevel=(channel->trim*(velocity+10))/1000.0f; // denominator should be about 140, but square waves are really loud
       } break;
     
     case SYNTH_CHANNEL_MODE_WAVE: {
