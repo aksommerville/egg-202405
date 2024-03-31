@@ -63,7 +63,6 @@ export class Audio {
    *****************************************************************/
   
   audio_play_song(qual, songid, force, repeat) {
-    console.log(`TODO Audio.audio_play_song(${qual},${songid},${force},${repeat})`);
     if (!force && this.song && this.song.isResource(qual, songid)) return;
     this.endSong();
     const serial = this.rom.getResource(Rom.TID_song, qual, songid);
@@ -125,7 +124,6 @@ export class Audio {
       if (!src.volume) continue;
       this.channels[i] = new Channel(this, src.pid, src.volume, src.pan);
     }
-    console.log(`...beginSong`, { song: this.song, channels: this.channels });
   }
   
   acquireSound(qual, rid) {
@@ -152,18 +150,13 @@ export class Audio {
   
   // (velocity) in 0..127 like MIDI. (when) in AudioContext time.
   playNote(chid, noteid, velocity, durs, when) {
-    console.log(`Audio.playNote chid=${chid} noteid=${noteid} velocity=${velocity} durs=${durs} when=${when - this.context.currentTime}`);//TODO
     const channel = this.channels[chid];
-    if (!channel) {
-      console.log(`...channel ${chid} not initialized`);
-      return;
-    }
+    if (!channel) return;
     channel.playNote(this, noteid, velocity / 127.0, durs, when);
   }
   
   // (v) in 0..0x3fff like MIDI. (when) in AudioContext time.
   changeWheel(chid, v, when) {
-    console.log(`Audio.changeWheel chid=${chid} v=${v} when=${when - this.context.currentTime}`);//TODO
     const channel = this.channels[chid];
     if (!channel) return;
     if (!channel.wheelRange) return;
@@ -200,7 +193,7 @@ class Song {
     if (!(src instanceof Uint8Array)) throw new Error(`Expected Uint8Array`);
     if (src.length < 42) throw new Error(`Invalid song`);
     if ((src[0] !== 0xbe) || (src[1] !== 0xee) || (src[2] !== 0xee) || (src[3] !== 0x50)) throw new Error(`Invalid song`);
-    this.usperqnote = (src[4] << 8) | src[5];
+    this.msperqnote = (src[4] << 8) | src[5];
     this.startp = (src[6] << 8) | src[7];
     this.loopp = (src[8] << 8) | src[9];
     if ((this.startp < 42) || (this.loopp < this.startp) || (this.loopp >= src.length)) throw new Error(`Invalid song`);
@@ -253,7 +246,6 @@ class Song {
     if (!lead) {
       if (!this.repeat) return null;
       this.readp = this.loopp;
-      console.log(`*** repeat ${this.readTime - this.startTime} ***`);//TODO Need to record the readhead time for reporting purposes.
       // Must delay a little, in case the song has no explicit delays, so we don't loop forever.
       // Note that if this happens, it's a disaster no matter what.
       return 0.010;
@@ -337,7 +329,6 @@ class Channel {
   }
   
   _initBuiltin(audio) {
-    console.log(`TODO Channel._initBuiltin pid=${this.pid}`);
     
     /**
     this.mode = "blip";
@@ -364,7 +355,7 @@ class Channel {
     /**
     this.mode = "fmrel";
     this.levelTiny = 0x80 | (2<<3) | 4; //TONE|ATTACK(2)|RELEASE(4),
-    this.fmRate = 0.5;
+    this.fmRate = 1.0;
     this.fmRangeScale = 3.0;
     this.fmRangeEnv = 0x0f61;
     /**/
@@ -394,12 +385,12 @@ class Channel {
     this.fmRangeLfo = 1.0;
     this.fmScale = 3.0;
     this.fmRate = 2.0;
-    this.levelTiny = 0x40 | (1<<3) | 5;
+    this.levelTiny = 0x40 | (1<<3) | 1;
     this.detuneRate = 1.0;
     this.detuneDepth = 0.0625;
-    this.overdrive = 0;
-    this.delayRate = 2.0;
-    this.delayDepth = 0.25;
+    this.overdrive = 0.80;
+    this.delayRate = 1.0;
+    this.delayDepth = 0.5;
     this.fxBegin(audio);
     /**/
   }
@@ -472,14 +463,58 @@ class Channel {
     }
   }
   
-  //XXX Not sure about implementing the 'fx' mode in WebAudio, it's complicated.
-  // Did I make the whole thing too complicated?
-  
   fxBegin(audio) {
     this.audio = audio;
     this.fxMaster = new GainNode(audio.context);
-    this.fxMaster.setValueAtTime(this.trim * this.master, 0);
+    this.fxMaster.gain.setValueAtTime(this.volume * this.master, 0);
     this.fxMaster.connect(audio.context.destination);
+    this.fxVoices = [];
+    this.fxAttach = this.fxMaster;
+    
+    //TODO detune. Can't do it in post like the C implementation, but I think we can vary the voice's frequencies.
+    //TODO FM range LFO.
+    
+    if ((this.delayRate > 0) && (this.delayDepth > 0) && this.audio.song && (this.audio.song.msperqnote > 0)) {
+      const wetLevel = this.delayDepth * 0.500;
+      const dryLevel = 1 - wetLevel;
+      const period = (this.delayRate * this.audio.song.msperqnote) / 1000;
+      const delay = new DelayNode(this.audio.context, { delayTime: period });
+      
+      const intake = new GainNode(this.audio.context, { gain: 1 });
+      const output = new GainNode(this.audio.context, { gain: 1 });
+      const dryGain = new GainNode(this.audio.context, { gain: dryLevel });
+      const wetGain = new GainNode(this.audio.context, { gain: wetLevel });
+      intake.connect(dryGain);
+      dryGain.connect(output);
+      intake.connect(delay);
+      delay.connect(wetGain);
+      wetGain.connect(delay);
+      wetGain.connect(output);
+      output.connect(this.fxAttach);
+      this.fxAttach = intake;
+    }
+    
+    if (this.overdrive > 0) {
+      const len = 99;
+      const ramplen = Math.floor(len * (0.500 - (Math.pow(2, this.overdrive) - 1) * 0.500));
+      const peak = 1.0 - this.overdrive * 0.500;
+      const midp = len >> 1;
+      const vv = new Float32Array(len);
+      for (let i=0; i<ramplen; i++) {
+        vv[midp + i + 1] = Math.sin((i * Math.PI / 2) / ramplen) * peak;
+      }
+      for (let i=midp+ramplen+1; i<len; i++) {
+        vv[i] = peak;
+      }
+      for (let dst=midp, src=midp+1; dst-->0; src++) {
+        vv[dst] = -vv[src];
+      }
+      const shaper = new WaveShaperNode(this.audio.context, {
+        curve: vv,
+      });
+      shaper.connect(this.fxAttach);
+      this.fxAttach = shaper;
+    }
   }
   
   fxStop() {
@@ -490,6 +525,10 @@ class Channel {
   }
   
   fxNote(audio, when, noteid, velocity, durs) {
+    const voice = new Voice(this.audio);
+    voice.oscillateFmRelative(this.audio.hzByNoteid[noteid], this.wheelCents, this.fmRate, this.fmScale, this.fmRangeEnv);
+    voice.tinyEnv(when, this.levelTiny, durs, velocity, 1);
+    voice.begin(this.fxAttach);
   }
 }
 
@@ -539,13 +578,18 @@ class Voice {
       this.noiseNode.disconnect();
       this.noiseNode = null;
     }
+    if (this.post) {
+      this.post.disconnect();
+      this.post = null;
+    }
   }
   
   release() {
   }
   
-  begin() {
+  begin(dst) {
     if (!this.audio || !this.env) return;
+    if (!dst) dst = this.audio.context.destination;
     if (this.osc) {
       this.osc.connect(this.env);
       if (this.osc.start) this.osc.start();
@@ -557,7 +601,8 @@ class Voice {
     } else {
       return;
     }
-    this.env.connect(this.audio.context.destination);
+    if (this.post) this.post.connect(dst);
+    else this.env.connect(dst);
     this.audio.voices.push(this);
   }
   
@@ -733,9 +778,9 @@ class Voice {
     else if (velocity >= 1) { a=0; b=1; }
     else { a = 1 - velocity; b = velocity; }
     const attackTime = attackTimeLo * a + attackTimeHi * b;
-    const attackValue = (attackValueLo * a + attackValueHi * b) * trim;
+    const attackValue = (attackValueLo * a + attackValueHi * b) ;//* trim;
     const decayTime = decayTimeLo * a + decayTimeHi * b;
-    const sustainValue = (sustainValueLo * a + sustainValueHi * b) * trim;
+    const sustainValue = (sustainValueLo * a + sustainValueHi * b) ;//* trim;
     if (!sustain) durs = 0;
     const releaseTime = releaseTimeLo * a + releaseTimeHi * b;
     this.endTime = when + attackTime + decayTime + durs + releaseTime;

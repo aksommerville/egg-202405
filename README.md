@@ -27,6 +27,10 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [x] pcmprint
 - [ ] Synthesizer, web.
 - - [ ] Generate instrument config from src/opt/synth/synth_builtin.c
+- - [ ] fx: detune
+- - [ ] fx: FM LFO
+- - [ ] Pitch wheel
+- - [ ] Readhead should wrap around on song repeats.
 - [ ] User-supplied HTTP permissions.
 - [ ] User-supplied storage permissions.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
@@ -35,3 +39,10 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - [ ] x11 app icon broken, after i changed from GIF to ICO
 - - [ ] Our ico and bmp decoder are all kinds of wrong.
 - [ ] Web: Detect low frame rate and pause. Or at least kill the audio. (eg when browser window goes into background)
+
+Rethink audio. It's getting too complicated.
+- Can I do WebAudio-like pluggable nodes on the C side?
+- Integrate PCM printing with synth, there's tons of overlap.
+- - But then how will it work in web?
+- - - Can we run a second AudioContext and capture its output? YES: OfflineAudioContext.
+- I don't want to get stuck on audio forever. Left some thoughts in src/opt/synth2, but will proceed with the existing ones.
