@@ -19,6 +19,7 @@
 #define FMABS(pid,...) [pid]={.mode=SYNTH_CHANNEL_MODE_FMABS,.fmabs={__VA_ARGS__}},
 #define SUB(pid,...) [pid]={.mode=SYNTH_CHANNEL_MODE_SUB,.sub={__VA_ARGS__}},
 #define FX(pid,...) [pid]={.mode=SYNTH_CHANNEL_MODE_FX,.fx={__VA_ARGS__}},
+#define ALIAS(pid,otherpid) [pid]={.mode=SYNTH_CHANNEL_MODE_ALIAS,.alias=otherpid},
 
 const struct synth_builtin synth_builtin[0x80]={
   //WAVE(0x00,.wave={0})
@@ -61,11 +62,25 @@ const struct synth_builtin synth_builtin[0x80]={
   BLIP(0x0b)
   BLIP(0x0c)
   BLIP(0x0d)
-  BLIP(0x0e)
-  BLIP(0x0f)
-  BLIP(0x10)
-  BLIP(0x11)
-  BLIP(0x12)
+  
+  // eye-of-newt
+  FX(0x0e,
+    .rangeenv=0x0f80,
+    .rangelfo=0x10,
+    .rate=0x20,
+    .scale=0x30,
+    .level=PLUCK|ATTACK(1)|RELEASE(5),
+    .detune_rate=0x10,
+    .detune_depth=0x10,
+    .overdrive=0x00,
+    .delay_rate=0x20,
+    .delay_depth=0x40,
+  )
+  ALIAS(0x0f,0x0e)
+  ALIAS(0x10,0x0e)
+  ALIAS(0x11,0x0e)
+  ALIAS(0x12,0x0e)
+  
   BLIP(0x13)
   BLIP(0x14)
   BLIP(0x15)

@@ -41,7 +41,9 @@ export class Runtime {
     if (this.terminated) return Promise.reject('terminated');
     this._findAndApplyMetadata();
     this._initializeGlobals();
-    return this._findClientEntryPoints().then(() => {
+    return this._findClientEntryPoints()
+      .then(() => this.audio.start())
+      .then(() => {
       if (this.egg_client_init) {
         if (this.egg_client_init() < 0) throw new Error(`egg_client_init failed`);
       }

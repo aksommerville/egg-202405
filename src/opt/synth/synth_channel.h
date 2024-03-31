@@ -14,6 +14,7 @@
 #define SYNTH_CHANNEL_MODE_FMABS 6 /* FM with absolute-frequency modulator. */
 #define SYNTH_CHANNEL_MODE_SUB   7 /* IIR bandpass of white noise. */
 #define SYNTH_CHANNEL_MODE_FX    8 /* Shared LFO, FM voices, post-processing. The cadillac of synths. */
+#define SYNTH_CHANNEL_MODE_ALIAS 9 /* Use some other program and issue a warning. */
 
 extern const struct synth_builtin {
   uint8_t mode;
@@ -60,6 +61,7 @@ extern const struct synth_builtin {
       uint8_t delay_rate; // u4.4, beats
       uint8_t delay_depth;
     } fx;
+    uint8_t alias;
   };
 } synth_builtin[0x80];
 

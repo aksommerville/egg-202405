@@ -13,7 +13,13 @@ void synth_channel_del(struct synth_channel *channel) {
  */
  
 static int synth_channel_init_builtin(struct synth *synth,struct synth_channel *channel,const struct synth_builtin *builtin) {
-  fprintf(stderr,"%s %p\n",__func__,builtin);
+  if (builtin->mode==SYNTH_CHANNEL_MODE_ALIAS) {
+    fprintf(stderr,
+      "WARNING: Program 0x%02x not defined, using 0x%02x instead. This song might sound different in the future.\n",
+      channel->pid,builtin->alias
+    );
+    builtin=synth_builtin+builtin->alias;
+  }
   switch (channel->mode=builtin->mode) {
     case SYNTH_CHANNEL_MODE_DRUM: return -1; // Not valid for builtins.
     case SYNTH_CHANNEL_MODE_BLIP: break; // OK, done!
@@ -99,7 +105,6 @@ struct synth_channel *synth_channel_new(struct synth *synth,uint8_t chid,int pid
     
   // pid 0..127 are General MIDI, defined in synth_builtin.
   if (pid<0x80) {
-    pid&=1;
     if (synth_channel_init_builtin(synth,channel,synth_builtin+pid)<0) {
       synth_channel_del(channel);
       return 0;

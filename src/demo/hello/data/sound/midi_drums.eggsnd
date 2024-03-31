@@ -1,7 +1,7 @@
 #TODO Everything here is temporary, just running pcmprint thru its paces.
 
 sound 35 # B1 Acoustic Bass Drum
-  master 0.750
+  master 0.150
   wave fm=0.5,3
   fmrange 0 40 1 300 0
   fmlfo 0.4 0.8
@@ -11,7 +11,7 @@ sound 35 # B1 Acoustic Bass Drum
 end
 
 sound 36 # C2 Bass Drum 1
-  master 0.150
+  master 0.100
   #wave 0.900 0.000 0.400 0.000 0.100
   wave fm=0.5,3
   fmrange 0 20 1 20 0.5 600 0
@@ -20,7 +20,7 @@ sound 36 # C2 Bass Drum 1
 end
 
 sound 37 # C#2 Side Stick
-  master 0.400
+  master 0.100
   wave noise
   level 0.000 10 0.999 10 0.000
   delay 80 0.5 0.5 0.5 0.8
@@ -28,7 +28,7 @@ sound 37 # C#2 Side Stick
 end
 
 sound 38 # D2 Acoustic Snare
-  master 0.500
+  master 0.200
   wave square
   level 0.000 15 0.999 20 0.100 250 0.000
   rate 100 250 800
@@ -36,7 +36,7 @@ sound 38 # D2 Acoustic Snare
 end
 
 sound 39 # D#2 Hand Clap
-  master 0.500
+  master 0.200
   wave noise
   level 0.000 10 0.999 20 0.000
   delay 60 0.5 0.5 0.5 0.8
@@ -48,7 +48,7 @@ voice
 end
 
 sound 40 # E2 Electric Snare
-  master 0.500
+  master 0.100
   wave fm=5.3,9
   rate 300 500 400
   fmlfo 10 1
@@ -56,7 +56,7 @@ sound 40 # E2 Electric Snare
 end
 
 sound 41 # F2 Low Floor Tom
-  master 0.300
+  master 0.200
   wave fm=0.666,5
   rate 200 300 50
   level 0.000 20 0.999 40 0.200 200 0.000

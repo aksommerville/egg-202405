@@ -4,6 +4,9 @@ Games platform designed to work like an emulator: The game is a single file that
 
 Game code can be in JavaScript or WebAssembly.
 
+Video and audio, we provide a small opinionated API.
+Input is more agnostic, tries to give you raw events as much as possible.
+
 ## TODO
 
 - [ ] Alternate render implementations.
@@ -23,6 +26,7 @@ Game code can be in JavaScript or WebAssembly.
 - - [ ] GM drums.
 - - [x] pcmprint
 - [ ] Synthesizer, web.
+- - [ ] Generate instrument config from src/opt/synth/synth_builtin.c
 - [ ] User-supplied HTTP permissions.
 - [ ] User-supplied storage permissions.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
@@ -30,3 +34,4 @@ Game code can be in JavaScript or WebAssembly.
 - [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.
 - [ ] x11 app icon broken, after i changed from GIF to ICO
 - - [ ] Our ico and bmp decoder are all kinds of wrong.
+- [ ] Web: Detect low frame rate and pause. Or at least kill the audio. (eg when browser window goes into background)
