@@ -30,14 +30,14 @@ const struct synth_builtin synth_builtin[0x80]={
     .rate=0x10,
     .scale=0x30,
     .level=PLUCK|ATTACK(1)|RELEASE(1),
-    .detune_rate=0x40,
-    .detune_depth=0x10,
-    .overdrive=0x40,
+    //.detune_rate=0x40,
+    //.detune_depth=0x10,
+    .overdrive=0xff,
     .delay_rate=0x08,
     .delay_depth=0x80,
   )
-  //BLIP(0x01)
-  FX(0x01,
+  BLIP(0x01)
+  FX(0x51,
     .rangeenv=0x0f80,
     .rangelfo=0x10,
     .rangelfo_depth=0x08,
@@ -76,10 +76,29 @@ const struct synth_builtin synth_builtin[0x80]={
     .delay_rate=0x20,
     .delay_depth=0x40,
   )
-  ALIAS(0x0f,0x0e)
-  ALIAS(0x10,0x0e)
-  ALIAS(0x11,0x0e)
-  ALIAS(0x12,0x0e)
+  ROCK(0x0f,
+    .wave={0xff,0x00,0x55,0x00,0x33,0x00,0x11,0x00},
+    .mix=0x0f80,
+    .level=PLUCK|ATTACK(0)|RELEASE(7),
+  )
+  FMREL(0x10,
+    .rate=0x08,
+    .scale=0x30,
+    .range=0x0f61,
+    .level=TONE|ATTACK(2)|RELEASE(4),
+  )
+  SUB(0x11,
+    .width1=40,
+    .width2=20,
+    .gain=30,
+    .level=BOW|ATTACK(7)|RELEASE(6),
+  )
+  FMABS(0x12,
+    .rate=0x0600,
+    .scale=0x04,
+    .range=0x8f20,
+    .level=TONE|ATTACK(1)|RELEASE(3),
+  )
   
   BLIP(0x13)
   BLIP(0x14)
@@ -106,6 +125,12 @@ const struct synth_builtin synth_builtin[0x80]={
   BLIP(0x29)
   BLIP(0x2a)
   BLIP(0x2b)
+  FMREL(0x2c,
+    .rate=0x08,
+    .scale=0x20,
+    .range=0x8f84,
+    .level=TONE|ATTACK(1)|RELEASE(4),
+  )
   WAVE(0x71,
     .wave={0xff,0x00,0x55,0x00,0x33,0x00,0x11,0x00},
     .level=PLUCK|ATTACK(0)|RELEASE(7),
@@ -142,7 +167,7 @@ const struct synth_builtin synth_builtin[0x80]={
     .detune_rate=0x10,
     .detune_depth=0x40,
     .overdrive=0x80,
-    .delay_rate=0x20,
+    .delay_rate=0x20,/*spacelessComment*/
     .delay_depth=0x40,
   )
 };

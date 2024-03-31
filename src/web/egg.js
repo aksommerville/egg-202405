@@ -5,7 +5,7 @@
  
 import { Rom } from "./js/Rom.js";
 import { Runtime } from "./js/Runtime.js";
- 
+
 window.addEventListener("message", e => {
   if (!e.data?.eggRunSerial) return;
   const canvas = document.getElementById(e.data.eggCanvasId);

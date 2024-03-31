@@ -50,7 +50,7 @@
  * When a new one gets created, it might evict some older one.
  * Safe to raise or lower these limits arbitrarily.
  */
-#define SYNTH_VOICE_LIMIT 16
+#define SYNTH_VOICE_LIMIT 32
 #define SYNTH_PROC_LIMIT 16
 #define SYNTH_PLAYBACK_LIMIT 16
 

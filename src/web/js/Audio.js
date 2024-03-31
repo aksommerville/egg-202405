@@ -4,6 +4,7 @@
 
 import { Rom } from "./Rom.js"; 
 import { Pcmprint } from "./Pcmprint.js";
+import { Instruments } from "./Instruments.js";
  
 export class Audio {
   constructor(window, rom) {
@@ -163,7 +164,6 @@ export class Audio {
     if (v === channel.wheel) return;
     channel.wheel = v;
     channel.wheelCents = ((v - 0x2000) * channel.wheelRange) / 0x2000;
-    //channel.bend = Math.pow(2, ((v - 0x2000) * channel.wheelRange) / (1200 * 8192));
     //TODO Apply to in-flight voices. Must respect (when) too!
   }
   
@@ -301,6 +301,7 @@ class Song {
  
 class Channel {
   constructor(audio, pid, volume, pan) {
+    this.audio = audio;
     this.pid = pid;
     this.volume = volume / 255.0;
     this.master = 0.250;
@@ -308,7 +309,6 @@ class Channel {
     this.mode = "noop";
     this.wheelRange = 200; // cents
     this.wheel = 0; // Last value, 0..0x3fff
-    //this.bend = 1; // Multiplier, from wheel and wheelRange. XXX Not sure we'll need this; OscillatorNode expects it in cents.
     this.wheelCents = 0;
     
     if (this.pid < 0x00) this._initNoop();
@@ -329,70 +329,24 @@ class Channel {
   }
   
   _initBuiltin(audio) {
-    
-    /**
-    this.mode = "blip";
-    // no more params!
-    /**/
-    
-    /**
-    this.mode = "wave";
-    this.levelTiny = 0x80 | (2<<3) | 5;
-    this.wave = new PeriodicWave(audio.context, {
-      real: [0, 0xff/255.0, 0x80/255.0, 0x55/255.0, 0x40/255.0, 0x22/255.0],
-    });
-    /**/
-    
-    /**
-    this.mode = "rock";
-    this.levelTiny = 0x40 | (3<<3) | 3;
-    this.wave = new PeriodicWave(audio.context, {
-      real: [0, 0x10/255.0, 0xc0/255.0, 0x55/255.0, 0x40/255.0, 0x22/255.0],
-    });
-    this.mix = 0x0f42;
-    /**/
-    
-    /**
-    this.mode = "fmrel";
-    this.levelTiny = 0x80 | (2<<3) | 4; //TONE|ATTACK(2)|RELEASE(4),
-    this.fmRate = 1.0;
-    this.fmRangeScale = 3.0;
-    this.fmRangeEnv = 0x0f61;
-    /**/
-    
-    /**
-    this.mode = "fmabs";
-    this.fmRate = 6.0;
-    this.fmRangeScale = 0.25;
-    this.fmRangeEnv = 0x8f20;
-    this.levelTiny = 0x80 | (1<<3) | 3;
-    /**/
-    
-    /**
-    // sub: We're using BiquadFilterNode, I couldn't get IIRFilterNode to work.
-    // The Q parameter is black magic. Seems to run 0..100 = wide..narrow.
-    // Two passes are advisable, same as we do in the C implementation.
-    this.mode = "sub";
-    this.subQ1 = 20; //this.subWidth1 = 40 / audio.rate;
-    this.subQ2 = 40; //this.subWidth2 = 20 / audio.rate;
-    this.subGain = 50;
-    this.levelTiny = 0x40 | (3<<3) | 4;
-    /**/
-    
-    /**/
-    this.mode = "fx";
-    this.fmRangeEnv = 0x0f80;
-    this.fmRangeLfo = 1.0;
-    this.fmScale = 3.0;
-    this.fmRate = 2.0;
-    this.levelTiny = 0x40 | (1<<3) | 1;
-    this.detuneRate = 1.0;
-    this.detuneDepth = 0.0625;
-    this.overdrive = 0.80;
-    this.delayRate = 1.0;
-    this.delayDepth = 0.5;
-    this.fxBegin(audio);
-    /**/
+    let cfg = Instruments[this.pid];
+    if (typeof(cfg) === "number") {
+      cfg = Instruments[cfg];
+    }
+    if (!cfg) return this._initNoop();
+    if (typeof(cfg) === "string") {
+      this.mode = cfg;
+      return;
+    }
+    for (const k of Object.keys(cfg)) {
+      this[k] = cfg[k];
+    }
+    if (this.wave) {
+      this.wave = new PeriodicWave(audio.context, { real: this.wave });
+    }
+    if (this.mode === "fx") {
+      this.fxBegin(audio);
+    }
   }
   
   // (velocity) normalized
@@ -472,7 +426,24 @@ class Channel {
     this.fxAttach = this.fxMaster;
     
     //TODO detune. Can't do it in post like the C implementation, but I think we can vary the voice's frequencies.
-    //TODO FM range LFO.
+    
+    if ((this.fmRangeLfo > 0) && (this.fmRangeLfoDepth > 0)) {
+      let beatRate = 2;
+      if (this.audio.song && (this.audio.song.msperqnote > 0)) {
+        beatRate = 1000 / this.audio.song.msperqnote;
+      }
+      const osc = new OscillatorNode(this.audio.context, {
+        type: "sine",
+        frequency: beatRate / this.fmRangeLfo,
+      });
+      const gain = new GainNode(this.audio.context, {
+        gain: this.fmRangeLfoDepth * 100, // TODO No idea why this *100 is needed.
+      });
+      osc.connect(gain);
+      osc.start();
+      this.fmLfo = osc;
+      this.fmLfoOut = gain;
+    }
     
     if ((this.delayRate > 0) && (this.delayDepth > 0) && this.audio.song && (this.audio.song.msperqnote > 0)) {
       const wetLevel = this.delayDepth * 0.500;
@@ -496,15 +467,18 @@ class Channel {
     
     if (this.overdrive > 0) {
       const len = 99;
-      const ramplen = Math.floor(len * (0.500 - (Math.pow(2, this.overdrive) - 1) * 0.500));
-      const peak = 1.0 - this.overdrive * 0.500;
+      const odrange = 8;
       const midp = len >> 1;
+      const odscaled = 0.5 + this.overdrive * (odrange - 0.5);
+      const odcurved = 1 / odscaled; // Now in (1/odrange)..2
+      const odnormed = (odcurved - 1 / odrange) / (2 - 1 / odrange);
+      const ramplen = midp * odnormed;
       const vv = new Float32Array(len);
       for (let i=0; i<ramplen; i++) {
-        vv[midp + i + 1] = Math.sin((i * Math.PI / 2) / ramplen) * peak;
+        vv[midp + i + 1] = Math.sin((i * Math.PI / 2) / ramplen);
       }
       for (let i=midp+ramplen+1; i<len; i++) {
-        vv[i] = peak;
+        vv[i] = 1;
       }
       for (let dst=midp, src=midp+1; dst-->0; src++) {
         vv[dst] = -vv[src];
@@ -512,7 +486,16 @@ class Channel {
       const shaper = new WaveShaperNode(this.audio.context, {
         curve: vv,
       });
-      shaper.connect(this.fxAttach);
+      // Also some attenuation, after the wave-shape, since we're raising its average level.
+      if (this.overdrive >= 0.25) {
+        const drop = new GainNode(this.audio.context, {
+          gain: 1 - (this.overdrive - 0.25) * 0.8,
+        });
+        shaper.connect(drop);
+        drop.connect(this.fxAttach);
+      } else {
+        shaper.connect(this.fxAttach);
+      }
       this.fxAttach = shaper;
     }
   }
@@ -522,11 +505,20 @@ class Channel {
       this.fxMaster.disconnect();
       this.fxMaster = null;
     }
+    if (this.fmLfo) {
+      this.fmLfo.stop();
+      this.fmLfo.disconnect();
+      this.fmLfo = null;
+    }
+    if (this.fmLfoOut) {
+      this.fmLfoOut.disconnect();
+      this.fmLfoOut = null;
+    }
   }
   
   fxNote(audio, when, noteid, velocity, durs) {
     const voice = new Voice(this.audio);
-    voice.oscillateFmRelative(this.audio.hzByNoteid[noteid], this.wheelCents, this.fmRate, this.fmScale, this.fmRangeEnv);
+    voice.oscillateFmRelative(this.audio.hzByNoteid[noteid], this.wheelCents, this.fmRate, this.fmRangeScale, this.fmRangeEnv, this.fmLfoOut);
     voice.tinyEnv(when, this.levelTiny, durs, velocity, 1);
     voice.begin(this.fxAttach);
   }
@@ -641,7 +633,7 @@ class Voice {
     this.mix = mix;
   }
   
-  oscillateFmRelative(frequency, detune, rate, scale, env) {
+  oscillateFmRelative(frequency, detune, rate, scale, env, lfo) {
     this.osc = new OscillatorNode(this.audio.context, {
       type: "sine",
       frequency,
@@ -652,9 +644,21 @@ class Voice {
       frequency: frequency * rate * Math.pow(2, detune / 1200),
     });
     this.modgain = new GainNode(this.audio.context);
+    if (lfo) {
+      this.fmGainLfo = lfo;
+      //const rangeCombine = new GainNode(this.audio.context, { gain: 20 });
+      //this.fmGainLfo.connect(rangeCombine);
+      this.fmGainLfo.connect(this.modgain.gain);
+      this.modgain.gain.setValueAtTime(1, 0);
+      //rangeCombine.connect(this.modosc.frequency);
+      //this.modgain.connect(rangeCombine);
+      //rangeCombine.connect(this.osc.frequency);
+      this.modgain.connect(this.osc.frequency);
+    } else {
+      this.modgain.connect(this.osc.frequency);
+    }
     this.modgainPeak = scale * frequency;
     this.fmRangeEnv = env;
-    this.modgain.connect(this.osc.frequency);
     this.modosc.connect(this.modgain);
     this.modosc.start();
   }
@@ -778,9 +782,9 @@ class Voice {
     else if (velocity >= 1) { a=0; b=1; }
     else { a = 1 - velocity; b = velocity; }
     const attackTime = attackTimeLo * a + attackTimeHi * b;
-    const attackValue = (attackValueLo * a + attackValueHi * b) ;//* trim;
+    const attackValue = (attackValueLo * a + attackValueHi * b) * trim;
     const decayTime = decayTimeLo * a + decayTimeHi * b;
-    const sustainValue = (sustainValueLo * a + sustainValueHi * b) ;//* trim;
+    const sustainValue = (sustainValueLo * a + sustainValueHi * b) * trim;
     if (!sustain) durs = 0;
     const releaseTime = releaseTimeLo * a + releaseTimeHi * b;
     this.endTime = when + attackTime + decayTime + durs + releaseTime;
@@ -812,7 +816,7 @@ class Voice {
       this.gainWet.gain.linearRampToValueAtTime(v3, this.endTime);
     }
     
-    if (this.fmRangeEnv) {
+    if (this.fmRangeEnv && !this.fmRangeLfo) {
       if (this.fmRangeEnv === 0xffff) {
         this.modgain.gain.setValueAtTime(this.modgainPeak, 0);
       } else {

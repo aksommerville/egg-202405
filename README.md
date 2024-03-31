@@ -26,11 +26,14 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] GM drums.
 - - [x] pcmprint
 - [ ] Synthesizer, web.
-- - [ ] Generate instrument config from src/opt/synth/synth_builtin.c
+- - [x] Generate instrument config from src/opt/synth/synth_builtin.c
 - - [ ] fx: detune
-- - [ ] fx: FM LFO
+- - [x] fx: FM LFO
+- - [x] fx: Overdrive should kick in a little harder. Make it match native as close as we can.
 - - [ ] Pitch wheel
 - - [ ] Readhead should wrap around on song repeats.
+- [x] Drums are proportionately much louder in native than web. Did i miss a trim somewhere?
+- [ ] Timing in MIDI conversion is still fucked up. See nearer-the-sky, they go out of sync toward the end.
 - [ ] User-supplied HTTP permissions.
 - [ ] User-supplied storage permissions.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.

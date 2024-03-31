@@ -36,8 +36,14 @@ canvas {
   white-space: pre;
 }
 </style>
-<script type="module" src="./egg.js"></script>
+<script type="module" src="./egg.js" onerror="fatalError('Failed to load JS bootstrap.')"></script>
 <script>
+function fatalError(message) {
+  console.error(`Fatal error: ${message}`);
+  const element = document.getElementById("error");
+  element.innerText = message;
+  element.classList.remove("hidden");
+}
 function terminate() {
   if (window.egg) {
     window.egg.request_termination();

@@ -37,7 +37,11 @@ define web_MOD_RULES
 endef
 $(foreach M,$(web_MODS),$(eval $(call web_MOD_RULES,$M)))
 
-web-run:$(web_MODS_OUT);echo "TODO HTTP server?" ; exit 1
+web_INSTRUMENTS:=src/web/js/Instruments.js
+all:$(web_INSTRUMENTS)
+$(web_INSTRUMENTS):src/opt/synth/synth_builtin.c etc/tool/mkinstruments.js;$(PRECMD) node etc/tool/mkinstruments.js src/opt/synth/synth_builtin.c $@
 
-test:$(web_MODS_OUT)
-test-%:$(web_MODS_OUT)
+web-run:$(web_MODS_OUT) $(web_INSTRUMENTS);echo "TODO HTTP server?" ; exit 1
+
+test:$(web_MODS_OUT) $(web_INSTRUMENTS)
+test-%:$(web_MODS_OUT) $(web_INSTRUMENTS)

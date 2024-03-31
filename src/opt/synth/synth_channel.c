@@ -21,6 +21,7 @@ static int synth_channel_init_builtin(struct synth *synth,struct synth_channel *
     builtin=synth_builtin+builtin->alias;
   }
   switch (channel->mode=builtin->mode) {
+    case 0: break;
     case SYNTH_CHANNEL_MODE_DRUM: return -1; // Not valid for builtins.
     case SYNTH_CHANNEL_MODE_BLIP: break; // OK, done!
     
@@ -133,9 +134,8 @@ void synth_channel_note_on(struct synth *synth,struct synth_channel *channel,uin
   switch (channel->mode) {
   
     case SYNTH_CHANNEL_MODE_DRUM: {
-        //fprintf(stderr,"drum %02x %02x\n",noteid,velocity);
         int soundid=channel->drumbase+noteid;
-        float trim=0.200f+(channel->trim*velocity)/100.0f;
+        float trim=0.200f+(channel->trim*channel->master*velocity)/150.0f;
         synth_play_sound(synth,0,soundid,trim,channel->pan);
       } break;
       

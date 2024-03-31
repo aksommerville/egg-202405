@@ -247,7 +247,7 @@ int synth_proc_fx_init(struct synth *synth,struct synth_proc *proc,struct synth_
   }
   if (builtin->fx.overdrive>0) {
     CTX->drive=1.0f+builtin->fx.overdrive/4.0f;
-    CTX->clip=1.0f-builtin->fx.overdrive/350.0f;
+    CTX->clip=1.0f-builtin->fx.overdrive/500.0f;
     CTX->clip*=channel->master;
   } else {
     CTX->drive=0.0f;

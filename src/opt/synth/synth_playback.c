@@ -27,6 +27,6 @@ void synth_playback_update(float *v,int c,struct synth *synth,struct synth_playb
   int i=playback->pcm->c-playback->p;
   if (i>c) i=c;
   else c=i;
-  for (;i-->0;v++,src++) (*v)+=(*src);
+  for (;i-->0;v++,src++) (*v)+=(*src)*playback->gain;
   playback->p+=c;
 }
