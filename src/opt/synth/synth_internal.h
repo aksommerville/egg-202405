@@ -71,6 +71,7 @@ struct synth {
   struct synth_song *song_next;
   struct synth_channel *channelv[SYNTH_CHANNEL_COUNT];
   int pidv[SYNTH_CHANNEL_COUNT];
+  struct synth_builtin override_pid_0; // Hack for live instrument editor.
   
   // Signal graph.
   float qbuf[SYNTH_BUFFER_LIMIT];

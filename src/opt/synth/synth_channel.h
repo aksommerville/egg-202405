@@ -6,6 +6,8 @@
 #ifndef SYNTH_CHANNEL_H
 #define SYNTH_CHANNEL_H
 
+#include "synth_env.h"
+
 #define SYNTH_CHANNEL_MODE_DRUM  1 /* Note On => Play PCM */
 #define SYNTH_CHANNEL_MODE_BLIP  2 /* Square wave and no envelope, the simplest synthesizer. */
 #define SYNTH_CHANNEL_MODE_WAVE  3 /* Wavetable and envelope, the simplest synthesizer one might actually use. */

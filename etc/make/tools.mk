@@ -4,7 +4,7 @@
 tools_MIDDIR:=mid/tool
 tools_OUTDIR:=out/tool
 
-tools_OPT_ENABLE+=fs serial romr romw midi wav http process
+tools_OPT_ENABLE+=fs serial romr romw midi wav http process ossmidi hostio synth pcmprint
 tools_OPT_ENABLE+=qoi rlead rawimg bmp gif ico png
 
 tools_CCWARN:=-Werror -Wimplicit
@@ -22,6 +22,12 @@ tools_LDPOST:=-lm -lz -lpthread $(tools_LDPOST_EXTRA)
 
 ifneq (,$(strip $(filter jpeg,$(tools_OPT_ENABLE))))
   tools_LDPOST+=-ljpeg
+endif
+ifneq (,$(strip $(filter asound,$(tools_OPT_ENABLE))))
+  tools_LDPOST+=-lasound
+endif
+ifneq (,$(strip $(filter pulse,$(tools_OPT_ENABLE))))
+  tools_LDPOST+=-lpulse -lpulse-simple
 endif
 
 $(tools_MIDDIR)/%.o:src/%.c;$(PRECMD) $(tools_CC) -o$@ $<
@@ -44,3 +50,5 @@ tools_TOOLS:=$(filter-out common,$(notdir $(wildcard src/tool/*)))
 $(foreach T,$(tools_TOOLS),$(eval $(call TOOL_RULES,$T)))
 
 serve:$(tools_server_EXE) demos-all;$(tools_server_EXE) --port=8080 --htdocs=src/web --makeable-dir=out/rom
+
+synthwerk:$(tools_synthwerk_EXE);$(tools_synthwerk_EXE)

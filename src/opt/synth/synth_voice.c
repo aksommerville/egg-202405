@@ -98,6 +98,7 @@ void synth_voice_begin(struct synth *synth,struct synth_voice *voice,struct synt
  */
 
 void synth_voice_release(struct synth *synth,struct synth_voice *voice) {
+  voice->noteid=0xff;
   switch (voice->mode) {
   
     case SYNTH_CHANNEL_MODE_BLIP: {

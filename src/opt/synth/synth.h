@@ -9,6 +9,7 @@
 
 struct synth;
 struct romr;
+struct synth_builtin;
 
 void synth_del(struct synth *synth);
 
@@ -69,5 +70,12 @@ double synth_get_playhead(struct synth *synth);
  * You may send 0xff System Reset with a channel to reset only that channel, or chid 0xff to reset everything.
  */
 void synth_event(struct synth *synth,uint8_t chid,uint8_t opcode,uint8_t a,uint8_t b,int dur);
+
+/* For live editor. Call this to replace the built-in config for pid 0.
+ * Not available for any other pid.
+ * struct synth_builtin is defined in synth_channel.h.
+ * Override with (mode==0) to restore the default.
+ */
+void synth_override_pid_0(struct synth *synth,const struct synth_builtin *builtin);
 
 #endif

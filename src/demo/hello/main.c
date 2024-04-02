@@ -72,7 +72,7 @@ int egg_client_init() {
     spritec=SPRITEA;
   }
   
-  egg_audio_play_song(0,16,0,1);
+  egg_audio_play_song(0,7,0,1);
   
   egg_log("%s:%d",__FILE__,__LINE__);
   return 0;

@@ -1,5 +1,31 @@
 #include "synth_internal.h"
 
+/* Override pid 0.
+ */
+ 
+void synth_override_pid_0(struct synth *synth,const struct synth_builtin *builtin) {
+  if (builtin) {
+    memcpy(&synth->override_pid_0,builtin,sizeof(struct synth_builtin));
+  } else {
+    memset(&synth->override_pid_0,0,sizeof(struct synth_builtin));
+  }
+  // Drop everything hard. Except song, pidv, and playbackv, no problem keep those.
+  while (synth->voicec>0) {
+    synth->voicec--;
+    synth_voice_cleanup(synth->voicev+synth->voicec);
+  }
+  while (synth->procc>0) {
+    synth->procc--;
+    synth_proc_cleanup(synth->procv+synth->procc);
+  }
+  int chid=SYNTH_CHANNEL_COUNT; while (chid-->0) {
+    if (synth->channelv[chid]) {
+      synth_channel_del(synth->channelv[chid]);
+      synth->channelv[chid]=0;
+    }
+  }
+}
+
 /* Get channel for chid, instantiating if needed.
  */
  

@@ -106,7 +106,9 @@ struct synth_channel *synth_channel_new(struct synth *synth,uint8_t chid,int pid
     
   // pid 0..127 are General MIDI, defined in synth_builtin.
   if (pid<0x80) {
-    if (synth_channel_init_builtin(synth,channel,synth_builtin+pid)<0) {
+    const struct synth_builtin *builtin=synth_builtin+pid;
+    if (!pid&&synth->override_pid_0.mode) builtin=&synth->override_pid_0;
+    if (synth_channel_init_builtin(synth,channel,builtin)<0) {
       synth_channel_del(channel);
       return 0;
     }
@@ -157,9 +159,15 @@ void synth_channel_note_on(struct synth *synth,struct synth_channel *channel,uin
  */
  
 void synth_channel_note_off(struct synth *synth,struct synth_channel *channel,uint8_t noteid,uint8_t velocity) {
-  struct synth_voice *voice=synth_find_voice_by_chid_noteid(synth,channel->chid,noteid);
-  if (!voice) return;
-  synth_voice_release(synth,voice);
+  if (channel->mode==SYNTH_CHANNEL_MODE_FX) {
+    struct synth_proc *proc=synth_find_proc_by_chid(synth,channel->chid);
+    if (!proc||!proc->note_off) return;
+    proc->note_off(synth,proc,noteid,velocity);
+  } else {
+    struct synth_voice *voice=synth_find_voice_by_chid_noteid(synth,channel->chid,noteid);
+    if (!voice) return;
+    synth_voice_release(synth,voice);
+  }
 }
 
 /* Note Once.
