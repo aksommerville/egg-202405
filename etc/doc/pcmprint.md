@@ -17,6 +17,7 @@ Binary begins with a fixed header:
 
 Text format may begin with `master FLOAT`, 1.0 if omitted.
 That doesn't show up in the binary format. Instead, the compiler inserts a gain at the end of each voice.
+Text format sounds are not allowed to be empty.
 
 ### Voice
 

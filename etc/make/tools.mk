@@ -4,7 +4,7 @@
 tools_MIDDIR:=mid/tool
 tools_OUTDIR:=out/tool
 
-tools_OPT_ENABLE+=fs serial romr romw midi wav http process ossmidi hostio synth pcmprint
+tools_OPT_ENABLE+=fs serial romr romw midi wav http process ossmidi hostio synth pcmprint pcmprintc
 tools_OPT_ENABLE+=qoi rlead rawimg bmp gif ico png
 
 tools_CCWARN:=-Werror -Wimplicit

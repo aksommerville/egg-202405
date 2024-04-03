@@ -11,7 +11,7 @@ sound 35 # B1 Acoustic Bass Drum
 end
 
 sound 36 # C2 Bass Drum 1
-  master 0.100
+  master 0.200
   #wave 0.900 0.000 0.400 0.000 0.100
   wave fm=0.5,3
   fmrange 0 20 1 20 0.5 600 0
@@ -69,119 +69,158 @@ sound 42 # F#2 Closed Hi Hat
 end
 
 sound 43 # G2 High Floor Tom
+  master 0.250
 end
 
 sound 44 # G#2 Pedal Hi-Hat
+  master 0.250
 end
 
 sound 45 # A2 Low Tom
+  master 0.250
 end
 
 sound 46 # A#2 Open Hi-Hat
+  master 0.250
 end
 
 sound 47 # B2 Low-Mid Tom
+  master 0.250
 end
 
 sound 48 # C3 Hi Mid Tom
+  master 0.250
 end
 
 sound 49 # C#3 Crash Cymbal 1
+  master 0.250
 end
 
 sound 50 # D3 High Tom
+  master 0.250
 end
 
 sound 51 # D#3 Ride Cymbal 1
+  master 0.250
 end
 
 sound 52 # E3 Chinese Cymbal
+  master 0.250
 end
 
 sound 53 # F3 Ride Bell
+  master 0.250
 end
 
 sound 54 # F#3 Tambourine
+  master 0.250
 end
 
 sound 55 # G3 Splash Cymbal
+  master 0.250
 end
 
 sound 56 # G#3 Cowbell
+  master 0.250
 end
 
 sound 57 # A3 Crash Cymbal 2
+  master 0.250
 end
 
 sound 58 # A#3 Vibraslap
+  master 0.250
 end
 
 sound 59 # B3 Ride Cymbal 2
+  master 0.250
 end
 
 sound 60 # C4 Hi Bongo
+  master 0.250
 end
 
 sound 61 # C#4 Low Bongo
+  master 0.250
 end
 
 sound 62 # D4 Mute Hi Conga
+  master 0.250
 end
 
 sound 63 # D#4 Open Hi Conga
+  master 0.250
 end
 
 sound 64 # E4 Low Conga
+  master 0.250
 end
 
 sound 65 # F4 High Timbale
+  master 0.250
 end
 
 sound 66 # F#4 Low Timbale
+  master 0.250
 end
 
 sound 67 # G4 High Agogo
+  master 0.250
 end
 
 sound 68 # G#4 Low Agogo
+  master 0.250
 end
 
 sound 69 # A4 Cabasa
+  master 0.250
 end
 
 sound 70 # A#4 Maracas
+  master 0.250
 end
 
 sound 71 # B4 Short Whistle
+  master 0.250
 end
 
 sound 72 # C5 Long Whistle
+  master 0.250
 end
 
 sound 73 # C#5 Short Guiro
+  master 0.250
 end
 
 sound 74 # D5 Long Guiro
+  master 0.250
 end
 
 sound 75 # D#5 Claves
+  master 0.250
 end
 
 sound 76 # E5 Hi Wood Block
+  master 0.250
 end
 
 sound 77 # F5 Low Wood Block
+  master 0.250
 end
 
 sound 78 # F#5 Mute Cuica
+  master 0.250
 end
 
 sound 79 # G5 Open Cuica
+  master 0.250
 end
 
 sound 80 # G#5 Mute Triangle
+  master 0.250
 end
 
 sound 81 # A5 Open Triangle
+  master 0.250
 end
 

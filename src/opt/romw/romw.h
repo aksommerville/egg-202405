@@ -18,11 +18,12 @@ struct romw {
     uint16_t rid;
     char *path;
     int pathc;
-    int lineno; // For resources extract from multi-resource text files (string,sound).
+    int lineno; // For resources extracted from multi-resource text files (string,sound).
     char *name;
     int namec;
     void *serial;
     int serialc;
+    int hint; // For consumer's use. Zero initially.
   } *resv;
   int resc,resa;
 };

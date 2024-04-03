@@ -74,6 +74,8 @@ int egg_client_init() {
   
   egg_audio_play_song(0,7,0,1);
   
+  egg_log("size of sound:0:35=%d",egg_res_get(0,0,7,0,35));
+  
   egg_log("%s:%d",__FILE__,__LINE__);
   return 0;
 }
