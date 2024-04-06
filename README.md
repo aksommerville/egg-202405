@@ -21,6 +21,7 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] Windows.
 - - [ ] Preferred language for Mac and Windows.
 - [ ] Call JS from Wasm and vice-versa.
+- [ ] GUI for pcmprint. Build as a web app, in synthwerk, at least for now.
 - [ ] Synthesizer, native.
 - - [ ] GM instruments.
 - - [ ] GM drums.

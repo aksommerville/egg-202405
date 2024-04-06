@@ -45,6 +45,18 @@ int main(int argc,char **argv) {
   fprintf(stderr,"synthwerk main...\n");
   signal(SIGINT,sw_rcvsig);
   
+  /* Launch HTTP server.
+   */
+  struct http_context_delegate http_delegate={
+    .cb_serve=sw_serve,
+  };
+  if (!(sw.http=http_context_new(&http_delegate))) return -1;
+  if (http_listen(sw.http,1,SW_HTTP_PORT)<0) {
+    fprintf(stderr,"%s: Failed to open HTTP server on port %d\n",argv[0],SW_HTTP_PORT);
+    return 1;
+  }
+  fprintf(stderr,"Serving HTTP on port %d.\n",SW_HTTP_PORT);
+  
   /* Acquire audio driver.
    */
   struct hostio_audio_delegate audio_delegate={
@@ -60,6 +72,7 @@ int main(int argc,char **argv) {
       fprintf(stderr,"Failed to initialize any audio driver.\n");
       return 1;
     }
+    if (!strcmp(type->name,"alsafd")) continue; // alsafd prevents Chrome from opening an AudioContext. yuck.
     if (sw.audio=hostio_audio_new(type,&audio_delegate,&audio_setup)) {
       fprintf(stderr,
         "Using audio driver '%s', rate=%d, chanc=%d\n",
@@ -113,6 +126,10 @@ int main(int argc,char **argv) {
         return 1;
       }
     }
+    if (http_update(sw.http,0)<0) {
+      fprintf(stderr,"Error updating HTTP context.\n");
+      return 1;
+    }
     
     // Poll inotify.
     struct pollfd pollfd={.fd=sw.infd,.events=POLLIN|POLLERR|POLLHUP};
@@ -153,6 +170,7 @@ int main(int argc,char **argv) {
   hostio_audio_del(sw.audio);
   synth_del(sw.synth);
   ossmidi_del(sw.ossmidi);
+  http_context_del(sw.http);
   fprintf(stderr,"Normal exit.\n");
   return 0;
 }
