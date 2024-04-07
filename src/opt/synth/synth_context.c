@@ -13,9 +13,9 @@ void synth_del(struct synth *synth) {
   for (i=synth->voicec;i-->0;) synth_voice_cleanup(synth->voicev+i);
   for (i=synth->procc;i-->0;) synth_proc_cleanup(synth->procv+i);
   for (i=synth->playbackc;i-->0;) synth_playback_cleanup(synth->playbackv+i);
-  if (synth->pcmprintv) {
-    while (synth->pcmprintc-->0) pcmprint_del(synth->pcmprintv[synth->pcmprintc]);
-    free(synth->pcmprintv);
+  if (synth->printerv) {
+    while (synth->printerc-->0) sfg_printer_del(synth->printerv[synth->printerc]);
+    free(synth->printerv);
   }
   free(synth);
 }
@@ -176,33 +176,33 @@ void synth_play_song_serial(
   synth_end_song(synth);
 }
 
-/* Create a pcmprint and register it.
+/* Create a pcm printer and register it.
  * On success, returns WEAK reference to the new PCM dump.
  * The printer stays resident until next update, even if it runs to completion immediately, to keep the pcm alive.
  */
- 
-static struct pcmprint_pcm *synth_begin_pcmprint(struct synth *synth,const void *src,int srcc) {
-  if (synth->pcmprintc>=synth->pcmprinta) {
-    int na=synth->pcmprinta+16;
+
+static struct sfg_pcm *synth_begin_pcmprint(struct synth *synth,const void *src,int srcc) {
+  if (synth->printerc>=synth->printera) {
+    int na=synth->printera+16;
     if (na>INT_MAX/sizeof(void*)) return 0;
-    void *nv=realloc(synth->pcmprintv,sizeof(void*)*na);
+    void *nv=realloc(synth->printerv,sizeof(void*)*na);
     if (!nv) return 0;
-    synth->pcmprintv=nv;
-    synth->pcmprinta=na;
+    synth->printerv=nv;
+    synth->printera=na;
   }
-  struct pcmprint *pcmprint=pcmprint_new(synth->rate,src,srcc);
-  if (!pcmprint) return 0;
-  synth->pcmprintv[synth->pcmprintc++]=pcmprint;
+  struct sfg_printer *printer=sfg_printer_new(synth->rate,src,srcc);
+  if (!printer) return 0;
+  synth->printerv[synth->printerc++]=printer;
   if (synth->update_in_progress>0) {
-    pcmprint_update(pcmprint,synth->update_in_progress);
+    sfg_printer_update(printer,synth->update_in_progress);
   }
-  return pcmprint_get_pcm(pcmprint);
+  return sfg_printer_get_pcm(printer);
 }
 
 /* Begin playing PCM.
  */
  
-static void synth_play_pcm(struct synth *synth,struct pcmprint_pcm *pcm,float trim,float pan) {
+static void synth_play_pcm(struct synth *synth,struct sfg_pcm *pcm,float trim,float pan) {
   struct synth_playback *playback=synth_playback_new(synth);
   synth_playback_init(synth,playback,pcm,trim,pan);
 }
@@ -216,7 +216,7 @@ void synth_play_sound(struct synth *synth,int qual,int soundid,float trim,float 
   // Find insertion point in cache, and if we already have it, start playing.
   int cachep=synth_cache_search(synth->cache,qual,soundid);
   if (cachep>=0) {
-    struct pcmprint_pcm *pcm=synth_cache_get(synth->cache,cachep);
+    struct sfg_pcm *pcm=synth_cache_get(synth->cache,cachep);
     if (pcm) synth_play_pcm(synth,pcm,trim,pan);
     return;
   }
@@ -228,8 +228,8 @@ void synth_play_sound(struct synth *synth,int qual,int soundid,float trim,float 
   int serialc=romr_get_qualified(&serial,synth->romr,EGG_TID_sound,qual,soundid);
   if (serialc<1) return;
   
-  // Add a pcmprint.
-  struct pcmprint_pcm *pcm=synth_begin_pcmprint(synth,serial,serialc);
+  // Add a pcm printer.
+  struct sfg_pcm *pcm=synth_begin_pcmprint(synth,serial,serialc);
   if (!pcm) return;
   
   // Add to cache and start playing.
@@ -247,7 +247,7 @@ void synth_play_sound_serial(
 ) {
   if (trim<=0.0) return;
   if (!src||(srcc<1)) return;
-  struct pcmprint_pcm *pcm=synth_begin_pcmprint(synth,src,srcc);
+  struct sfg_pcm *pcm=synth_begin_pcmprint(synth,src,srcc);
   if (!pcm) return;
   synth_play_pcm(synth,pcm,trim,pan);
 }

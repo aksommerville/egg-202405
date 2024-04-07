@@ -1,23 +1,14 @@
 /* PlaybackService.js
  */
  
-import { Comm } from "./Comm.js";
- 
 export class PlaybackService {
   static getDependencies() {
-    return [Window, Comm];
+    return [Window];
   }
-  constructor(window, comm) {
+  constructor(window) {
     this.window = window;
-    this.comm = comm;
     
     this.recentWave = null;
-    
-    this.comm.listen(event => {
-      if (event.type === "ready") {
-        this.playWave(event.wave);
-      }
-    });
     
     this.context = null;
     this.rate = 44100; // TODO Configurable?
@@ -39,14 +30,23 @@ export class PlaybackService {
     return true;
   }
   
+  // Float32Array or Int16Array
   playWave(wave) {
     if (!wave) wave = this.recentWave;
     if (!wave) return;
     this.recentWave = wave;
     if (!this.requireContext()) return;
     
-    const wave32 = new Float32Array(wave.length);
-    for (let i=wave.length; i-->0; ) wave32[i] = wave[i] / 32768.0;
+    let wave32;
+    if (wave instanceof Float32Array) {
+      wave32 = wave;
+    } else if (wave instanceof Int16Array) {
+      wave32 = new Float32Array(wave.length);
+      for (let i=wave.length; i-->0; ) wave32[i] = wave[i] / 32768.0;
+    } else {
+      throw new Error(`Expected Float32Array or Int16Array`);
+    }
+    
     const audioBuffer = new AudioBuffer({
       length: wave32.length,
       numberOfChannels: 1,

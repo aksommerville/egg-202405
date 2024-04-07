@@ -11,7 +11,7 @@ struct pcmprint_pcm;
 struct synth_cache {
   struct synth_cache_entry {
     int qual,soundid;
-    struct pcmprint_pcm *pcm;
+    struct sfg_pcm *pcm;
   } *entryv;
   int entryc,entrya;
 };
@@ -22,8 +22,8 @@ struct synth_cache *synth_cache_new();
 
 int synth_cache_search(const struct synth_cache *cache,int qual,int soundid);
 
-struct pcmprint_pcm *synth_cache_get(const struct synth_cache *cache,int p);
+struct sfg_pcm *synth_cache_get(const struct synth_cache *cache,int p);
 
-int synth_cache_add(struct synth_cache *cache,int p,int qual,int soundid,struct pcmprint_pcm *pcm);
+int synth_cache_add(struct synth_cache *cache,int p,int qual,int soundid,struct sfg_pcm *pcm);
 
 #endif

@@ -4,15 +4,15 @@
  */
  
 static void synth_update_printers(struct synth *synth,int framec) {
-  int i=synth->pcmprintc;
-  struct pcmprint **p=synth->pcmprintv+i-1;
+  int i=synth->printerc;
+  struct sfg_printer **p=synth->printerv+i-1;
   for (;i-->0;p--) {
-    struct pcmprint *pcmprint=*p;
-    int err=pcmprint_update(pcmprint,framec);
+    struct sfg_printer *printer=*p;
+    int err=sfg_printer_update(printer,framec);
     if (err) {
-      pcmprint_del(pcmprint);
-      synth->pcmprintc--;
-      memmove(p,p+1,sizeof(void*)*(synth->pcmprintc-i));
+      sfg_printer_del(printer);
+      synth->printerc--;
+      memmove(p,p+1,sizeof(void*)*(synth->printerc-i));
     }
   }
 }

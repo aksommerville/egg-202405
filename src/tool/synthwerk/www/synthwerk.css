@@ -19,151 +19,18 @@ body {
   width: 100vw;
   height: 100vh;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: stretch;
   justify-content: stretch;
   overflow: hidden;
 }
 
-.RootUi > .right {
-  display: flex;
-  flex-direction: column;
-  width: calc(100% - 380px);
-}
-
-/* TextUi
- *******************************************************************/
-
-.TextUi {
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid #000;
-  min-width: 380px;
-}
-
-.TextUi > textarea[name='text'] {
-  height: 50vh;
-  width: 380px;
-}
-
-.TextUi > .binary {
-  flex: 1;
-  background-color: #010;
-  color: #ff8;
-  margin: 0;
-}
-
-.TextUi > .binary.dirty {
-  background-color: #840;
-}
-
-.TextUi > .binary.error {
-  background-color: #f00;
-}
-
-/* WaveUi
- ******************************************************************/
-
-.WaveUi {
-  height: 25vh;
-  cursor: pointer;
-  position: relative;
-  border-top: 1px solid #000;
-  user-select: none;
-}
-
-.WaveUi > .visual {
-  width: 100%;
-  height: 100%;
-}
-
-.WaveUi > .dirty {
-  background-color: #840;
-}
-
-.WaveUi > .error {
-  background-color: #f00;
-}
-
-.WaveUi > .overlay {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
- 
-/* BoardUi
- *******************************************************************/
-
-.BoardUi {
-  flex: 1;
-  overflow-x: scroll;
-  overflow-y: hidden;
-  scrollbar-gutter: stable;
-  display: flex;
-  flex-direction: row;
-  justify-content: stretch;
-}
-
-.BoardUi > .global {
-  display: flex;
-  flex-direction: column;
-  width: 4em;
-}
-
-.BoardUi input[name="master"] {
-  -moz-orient: vertical;/*TODO vertical sliders are nonstandard and issue a warning in chrome. Implement with a bespoke element. */
-  -webkit-appearance: slider-vertical;
+.InputUi {
+  background-color: #066;
   flex: 1;
 }
 
-.VoiceUi {
-  background-color: #444;
-  margin-left: 0.5em;
-  min-width: 20em;
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-  overflow-y: scroll;
-  scrollbar-gutter: auto;
-}
-
-.OscillatorUi {
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-}
-
-.OscillatorUi .row > label {
-  display: inline-block;
-  min-width: 4em;
-}
-
-.OpUi {
-  background-color: #222;
-  border: 1px solid #000;
-  margin: 0.25em;
-  display: flex;
-  flex-direction: row;
-  justify-content: stretch;
-}
-
-.OpUi > .controls {
-  display: flex;
-  flex-direction: column;
-}
-
-.OpUi > .right {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-}
-
-.OpUi > .right > .payload {
-  flex: 1;
+.OutputUi {
+  background-color: #660;
+  min-height: 200px;
 }

@@ -4,7 +4,7 @@
  */
  
 static void synth_cache_entry_cleanup(struct synth_cache_entry *entry) {
-  pcmprint_pcm_del(entry->pcm);
+  sfg_pcm_del(entry->pcm);
 }
  
 void synth_cache_del(struct synth_cache *cache) {
@@ -45,7 +45,7 @@ int synth_cache_search(const struct synth_cache *cache,int qual,int soundid) {
 /* Get by index.
  */
 
-struct pcmprint_pcm *synth_cache_get(const struct synth_cache *cache,int p) {
+struct sfg_pcm *synth_cache_get(const struct synth_cache *cache,int p) {
   if ((p<0)||(p>=cache->entryc)) return 0;
   return cache->entryv[p].pcm;
 }
@@ -53,7 +53,7 @@ struct pcmprint_pcm *synth_cache_get(const struct synth_cache *cache,int p) {
 /* Add.
  */
 
-int synth_cache_add(struct synth_cache *cache,int p,int qual,int soundid,struct pcmprint_pcm *pcm) {
+int synth_cache_add(struct synth_cache *cache,int p,int qual,int soundid,struct sfg_pcm *pcm) {
   if ((p<0)||(p>cache->entryc)) return -1;
   if (p) {
     const struct synth_cache_entry *q=cache->entryv+p-1;
@@ -73,7 +73,7 @@ int synth_cache_add(struct synth_cache *cache,int p,int qual,int soundid,struct 
     cache->entryv=nv;
     cache->entrya=na;
   }
-  if (pcmprint_pcm_ref(pcm)<0) return -1;
+  if (sfg_pcm_ref(pcm)<0) return -1;
   struct synth_cache_entry *entry=cache->entryv+p;
   memmove(entry+1,entry,sizeof(struct synth_cache_entry)*(cache->entryc-p));
   cache->entryc++;

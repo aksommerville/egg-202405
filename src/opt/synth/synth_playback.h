@@ -6,14 +6,14 @@
 #define SYNTH_PLAYBACK_H
 
 struct synth_playback {
-  struct pcmprint_pcm *pcm;
+  struct sfg_pcm *pcm;
   int p;
   float gain; //TODO If we go stereo, make two gains and bake pan into them.
 };
 
 void synth_playback_cleanup(struct synth_playback *playback);
 
-void synth_playback_init(struct synth *synth,struct synth_playback *playback,struct pcmprint_pcm *pcm,double trim,double pan);
+void synth_playback_init(struct synth *synth,struct synth_playback *playback,struct sfg_pcm *pcm,double trim,double pan);
 
 void synth_playback_update(float *v,int c,struct synth *synth,struct synth_playback *playback);
 

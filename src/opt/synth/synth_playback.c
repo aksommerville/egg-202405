@@ -4,15 +4,15 @@
  */
  
 void synth_playback_cleanup(struct synth_playback *playback) {
-  pcmprint_pcm_del(playback->pcm);
+  sfg_pcm_del(playback->pcm);
   playback->pcm=0;
 }
 
 /* Init.
  */
 
-void synth_playback_init(struct synth *synth,struct synth_playback *playback,struct pcmprint_pcm *pcm,double trim,double pan) {
-  if (pcmprint_pcm_ref(pcm)<0) return;
+void synth_playback_init(struct synth *synth,struct synth_playback *playback,struct sfg_pcm *pcm,double trim,double pan) {
+  if (sfg_pcm_ref(pcm)<0) return;
   playback->pcm=pcm;
   playback->p=0;
   playback->gain=trim;

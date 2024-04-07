@@ -4,7 +4,7 @@
 #define SYNTH_ORIGIN_SONG 1
 #define SYNTH_ORIGIN_USER 2
 
-#include "opt/pcmprint/pcmprint.h"
+#include "opt/sfg/sfg.h"
 #include "synth.h"
 #include "synth_env.h"
 #include "synth_filter.h"
@@ -82,8 +82,8 @@ struct synth {
   int procc;
   struct synth_playback playbackv[SYNTH_PLAYBACK_LIMIT];
   int playbackc;
-  struct pcmprint **pcmprintv;
-  int pcmprintc,pcmprinta;
+  struct sfg_printer **printerv;
+  int printerc,printera;
 };
 
 void synth_end_song(struct synth *synth);

@@ -1,27 +1,27 @@
-#TODO Everything here is temporary, just running pcmprint thru its paces.
+#TODO Everything here is temporary, just running sfg thru its paces.
 
 sound 35 # B1 Acoustic Bass Drum
-  master 0.150
-  wave fm=0.5,3
-  fmrange 0 40 1 300 0
-  fmlfo 0.4 0.8
-  rate 100 500 250
-  ratelfo 1 100
-  level 0.000 30 1.000 45 0.200 300 0.000
+  master 0.250
+  shape sine
+  harmonics 1 0 0.400 0 0.100 0 0.040
+  fm 1 1
+  fmenv 0 100 1 2000 0
+  rate 440 30 220 200 440
+  ratelfo 3 100
+  level 0 30 1 50 0.200 2000 0
 end
 
 sound 36 # C2 Bass Drum 1
   master 0.200
-  #wave 0.900 0.000 0.400 0.000 0.100
-  wave fm=0.5,3
-  fmrange 0 20 1 20 0.5 600 0
+  fm 0.5 3
+  fmenv 0 20 1 20 0.5 600 0
   rate 150 150 50
   level 0.000 20 1.000 20 0.500 800 0.000
 end
 
 sound 37 # C#2 Side Stick
   master 0.100
-  wave noise
+  shape noise
   level 0.000 10 0.999 10 0.000
   delay 80 0.5 0.5 0.5 0.8
   level 0.000 1 1.000 400 1.000 1000 0.000
@@ -29,42 +29,41 @@ end
 
 sound 38 # D2 Acoustic Snare
   master 0.200
-  wave square
-  level 0.000 15 0.999 20 0.100 250 0.000
+  shape square
   rate 100 250 800
   ratelfo 10 300
+  level 0.000 15 0.999 20 0.100 250 0.000
 end
 
 sound 39 # D#2 Hand Clap
   master 0.200
-  wave noise
+  shape noise
   level 0.000 10 0.999 20 0.000
   delay 60 0.5 0.5 0.5 0.8
   level 0.000 1 1.000 400 0.000
-voice
-  wave fm=7.1,3
+endvoice
+  fm 7.1 3
   rate 1000 400 100
   level 0.000 10 0.500 50 0.100 350 0.000
 end
 
 sound 40 # E2 Electric Snare
   master 0.100
-  wave fm=5.3,9
+  fm 5.3 9
   rate 300 500 400
-  fmlfo 10 1
   level 0.000 10 0.999 20 0.100 400 0.000
 end
 
 sound 41 # F2 Low Floor Tom
   master 0.200
-  wave fm=0.666,5
+  fm 0.666 5
   rate 200 300 50
   level 0.000 20 0.999 40 0.200 200 0.000
 end
 
 sound 42 # F#2 Closed Hi Hat
   master 0.100
-  wave noise
+  shape noise
   level 0.000 10 0.999 15 0.000
 end
 

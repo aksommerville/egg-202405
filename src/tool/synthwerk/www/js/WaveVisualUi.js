@@ -1,25 +1,20 @@
-/* WaveUi.js
- * Lower-right side of window, shows the printed wave and provides play and stop buttons.
- * Or hey, just click on it to play or stop, that should be easier.
+/* WaveVisualUi.js
+ * Lower-right side of window, shows the printed wave, and user can click to play it.
  */
  
 import { Dom } from "./Dom.js";
-import { Comm } from "./Comm.js";
-import { PlaybackService } from "./PlaybackService.js";
+import { Bus } from "./Bus.js";
 
-export class WaveUi {
+export class WaveVisualUi {
   static getDependencies() {
-    return [HTMLElement, Dom, Comm, PlaybackService];
+    return [HTMLElement, Dom, Bus];
   }
-  constructor(element, dom, comm, playbackService) {
+  constructor(element, dom, bus) {
     this.element = element;
     this.dom = dom;
-    this.comm = comm;
-    this.playbackService = playbackService;
+    this.bus = bus;
     
     this.state = "init"; // "init", "ready", "dirty", "error"
-    
-    this.commListener = this.comm.listen(e => this.onCommEvent(e));
     
     this.element.addEventListener("click", () => this.onClick());
     
@@ -27,7 +22,6 @@ export class WaveUi {
   }
   
   onRemoveFromDom() {
-    this.comm.unlisten(this.commListener);
   }
   
   buildUi() {
@@ -117,16 +111,8 @@ export class WaveUi {
     this.state = "error";
   }
   
-  onCommEvent(event) {
-    switch (event.type) {
-      case "dirty": this.setDirty(); break;
-      case "ready": this.setReady(event.wave); break;
-      case "error": this.setError(event.error); break;
-    }
-  }
-  
   onClick() {
     if (this.state !== "ready") return;
-    this.playbackService.playWave(null);
+    this.bus.dispatch({ type: "play" });
   }
 }

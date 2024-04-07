@@ -22,6 +22,13 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] Preferred language for Mac and Windows.
 - [ ] Call JS from Wasm and vice-versa.
 - [ ] GUI for pcmprint. Build as a web app, in synthwerk, at least for now.
+- - xxx pcmprint compiler in javascript
+- [ ] sfg: Replacement for pcmprint, doing things a bit cleaner.
+- - [x] Implement both compiler and printer in Javascript.
+- - [x] C: optimized oscillators. For now everything is using the worst-case full oscillator.
+- - [ ] Remove pcmprint.
+- - [ ] Browser: Would it be possible to run SfgPrinter in a worker or something, to front-load all that work?
+- - - I'm thinking the web runtime could do that immediately on load, for all sounds. Consider.
 - [ ] Synthesizer, native.
 - - [ ] GM instruments.
 - - [ ] GM drums.
