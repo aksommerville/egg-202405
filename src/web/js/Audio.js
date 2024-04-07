@@ -3,7 +3,7 @@
  */
 
 import { Rom } from "./Rom.js"; 
-import { Pcmprint } from "./Pcmprint.js";
+import { SfgPrinter } from "./SfgPrinter.js";
 import { Instruments } from "./Instruments.js";
  
 export class Audio {
@@ -134,7 +134,7 @@ export class Audio {
     let v = null;
     const serial = this.rom.getResource(Rom.TID_sound, qual, rid);
     if (serial) {
-      const fv = Pcmprint.print(serial, this.rate);
+      const fv = new SfgPrinter(serial, this.rate).print();
       if (fv && fv.length) {
         v = new AudioBuffer({
           length: fv.length,

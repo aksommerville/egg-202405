@@ -61,7 +61,7 @@ struct synth {
   float sine[SYNTH_WAVE_SIZE_SAMPLES];
   float ffreqv[0x80]; // Note frequencies in 0..1 (hopefully 0..1/2).
   uint32_t ifreqv[0x80]; // Note frequencies in 0..0xffffffff, for wave runners.
-  int update_in_progress; // Duration of running update in frames, for new pcmprints.
+  int update_in_progress; // Duration of running update in frames, for new pcm printers.
   int64_t framec; // Total count generated since construction.
   struct romr *romr; // WEAK, OPTIONAL
   struct synth_cache *cache;

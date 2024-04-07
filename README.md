@@ -26,9 +26,10 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - [ ] sfg: Replacement for pcmprint, doing things a bit cleaner.
 - - [x] Implement both compiler and printer in Javascript.
 - - [x] C: optimized oscillators. For now everything is using the worst-case full oscillator.
-- - [ ] Remove pcmprint.
+- - [x] Remove pcmprint.
 - - [ ] Browser: Would it be possible to run SfgPrinter in a worker or something, to front-load all that work?
 - - - I'm thinking the web runtime could do that immediately on load, for all sounds. Consider.
+- - [ ] Along those lines too, JS oscillators in SfgPrinter.js could optimize like the C version.
 - [ ] Synthesizer, native.
 - - [ ] GM instruments.
 - - [ ] GM drums.

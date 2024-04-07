@@ -85,7 +85,6 @@ export class Bus {
   
   // Beware, can remain null if printing fails.
   requireWave() {
-    //if (!this.wave) this.wave = Pcmprint.print(this.requireBin(), this.rate);
     return this.wave;
   }
 }

@@ -6,7 +6,7 @@
 #ifndef SYNTH_CACHE_H
 #define SYNTH_CACHE_H
 
-struct pcmprint_pcm;
+struct sfg_pcm;
 
 struct synth_cache {
   struct synth_cache_entry {

@@ -50,16 +50,6 @@ export class Sound {
   
   decodeBinary(src) {
     throw new Error(`TODO: Sound.decodeBinary`);
-    /*
-    if (!src || (src.length < 2)) throw new Error(`Invalid pcmprint binary`);
-    this.clear();
-    const duration = (src[0] << 8) | src[1];
-    let srcp = 2;
-    while (srcp < src.length) {
-      ...
-    }
-    this.inferMasterFromVoices();
-    */
   }
   
   /* Binary format does not store a master level, instead it gets baked into level envelopes at compile time.
