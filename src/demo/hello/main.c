@@ -72,7 +72,7 @@ int egg_client_init() {
     spritec=SPRITEA;
   }
   
-  //egg_audio_play_song(0,4,0,1);
+  egg_audio_play_song(0,5,0,1);
   
   egg_log("size of sound:0:35=%d",egg_res_get(0,0,7,0,35));
   
@@ -83,7 +83,8 @@ int egg_client_init() {
 /**/
 static void on_key(int keycode,int value) {
   if (value) switch (keycode) {
-    case 0x0007001e: egg_audio_play_sound(0,35,1.0,0.0); break;
+    
+    case 0x0007001e: egg_audio_play_sound(0,35,1.0,0.0); break; // 1
     case 0x0007001f: egg_audio_play_sound(0,36,1.0,0.0); break;
     case 0x00070020: egg_audio_play_sound(0,37,1.0,0.0); break;
     case 0x00070021: egg_audio_play_sound(0,38,1.0,0.0); break;
@@ -92,6 +93,47 @@ static void on_key(int keycode,int value) {
     case 0x00070024: egg_audio_play_sound(0,41,1.0,0.0); break;
     case 0x00070025: egg_audio_play_sound(0,42,1.0,0.0); break;
     case 0x00070026: egg_audio_play_sound(0,43,1.0,0.0); break;
+    case 0x00070027: egg_audio_play_sound(0,44,1.0,0.0); break; // 0
+    case 0x00070014: egg_audio_play_sound(0,45,1.0,0.0); break; // q
+    case 0x0007001a: egg_audio_play_sound(0,46,1.0,0.0); break; // w
+    case 0x00070008: egg_audio_play_sound(0,47,1.0,0.0); break; // e
+    case 0x00070015: egg_audio_play_sound(0,48,1.0,0.0); break; // r
+    case 0x00070017: egg_audio_play_sound(0,49,1.0,0.0); break; // t
+    case 0x0007001c: egg_audio_play_sound(0,50,1.0,0.0); break; // y
+    case 0x00070018: egg_audio_play_sound(0,51,1.0,0.0); break; // u
+    case 0x0007000c: egg_audio_play_sound(0,52,1.0,0.0); break; // i
+    case 0x00070012: egg_audio_play_sound(0,53,1.0,0.0); break; // o
+    case 0x00070013: egg_audio_play_sound(0,54,1.0,0.0); break; // p
+    case 0x00070004: egg_audio_play_sound(0,55,1.0,0.0); break; // a
+    case 0x00070016: egg_audio_play_sound(0,56,1.0,0.0); break; // s
+    case 0x00070007: egg_audio_play_sound(0,57,1.0,0.0); break; // d
+    case 0x00070009: egg_audio_play_sound(0,58,1.0,0.0); break; // f
+    case 0x0007000a: egg_audio_play_sound(0,59,1.0,0.0); break; // g
+    case 0x0007000b: egg_audio_play_sound(0,60,1.0,0.0); break; // h
+    case 0x0007000d: egg_audio_play_sound(0,61,1.0,0.0); break; // j
+    case 0x0007000e: egg_audio_play_sound(0,62,1.0,0.0); break; // k
+    case 0x0007000f: egg_audio_play_sound(0,63,1.0,0.0); break; // l
+    case 0x00070033: egg_audio_play_sound(0,64,1.0,0.0); break; // ;
+    case 0x0007001d: egg_audio_play_sound(0,65,1.0,0.0); break; // z
+    case 0x0007001b: egg_audio_play_sound(0,66,1.0,0.0); break; // x
+    case 0x00070006: egg_audio_play_sound(0,67,1.0,0.0); break; // c
+    case 0x00070019: egg_audio_play_sound(0,68,1.0,0.0); break; // v
+    case 0x00070005: egg_audio_play_sound(0,69,1.0,0.0); break; // b
+    case 0x00070011: egg_audio_play_sound(0,70,1.0,0.0); break; // n
+    case 0x00070010: egg_audio_play_sound(0,71,1.0,0.0); break; // m
+    case 0x00070036: egg_audio_play_sound(0,72,1.0,0.0); break; // ,
+    case 0x00070037: egg_audio_play_sound(0,73,1.0,0.0); break; // .
+    case 0x00070038: egg_audio_play_sound(0,74,1.0,0.0); break; // /
+    case 0x0007005f: egg_audio_play_sound(0,75,1.0,0.0); break; // kp7
+    case 0x00070060: egg_audio_play_sound(0,76,1.0,0.0); break; // kp8
+    case 0x00070061: egg_audio_play_sound(0,77,1.0,0.0); break; // kp9
+    case 0x0007005c: egg_audio_play_sound(0,78,1.0,0.0); break; // kp4
+    case 0x0007005d: egg_audio_play_sound(0,79,1.0,0.0); break; // kp5
+    case 0x0007005e: egg_audio_play_sound(0,80,1.0,0.0); break; // kp6
+    case 0x00070059: egg_audio_play_sound(0,81,1.0,0.0); break; // kp1
+    case 0x0007005a: egg_audio_play_sound(0,82,1.0,0.0); break; // kp2
+    case 0x0007005b: egg_audio_play_sound(0,83,1.0,0.0); break; // kp3
+    
     case 0x00070029: egg_request_termination(); break; // ESC
     case 0x0007003a: { // F1
         if (egg_event_enable(EGG_EVENT_MMOTION,EGG_EVTSTATE_QUERY)==EGG_EVTSTATE_ENABLED) {

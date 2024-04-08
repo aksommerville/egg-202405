@@ -38,17 +38,43 @@ export class InputUi {
     
     const controls = this.dom.spawn(this.element, "DIV", ["controls"]);
     this.timeRangeUi = this.dom.spawnController(controls, SliderUi);
-    this.timeRangeUi.oninput = v => this.bus.dispatch({ type: "setTimeRange", timeRange: Math.max(100, Math.floor(v * TIME_RANGE_LIMIT)) });
-    this.timeRangeUi.setValue(this.bus.timeRange / TIME_RANGE_LIMIT);
+    this.timeRangeUi.oninput = v => this.onTimeRangeChange(v);
+    this.timeRangeUi.setValue(this.sliderValueForTimeRange(this.bus.timeRange), this.bus.timeRange);
     this.masterUi = this.dom.spawnController(controls, SliderUi);
-    this.masterUi.oninput = v => this.bus.dispatch({ type: "setMaster", master: v });
-    this.masterUi.setValue(this.bus.sound.master);
+    this.masterUi.oninput = v => this.onMasterChange(v);
+    this.masterUi.setValue(this.bus.sound.master, this.sliderDisplayForMaster(this.bus.sound.master));
     
     const voicesContainer = this.dom.spawn(this.element, "DIV", ["voicesContainer"]);
     for (const voice of this.bus.sound.voices) {
       const controller = this.dom.spawnController(voicesContainer, VoiceUi);
       controller.setVoice(voice);
     }
+  }
+  
+  sliderValueForTimeRange(timeRange) {
+    const lo = Math.log2(100);
+    const hi = Math.log2(65535);
+    const ranged = Math.log2(timeRange);
+    const norm = (ranged - lo) / (hi - lo);
+    return norm;
+  }
+  
+  onTimeRangeChange(norm) {
+    const lo = Math.log2(100);
+    const hi = Math.log2(65535);
+    const ranged = lo + (norm * (hi - lo));
+    const timeRange = Math.round(Math.pow(2, ranged));
+    this.timeRangeUi.setDisplayValue(timeRange);
+    this.bus.dispatch({ type: "setTimeRange", timeRange });
+  }
+  
+  sliderDisplayForMaster(master) {
+    return Math.round(master * 100);
+  }
+  
+  onMasterChange(v) {
+    this.masterUi.setDisplayValue(this.sliderDisplayForMaster(v));
+    this.bus.dispatch({ type: "setMaster", master: v });
   }
   
   onBusEvent(event) {

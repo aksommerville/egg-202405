@@ -28,8 +28,9 @@ export class SliderUi {
     this.dropMouseListener();
   }
   
-  setValue(v) {
+  setValue(v, display) {
     this.value = v;
+    this.setDisplayValue(display);
     // Kick the UI adjustment out to the next frame; we're usually not fully installed when this gets called.
     this.window.setTimeout(() => {
       const outerBounds = this.element.getBoundingClientRect();
@@ -40,10 +41,16 @@ export class SliderUi {
     }, 0);
   }
   
+  setDisplayValue(v) {
+    if ((typeof(v) !== "string") && (typeof(v) !== "number")) v = "";
+    this.element.querySelector(".display").innerText = v;
+  }
+  
   buildUi() {
     this.element.innerHTML = "";
     this.dom.spawn(this.element, "DIV", ["groove"]);
-    this.dom.spawn(this.element, "DIV", ["thumb"]);//, { on_mousedown: e => this.onThumbMouseDown(e) });
+    const thumb = this.dom.spawn(this.element, "DIV", ["thumb"]);
+    this.dom.spawn(thumb, "DIV", ["display"]);
   }
   
   dropMouseListener() {

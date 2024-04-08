@@ -219,7 +219,7 @@ export class SfgPrinter {
   
   _printOpDelay(dst, srcp) {
     const ms = (this.src[srcp] << 8) | this.src[srcp+1]; srcp += 2;
-    const period = (ms * this.rate) / 1000;
+    const period = Math.ceil((ms * this.rate) / 1000);
     if (isNaN(period) || (period < 1)) return srcp + 4;
     const buf = new Float32Array(period);
     let bufp = 0;

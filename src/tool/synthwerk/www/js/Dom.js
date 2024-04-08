@@ -64,20 +64,27 @@ export class Dom {
   presentModal(controllerClass) {
     let dialog = this.spawn(this.document.body, "DIALOG");
     const controller = this.spawnController(dialog, controllerClass);
+    let ignoreNextClick = false;
+    dialog.addEventListener("mousedown", event => {
+      ignoreNextClick = this.eventInDialog(dialog, event);
+    });
     dialog.addEventListener("click", event => {
-      if (event.target !== dialog) return;
-      const bounds = dialog.getBoundingClientRect();
-      if (
-        (event.clientX < bounds.x) ||
-        (event.clientY < bounds.y) ||
-        (event.clientX >= bounds.x + bounds.width) ||
-        (event.clientY >= bounds.y + bounds.height)
-      ) {
+      if (!ignoreNextClick && !this.eventInDialog(dialog, event)) {
         dialog.close();
       }
+      ignoreNextClick = false;
     });
     dialog.showModal();
     return controller;
+  }
+  
+  eventInDialog(dialog, event) {
+    const bounds = dialog.getBoundingClientRect();
+    if (event.clientX < bounds.x) return false;
+    if (event.clientY < bounds.y) return false;
+    if (event.clientX >= bounds.x + bounds.width) return false;
+    if (event.clientY >= bounds.y + bounds.height) return false;
+    return true;
   }
   
   dismissModalForController(controller) {

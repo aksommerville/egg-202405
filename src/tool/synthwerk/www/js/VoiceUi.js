@@ -22,6 +22,7 @@ export class VoiceUi {
     this.buildUi();
     
     this.element.addEventListener("change", e => this.onChange(e));
+    this.element.addEventListener("input", e => this.onChange(e));
   }
   
   onRemoveFromDom() {
