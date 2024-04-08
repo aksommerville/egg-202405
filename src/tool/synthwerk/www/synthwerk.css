@@ -11,7 +11,12 @@ body {
   display: none !important;
 }
 
-/* RootUi
+dialog::backdrop {
+  opacity: 0.5;
+  background-color: #000;
+}
+
+/* RootUi et al
  **************************************************************/
  
 .RootUi {
@@ -26,11 +31,157 @@ body {
 }
 
 .InputUi {
-  background-color: #066;
   flex: 1;
 }
 
 .OutputUi {
-  background-color: #660;
-  min-height: 200px;
+  height: 200px;
+  display: flex;
+  flex-direction: row;
+  border-top: 1px solid #000;
+}
+
+.OutputUi > .buttons {
+  display: flex;
+  flex-direction: column;
+}
+
+.WaveVisualUi {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.WaveVisualUi > canvas {
+  flex: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Modals.
+ **********************************************************/
+ 
+.TextModal > textarea {
+  width: 50vw;
+  height: 50vh;
+}
+
+.TextModal.dirty > textarea {
+  background-color: #eda;
+}
+
+/* InputUi
+ ******************************************************/
+ 
+.InputUi {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: stretch;
+  max-height: calc(100% - 200px);
+}
+
+.InputUi > .controls {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  border-right: 1px solid #000;
+}
+
+.InputUi > .voicesContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow-x: scroll;
+  overflow-y: hidden;
+}
+
+.VoiceUi {
+  background-color: #111;
+  border: 1px solid #000;
+  margin: 0.5em;
+/*  height: calc(100% - 20px); /* accomodate scroll bar */
+  overflow-y: scroll;
+  width: 480px;
+  min-width: 480px;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+}
+
+.VoiceFieldUi {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  background-color: #444;
+  border-top: 1px solid #666;
+  border-bottom: 1px solid #222;
+}
+
+.VoiceFieldUi > .upper {
+  height: 2em;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: stretch;
+}
+
+.VoiceFieldUi > .upper > .key {
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+
+.VoiceFieldUi > .upper > .spacer {
+  flex: 1;
+}
+
+.VoiceFieldUi > .upper > input[type="number"] {
+  width: 60px;
+}
+
+/* SliderUi
+ *************************************************************/
+ 
+.SliderUi {
+  position: relative;
+  min-width: 50px;
+  flex: 1;
+  user-select: none;
+}
+
+.SliderUi > .groove {
+  position: absolute;
+  border: 1px solid #444;
+  background-color: #666;
+  left: 40%;
+  right: 40%;
+  top: 16px;
+  bottom: 16px;
+}
+
+.SliderUi > .thumb {
+  position: absolute;
+  border: 1px solid #000;
+  background-color: #aaa;
+  width: 75%;
+  left: 12.5%;
+  height: 20px;
+  top: 0px;
+  cursor: pointer;
+}
+
+/* HarmonicsUi, EnvUi
+ *******************************************************/
+ 
+.HarmonicsUi {
+  cursor: pointer;
+  user-select: none;
+}
+
+.EnvUi {
+  cursor: pointer;
+  user-select: none;
 }

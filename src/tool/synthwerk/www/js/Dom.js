@@ -61,6 +61,41 @@ export class Dom {
     this.ignoredRemoval.push(element);
   }
   
+  presentModal(controllerClass) {
+    let dialog = this.spawn(this.document.body, "DIALOG");
+    const controller = this.spawnController(dialog, controllerClass);
+    dialog.addEventListener("click", event => {
+      if (event.target !== dialog) return;
+      const bounds = dialog.getBoundingClientRect();
+      if (
+        (event.clientX < bounds.x) ||
+        (event.clientY < bounds.y) ||
+        (event.clientX >= bounds.x + bounds.width) ||
+        (event.clientY >= bounds.y + bounds.height)
+      ) {
+        dialog.close();
+      }
+    });
+    dialog.showModal();
+    return controller;
+  }
+  
+  dismissModalForController(controller) {
+    const dialog = controller.element?.parentNode;
+    if (!dialog || (dialog.tagName !== "DIALOG")) return;
+    dialog.close();
+  }
+  
+  // Window.prompt(), but as a Promise.
+  // Cancelling rejects the Promise.
+  prompt(text, initial) {
+    return new Promise((resolve, reject) => {
+      const result = this.window.prompt(text, initial);
+      if (typeof(result) === "string") resolve(result);
+      else reject();
+    });
+  }
+  
   tagNameForControllerClass(cls) {
     const deps = cls.getDependencies?.() || [];
     for (const depcls of deps) {

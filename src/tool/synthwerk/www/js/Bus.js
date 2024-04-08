@@ -16,9 +16,18 @@
  * { type:"showHex" }
  *   Request hexdump modal.
  *
+ * { type:"soundDirty", sender }
+ *   Only Bus should dispatch. Clients, call Bus.soundDirty().
+ *   Drops cached text, binary, and wave. Notify all that sound has changed.
+ *
+ * { type:"setTimeRange", timeRange:number }
+ * { type:"setMaster", master:number } -- no associated soundDirty
+ *
  */
  
 import { Sound } from "./Sound.js";
+import { SfgCompiler } from "./SfgCompiler.js";
+import { SfgPrinter } from "./SfgPrinter.js";
  
 export class Bus {
   static getDependencies() {
@@ -35,6 +44,7 @@ export class Bus {
     this.wave = null; // Float32Array
     this.timeRange = 1000; // ms, horizontal range of all envelopes, and effectively the duration limit.
     this.rate = 44100;
+    this.autoPlay = false; // Must start false, to force some interaction before launching the WebAudio context.
   }
   
   listen(cb) {
@@ -52,6 +62,17 @@ export class Bus {
   dispatch(event) {
     switch (event.type) {
       case "newSound": this.newSound(); break;
+      case "setTimeRange": {
+          if (!event.timeRange || (event.timeRange === this.timeRange)) return;
+          this.timeRange = event.timeRange;
+        } break;
+      case "setMaster": {
+          if (!event.master || (event.master === this.sound.master)) return;
+          this.sound.master = event.master;
+          this.text = null;
+          this.bin = null;
+          this.wave = null;
+        } break;
     }
     for (const { cb } of this.listeners) cb(event);
   }
@@ -67,25 +88,64 @@ export class Bus {
     this.timeRange = 1000;
   }
   
-  soundDirty() {
+  soundDirty(sender) {
     this.text = null;
     this.bin = null;
     this.wave = null;
+    this.dispatch({ type: "soundDirty", sender });
+  }
+  
+  replaceText(text, sender) {
+    this.sound.decodeText(text);
+    this.text = text;
+    this.bin = null;
+    this.wave = null;
+    this.dispatch({ type: "soundDirty", sender });
+  }
+  
+  replaceBin(bin, sender) { // XXX Not sure we're going to support this.
+    this.sound.decodeBinary(bin);
+    this.text = null;
+    this.wave = null;
+    this.dispatch({ type: "soundDirty", sender });
   }
   
   requireText() {
-    if (!this.text) this.text = this.sound.encodeText();
+    try {
+      if (!this.text) this.text = this.sound.encodeText();
+    } catch (e) {
+      console.error(e);
+    }
     return this.text;
   }
   
   requireBin() {
-    if (!this.bin) this.bin = this.sound.encodeBinary();
+    if (!this.bin) {
+      try {
+        this.bin = new SfgCompiler(this.requireText()).compile();
+      } catch (e) {
+        console.error(e);
+      }
+    }
     return this.bin;
   }
   
-  // Beware, can remain null if printing fails.
   requireWave() {
+    if (!this.wave) {
+      try {
+        this.wave = new SfgPrinter(this.requireBin(), this.rate).print();
+      } catch (e) {
+        console.error(e);
+      }
+    }
     return this.wave;
+  }
+  
+  setAutoPlay(autoPlay) {
+    autoPlay = !!autoPlay;
+    if (autoPlay === this.autoPlay) return;
+    this.autoPlay = autoPlay;
+    // I think no need for an event.
   }
 }
 

@@ -72,7 +72,7 @@ int egg_client_init() {
     spritec=SPRITEA;
   }
   
-  egg_audio_play_song(0,7,0,1);
+  //egg_audio_play_song(0,4,0,1);
   
   egg_log("size of sound:0:35=%d",egg_res_get(0,0,7,0,35));
   

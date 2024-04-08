@@ -104,7 +104,7 @@ export class SfgPrinter {
     if (features & 0x10) { // rate
       srcp = this._decodeEnv(rate, srcp, 1 / this.rate);
     } else {
-      this._constantEnv(rate, 440);
+      this._constantEnv(rate, 440 / this.rate);
     }
     
     let ratelforate = 0;
@@ -175,7 +175,8 @@ export class SfgPrinter {
       dst[i] = wave[sp] || 0;
       crate += crate * mod;
       carp += crate;
-      if (carp >= 1) carp -= 1;
+      while (carp >= 1) carp -= 1;
+      while (carp < 0) carp += 1;
     }
   }
   
@@ -186,6 +187,11 @@ export class SfgPrinter {
   _printOpLevel(dst, srcp) {
     const env = {};
     srcp = this._decodeEnv(env, srcp, 1 / 65535.0);
+    let lo=dst[0], hi=dst[0];
+    for (let i=dst.length; i-->0; ) {
+      if (dst[i]<lo) lo=dst[i];
+      else if (dst[i]>hi) hi=dst[i];
+    }
     for (let i=0; i<dst.length; i++) {
       dst[i] *= this._updateEnv(env);
     }
@@ -214,7 +220,7 @@ export class SfgPrinter {
   _printOpDelay(dst, srcp) {
     const ms = (this.src[srcp] << 8) | this.src[srcp+1]; srcp += 2;
     const period = (ms * this.rate) / 1000;
-    if (isNaN(period) || (period < 1)) return;
+    if (isNaN(period) || (period < 1)) return srcp + 4;
     const buf = new Float32Array(period);
     let bufp = 0;
     const dry = this.src[srcp++] / 255.0;
@@ -281,7 +287,7 @@ export class SfgPrinter {
     const k = Math.sin(0.5 - w / 2) / Math.sin(0.5 + w / 2);
     const coefv = [
       (x0 - x1 * k + x2 * k * k) / d,
-      (-2 * x * k + x1 + x1 * k * k - 2 * x2 * k) / d,
+      (-2 * x0 * k + x1 + x1 * k * k - 2 * x2 * k) / d,
       (x0 * k * k - x1 * k + x2) / d,
       (2 * k + y1 + y1 * k * k - 2 * y2 * k) / d,
       (-k * k - y1 * k + y2) / d,

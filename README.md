@@ -30,6 +30,10 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] Browser: Would it be possible to run SfgPrinter in a worker or something, to front-load all that work?
 - - - I'm thinking the web runtime could do that immediately on load, for all sounds. Consider.
 - - [ ] Along those lines too, JS oscillators in SfgPrinter.js could optimize like the C version.
+- - [x] I must have messed something up re FM, in SfgPrinter.js. It's unexpectedly noisy.
+- - [x] Mouse tattle in envelopes. ...vertical lines showing time, seems sufficient
+- - [x] New voice, create a level envelope automatically.
+- [ ] Assess SfgPrinter performance, opportunities for optimization here if needed.
 - [ ] Synthesizer, native.
 - - [ ] GM instruments.
 - - [ ] GM drums.

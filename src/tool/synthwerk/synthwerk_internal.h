@@ -18,6 +18,10 @@
 #include <sys/poll.h>
 #include <sys/inotify.h>
 
+// Toggle runtime features here. TODO command line.
+#define SW_USE_AUDIO 0 /* Native audio output, synthesizer, and dynamically reload an instrument per inotify. */
+#define SW_USE_HTTP  1 /* Serve the web app. */
+
 #define SW_INSTRUMENT_FILE "mid/synthwerk.ins"
 #define SW_INSTRUMENT_DIR "mid"
 #define SW_INSTRUMENT_BASE "synthwerk.ins"

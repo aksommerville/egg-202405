@@ -1,17 +1,23 @@
 /* PlaybackService.js
  */
  
+import { Bus } from "./Bus.js";
+
+const PLAY_TIMEOUT = 500;
+ 
 export class PlaybackService {
   static getDependencies() {
-    return [Window];
+    return [Window, Bus];
   }
-  constructor(window) {
+  constructor(window, bus) {
     this.window = window;
+    this.bus = bus;
     
     this.recentWave = null;
-    
+    this.busListener = this.bus.listen(e => this.onBusEvent(e));
     this.context = null;
     this.rate = 44100; // TODO Configurable?
+    this.playTimeout = null;
   }
   
   /* Don't create the AudioContext at construction.
@@ -60,6 +66,24 @@ export class PlaybackService {
     });
     node.connect(this.context.destination);
     node.start(0);
+  }
+  
+  playWaveSoon() {
+    if (this.playTimeout) {
+      this.window.clearTimeout(this.playTimeout);
+    }
+    this.playTimeout = this.window.setTimeout(() => {
+      this.playTimeout = null;
+      this.playWave(this.bus.requireWave());
+    }, PLAY_TIMEOUT);
+  }
+  
+  onBusEvent(event) {
+    switch (event.type) {
+      case "play": this.playWave(this.bus.requireWave()); break;
+      case "setMaster":
+      case "soundDirty": if (this.bus.autoPlay) this.playWaveSoon(); break;
+    }
   }
 }
 

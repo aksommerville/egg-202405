@@ -2,28 +2,38 @@
  * General envelope editor.
  */
  
+import { Bus } from "./Bus.js";
+ 
 const RENDER_TIMEOUT_MS = 10; // Just enough to kick out of this execution frame; 0 would probly be ok too.
-const RIGHT_SLOP_WIDTH_MS = 100; // Dead space on the right side, so you can drag and expand the range.
+const HANDLE_RADIUS = 6;
+const LOG_FLOOR = 20;
  
 export class EnvUi {
   static getDependencies() {
-    return [HTMLCanvasElement, Window];
+    return [HTMLCanvasElement, Window, Bus];
   }
-  constructor(element, window) {
+  constructor(element, window, bus) {
     this.element = element;
     this.window = window;
+    this.bus = bus;
     
-    this.range = 1; // Owner may replace.
-    this.valueIsHertz = false; // True to treat value as hz and display on a more useful log scale.
     this.onChanged = () => {};
     
-    this.points = []; // {t:ms,v:0..1} Times are absolute, values are always normalized.
+    this.env = null;
+    this.range = 1;
+    this.logscale = false;
+    this.loglo = 1;
+    this.loghi = 2;
     this.renderTimeout = null;
-    this.dragIndex = -1;
+    this.dragPoint = null; // One of (env.points), "init", or null.
+    this.tlo = 0; // while dragging
+    this.thi = 0;
     
     this.element.addEventListener("mousedown", e => this.onMouseDown(e));
     this.element.addEventListener("contextmenu", e => e.preventDefault()); // mousedown preventDefault isn't sufficient
     this.mouseListener = null; // For mouseup and mousemove, attached to window.
+    
+    this.busListener = this.bus.listen(e => this.onBusEvent(e));
   }
   
   onRemoveFromDom() {
@@ -31,36 +41,18 @@ export class EnvUi {
       this.window.clearTimeout(this.renderTimeout);
     }
     this.dropMouseListener();
+    this.bus.unlisten(this.busListener);
   }
   
-  setup(words) {
-    this.points = [];
-    this.points.push({ t:0, v: (+words[0] || 0) / this.range });
-    for (let p=1, t=0; p<words.length; ) {
-      const delay = +words[p++] || 0;
-      const v = (+words[p++] / this.range) || 0;
-      t += delay;
-      if (t < 1) t = 1; // t==0 is reserved for the first point, important, we won't allow t to change if zero.
-      this.points.push({ t, v });
+  setup(env, range, logscale) {
+    this.env = env;
+    this.range = range || 1;
+    this.logscale = logscale || false;
+    if (this.logscale) {
+      this.loglo = Math.log2(LOG_FLOOR);
+      this.loghi = Math.log2(this.range);
     }
     this.renderSoon();
-  }
-  
-  encode() {
-    if (!this.points.length) return ""; // Definitely unused if we don't have the dummy zero point (setup was never called).
-    let encv;
-    if (this.range >= 65535) { // Values end up 16-bit. If range is this high, output integers only.
-      encv = v => Math.min(65535, Math.floor(v * this.range));
-    } else { // Floating-point values in text.
-      encv = v => v * this.range;
-    }
-    let dst = encv(this.points[0].v);
-    for (let i=1, t=0; i<this.points.length; i++) {
-      const pt = this.points[i];
-      dst += ` ${pt.t-t} ${encv(pt.v)}`;
-      t = pt.t;
-    }
-    return dst;
   }
   
   renderSoon() {
@@ -79,11 +71,28 @@ export class EnvUi {
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, bounds.width, bounds.height);
     
-    // If we're log-scaled, draw guidelines an octave apart. The phase of these lines isn't important.
-    if (this.valueIsHertz) {
+    // Guidelines to show time scale.
+    for (const [interval, color] of [
+      [62.5, "#080808"],
+      [ 250, "#101010"],
+      [1000, "#202020"],
+    ]) {
       ctx.beginPath();
-      for (let f=20; f<22000; f*=2) {
-        const y = this.yForV(f / 65536, bounds.height);
+      for (let t=interval; t<this.bus.timeRange; t+=interval) {
+        const x = this.xFromT(t);
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, bounds.bottom);
+      }
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    }
+    
+    // When working in log scale, draw guidelines one octave apart.
+    if (this.logscale) {
+      ctx.beginPath();
+      for (let hz=25; ; hz*=2) {
+        const y = this.yFromV(hz);
+        if (y <= 0) break;
         ctx.moveTo(0, y);
         ctx.lineTo(bounds.width, y);
       }
@@ -91,146 +100,175 @@ export class EnvUi {
       ctx.stroke();
     }
     
-    if (this.points.length > 1) {
+    if (!this.env) return;
+    const points = this.env.points.map(({t, v}) => [
+      this.xFromT(t),
+      this.yFromV(v),
+    ]);
     
-      // Trace the envelope.
-      const trange = this.points[this.points.length - 1].t + RIGHT_SLOP_WIDTH_MS;
+    ctx.beginPath();
+    let lasty;
+    ctx.moveTo(0, lasty = this.yFromV(this.env.init));
+    for (const [x, y] of points) ctx.lineTo(x, lasty = y);
+    ctx.lineTo(bounds.width, lasty);
+    ctx.strokeStyle = "#a50";
+    ctx.stroke();
+    
+    ctx.fillStyle = "#ff0";
+    for (const [x, y] of points) {
       ctx.beginPath();
-      ctx.moveTo(0, this.yForV(this.points[0].v, bounds.height));
-      for (const { t, v } of this.points) {
-        const x = (t * bounds.width) / trange;
-        const y = this.yForV(v, bounds.height);
-        ctx.lineTo(x, y);
-      }
-      ctx.strokeStyle = "#aaa";
-      ctx.stroke();
-      
-      // Draw a big handle on each point.
-      const radius = 4;
-      ctx.fillStyle = "#f80";
-      for (const { t, v } of this.points) {
-        const x = (t * bounds.width) / trange;
-        const y = this.yForV(v, bounds.height);
-        ctx.beginPath();
-        ctx.ellipse(x, y, radius, radius, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.ellipse(x, y, HANDLE_RADIUS, HANDLE_RADIUS, 0, Math.PI * 2, false);
+      ctx.fill();
     }
+    ctx.beginPath();
+    ctx.ellipse(0, this.yFromV(this.env.init), HANDLE_RADIUS, HANDLE_RADIUS, 0, Math.PI * 2, false);
+    ctx.fill();
   }
   
-  yForV(v, h) {
-    if (this.valueIsHertz) {
-      // We'll try to display only values in 20..22k, and on a base-2 log scale so octaves have a uniform height.
-      v *= 65536;
-      if (v > 22000) v = 22000;
-      else if (v < 20) v = 20;
-      v = (Math.log2(v) - 4.3) / (14.5 - 4.3);
-      return h - v * h;
-    } else {
-      return h - v * h;
-    }
+  /* Coordinate transforms.
+   **************************************************/
+  
+  xFromT(t) {
+    return (t * this.element.width) / this.bus.timeRange;
   }
   
-  vForY(y, h) {
-    y = (h - y - 1) / h;
-    if (this.valueIsHertz) {
-      const hz = Math.min(65535, Math.max(1, Math.pow(2, (y * (14.5 - 4.3)) + 4.3)));
-      return hz / 65536.0;
-    }
-    return y;
+  tFromX(x) {
+    return Math.round((x * this.bus.timeRange) / this.element.width);
   }
+  
+  yFromV(v) {
+    if (this.logscale) {
+      if (v <= LOG_FLOOR) return this.element.height;
+      const log = Math.log2(v);
+      const norm = (log - this.loglo) / (this.loghi - this.loglo);
+      return (1 - norm) * this.element.height;
+    }
+    return this.element.height - (v * this.element.height) / this.range;
+  }
+  
+  vFromY(y) {
+    if (this.logscale) {
+      const norm = (this.element.height - y) / this.element.height;
+      const log = this.loglo + norm * (this.loghi - this.loglo);
+      const pow = Math.pow(2, log);
+      return pow;
+    }
+    return ((this.element.height - y) * this.range) / this.element.height;
+  }
+  
+  /* Events.
+   *********************************************************************/
   
   dropMouseListener() {
-    if (!this.mouseListener) return;
-    this.window.removeEventListener("mouseup", this.mouseListener);
-    this.window.removeEventListener("mousemove", this.mouseListener);
-    this.mouseListener = null;
-    this.dragIndex = -1;
+    if (this.mouseListener) {
+      this.window.removeEventListener("mouseup", this.mouseListener);
+      this.window.removeEventListener("mousedown", this.mouseListener);
+      this.mouseListener = null;
+    }
+    this.dragPoint = null;
   }
   
-  onMouseMoveOrUp(event) {
-    if ((event.type === "mouseup") || (this.dragIndex < 0) || (this.dragIndex >= this.points.length)) {
+  onMouseUpOrMove(event) {
+    if (event.type === "mouseup") {
       this.dropMouseListener();
-      this.onChanged();
       return;
     }
+    if (!this.env || !this.dragPoint) return;
     const bounds = this.element.getBoundingClientRect();
-    const x = event.x - bounds.x;
-    const y = event.y - bounds.y;
-    const point = this.points[this.dragIndex];
-    if (point.t) {
-      const trange = this.points[this.points.length - 1].t + RIGHT_SLOP_WIDTH_MS;
-      point.t = Math.max(1, Math.round((x * trange) / bounds.width));
-      if ((this.dragIndex > 0) && (point.t <= this.points[this.dragIndex - 1].t)) {
-        point.t = this.points[this.dragIndex - 1].t + 1;
-      } else if ((this.dragIndex < this.points.length - 1) && (point.t >= this.points[this.dragIndex + 1].t)) {
-        point.t = this.points[this.dragIndex + 1].t - 1;
-      }
+    const x = event.clientX - bounds.x;
+    const y = event.clientY - bounds.y;
+    const v = Math.max(0, Math.min(this.range, this.vFromY(y)));
+    if (this.dragPoint === "init") {
+      this.env.init = v;
+    } else {
+      const t = Math.max(this.tlo, Math.min(this.thi, this.tFromX(x)));
+      this.dragPoint.t = t;
+      this.dragPoint.v = v;
     }
-    point.v = Math.max(0, Math.min(1, this.vForY(y, bounds.height)));
+    this.onChanged();
     this.renderSoon();
   }
   
   onMouseDown(event) {
-    event.stopPropagation();
+    if (this.mouseListener) return;
     event.preventDefault();
+    event.stopPropagation();
+    if (!this.env) return;
+    
     const bounds = this.element.getBoundingClientRect();
-    const x = event.x - bounds.x;
-    const y = event.y - bounds.y;
+    const x = event.clientX - bounds.x;
+    const y = event.clientY - bounds.y;
     
-    // Convert our logical points into canvas coords like (x,y), and maintain order.
-    const radius = 4;
-    const trange = this.points[this.points.length - 1].t + RIGHT_SLOP_WIDTH_MS;
-    const points = this.points.map(pt => [
-      (pt.t * bounds.width) / trange,
-      this.yForV(pt.v, bounds.height),
-    ]);
-    
-    // If we're inside a point, begin dragging it. (or delete it, if it was a right-click)
-    this.dragIndex = -1;
-    for (let i=points.length; i-->0; ) {
-      const point = points[i];
-      const dx = point[0] - x;
-      if ((dx < -radius) || (dx > radius)) continue;
-      const dy = point[1] - y;
-      if ((dy < -radius) || (dy > radius)) continue;
-      
-      if (event.button === 2) {
-        if (!i) return; // Can't delete point zero; it's not a real point.
-        this.points.splice(i, 1);
-        this.renderSoon();
-        this.onChanged();
-        return;
-      }
-      this.dragIndex = i;
-      break;
+    // First check if we clicked on a handle, in screen coordinates only.
+    let dragPoint = null;
+    for (const point of this.env.points) {
+      const dx = x - this.xFromT(point.t);
+      if ((dx < -HANDLE_RADIUS) || (dx > HANDLE_RADIUS)) continue;
+      const dy = y - this.yFromV(point.v);
+      if ((dy < -HANDLE_RADIUS) || (dy > HANDLE_RADIUS)) continue;
+      dragPoint = point;
     }
     
-    // If we didn't find a point, add one.
-    if (this.dragIndex < 0) {
-      const t = Math.max(1, Math.round((x * trange) / bounds.width));
-      for (let i=1; i<this.points.length; i++) {
-        if (t <= this.points[i].t) {
-          this.dragIndex = i;
-          this.points.splice(i, 0, {
-            t,
-            v: this.vForY(y, bounds.height),
-          });
+    // Got a handle, and it's a right click? Delete the point and we're done.
+    if (dragPoint && (event.button === 2)) {
+      const p = this.env.points.indexOf(dragPoint);
+      this.env.points.splice(p, 1);
+      this.onChanged();
+      this.renderSoon();
+      return;
+    }
+    
+    // Any other right click is noop.
+    if (event.button !== 0) return;
+    
+    // If no point yet, check the imaginary init point.
+    if (!dragPoint) {
+      if (x <= HANDLE_RADIUS) {
+        const dy = y - this.yFromV(this.env.init);
+        if ((dy >= -HANDLE_RADIUS) && (dy <= HANDLE_RADIUS)) {
+          dragPoint = "init";
+        }
+      }
+    }
+    
+    // Still no point? We'll add one.
+    if (!dragPoint) {
+      const mouset = this.tFromX(x);
+      const mousev = this.vFromY(y);
+      let insp = this.env.points.length;
+      for (let i=0; i<this.env.points.length; i++) {
+        if (this.env.points[i].t >= mouset) {
+          insp = i;
           break;
         }
       }
-      if (this.dragIndex < 0) {
-        this.dragIndex = this.points.length;
-        this.points.push({
-          t,
-          v: this.vForY(y, bounds.height),
-        });
-      }
+      dragPoint = { t: mouset, v: mousev };
+      this.env.points.splice(insp, 0, dragPoint);
+    }
+
+    this.dragPoint = dragPoint;
+    if (this.dragPoint === "init") {
+      this.tlo = 0;
+      this.thi = 0;
+    } else {
+      const p = this.env.points.indexOf(this.dragPoint);
+      if (p < 0) return;
+      if (p > 0) this.tlo = this.env.points[p-1].t + 1;
+      else this.tlo = 1;
+      if (p < this.env.points.length - 1) this.thi = this.env.points[p+1].t - 1;
+      else this.thi = this.bus.timeRange;
+      if (this.tlo > this.thi) return;
     }
     
-    this.mouseListener = e => this.onMouseMoveOrUp(e);
+    this.mouseListener = e => this.onMouseUpOrMove(e);
     this.window.addEventListener("mouseup", this.mouseListener);
     this.window.addEventListener("mousemove", this.mouseListener);
-    this.onMouseMoveOrUp(event);
+    this.onMouseUpOrMove(event);
+  }
+  
+  onBusEvent(event) {
+    switch (event.type) {
+      case "setTimeRange": this.renderSoon(); break;
+    }
   }
 }

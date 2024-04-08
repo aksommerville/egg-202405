@@ -47,6 +47,7 @@ int main(int argc,char **argv) {
   
   /* Launch HTTP server.
    */
+  #if SW_USE_HTTP
   struct http_context_delegate http_delegate={
     .cb_serve=sw_serve,
   };
@@ -56,9 +57,13 @@ int main(int argc,char **argv) {
     return 1;
   }
   fprintf(stderr,"Serving HTTP on port %d.\n",SW_HTTP_PORT);
+  #else
+  fprintf(stderr,"HTTP service disabled.\n");
+  #endif
   
   /* Acquire audio driver.
    */
+  #if SW_USE_AUDIO
   struct hostio_audio_delegate audio_delegate={
     .cb_pcm_out=sw_pcm_out,
   };
@@ -112,11 +117,31 @@ int main(int argc,char **argv) {
     .cb_event=sw_midi_event,
   };
   if (!(sw.ossmidi=ossmidi_new(&ossmidi_delegate))) return 1;
+  #else
+  fprintf(stderr,"Native audio disabled.\n");
+  #endif
+  
+  // One of the pollable things must have a nonzero timeout, and the other should be zero.
+  // Recommend nonzero for ossmidi if enabled, since it's more sensitive to latency.
+  #if SW_USE_AUDIO && SW_USE_HTTP
+    int ossto=100;
+    int httpto=0;
+  #elif SW_USE_AUDIO
+    int ossto=100;
+    int httpto=0;
+  #elif SW_USE_HTTP
+    int ossto=0;
+    int httpto=100;
+  #else
+    fprintf(stderr,"All features disabled. Aborting.\n");
+    return 1;
+  #endif
   
   /* Main loop.
    */
   while (!sw.sigc) {
-    if (ossmidi_update(sw.ossmidi,100)<0) {
+    #if SW_USE_AUDIO
+    if (ossmidi_update(sw.ossmidi,ossto)<0) {
       fprintf(stderr,"ossmidi_update failed\n");
       return 1;
     }
@@ -126,12 +151,16 @@ int main(int argc,char **argv) {
         return 1;
       }
     }
-    if (http_update(sw.http,0)<0) {
+    #endif
+    
+    #if SW_USE_HTTP
+    if (http_update(sw.http,httpto)<0) {
       fprintf(stderr,"Error updating HTTP context.\n");
       return 1;
     }
+    #endif
     
-    // Poll inotify.
+    #if SW_USE_AUDIO
     struct pollfd pollfd={.fd=sw.infd,.events=POLLIN|POLLERR|POLLHUP};
     if (poll(&pollfd,1,0)>0) {
       char tmp[1024];
@@ -162,11 +191,12 @@ int main(int argc,char **argv) {
         }
       }
     }
+    #endif
   }
   
   /* Clean up.
    */
-  close(sw.infd);
+  if (sw.infd>=0) close(sw.infd);
   hostio_audio_del(sw.audio);
   synth_del(sw.synth);
   ossmidi_del(sw.ossmidi);
