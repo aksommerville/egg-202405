@@ -6,9 +6,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#if USE_bmp
-  #include "opt/bmp/bmp.h"
-#endif
 #if USE_png
   #include "opt/png/png.h"
 #endif
@@ -171,8 +168,6 @@ static int ico_file_decode(struct ico_file *ico,const uint8_t *src,int srcc) {
     image->planec=planec;
     image->pixelsize=pixelsize;
     // (stride,v) do not get populated yet
-    
-    fprintf(stderr,"ico %dx%d ctc=%d planec=%d pixelsize=%d paylen=%d\n",w,h,ctc,planec,pixelsize,paylen);
   }
   return 0;
 }
@@ -240,25 +235,157 @@ static int ico_image_yoink_png(struct ico_image *ico,struct png_image *png) {
 
 #endif
 
-/* Populate ico_image from bmp_image.
- * May handoff and zero pixels directly.
+/* Finish decoding from BMP.
+ * Caller takes all the measurements.
+ *
+ * Pixels and mask are stored big-endianly (despite everything else being little-endian, grr).
+ * Color table entries are 32 bit BGRX, the last 8 are evidently unused.
+ * Mask is backward: Ones are transparent, zeroes are opaque.
  */
  
-#if USE_bmp
- 
-static int ico_image_yoink_bmp(struct ico_image *ico,struct bmp_image *bmp) {
-  ico->v=bmp->v;
-  bmp->v=0;
-  ico->w=bmp->w;
-  ico->h=bmp->h;
-  ico->stride=bmp->stride;
-  ico->planec=1;
-  ico->pixelsize=bmp->pixelsize;
-  //TODO We need to capture the color table if present.
+static int ico_image_from_bmp(
+  struct ico_image *image,
+  const uint8_t *ctab,
+  const uint8_t *pixels,int stride,
+  const uint8_t *mask,int maskstride
+) {
+  int dststride=image->w<<2;
+  uint8_t *dst=calloc(dststride,image->h); // only need to visit the opaque ones
+  if (!dst) return -1;
+  
+  const uint8_t *srcrow=pixels;
+  const uint8_t *maskrow=mask;
+  uint8_t *dstrow=dst+dststride*(image->h-1); // write bottom to top
+  int yi=image->h;
+  for (;yi-->0;srcrow+=stride,maskrow+=maskstride,dstrow-=dststride) {
+    const uint8_t *srcp=srcrow;
+    const uint8_t *maskp=maskrow;
+    uint8_t maskmask=0x80;
+    uint8_t *dstp=dstrow;
+    int xi=image->w;
+    switch (image->pixelsize) {
+    
+      case 1: {
+          for (;xi-->0;dstp+=4) {
+            if (!((*maskp)&maskmask)) {
+              int p=((*srcp)&maskmask)?1:0;
+              if (p>=image->ctc) {
+                if (p) dstp[0]=dstp[1]=dstp[2]=0xff;
+                else dstp[0]=dstp[1]=dstp[2]=0x00;
+              } else {
+                const uint8_t *ct=ctab+p*4;
+                dstp[0]=ct[2];
+                dstp[1]=ct[1];
+                dstp[2]=ct[0];
+              }
+              dstp[3]=0xff;
+            }
+            if (maskmask==1) {
+              maskmask=0x80;
+              srcp++;
+              maskp++;
+            } else {
+              maskmask>>=1;
+            }
+          }
+        } break;
+        
+      case 2: {
+          int srcshift=6;
+          for (;xi-->0;dstp+=4) {
+            if (!((*maskp)&maskmask)) {
+              int p=((*srcp)>>srcshift)&3;
+              if (p>=image->ctc) {
+                p|=p<<2;
+                p|=p<<4;
+                dstp[0]=dstp[1]=dstp[2]=p;
+              } else {
+                const uint8_t *ct=ctab+p*4;
+                dstp[0]=ct[2];
+                dstp[1]=ct[1];
+                dstp[2]=ct[0];
+              }
+              dstp[3]=0xff;
+            }
+            if (maskmask==1) {
+              maskmask=0x80;
+              maskp++;
+            } else {
+              maskmask>>=1;
+            }
+            if (srcshift) {
+              srcshift-=2;
+            } else {
+              srcshift=6;
+              srcp++;
+            }
+          }
+        } break;
+        
+      case 4: {
+          int srcshift=4;
+          for (;xi-->0;dstp+=4) {
+            if (!((*maskp)&maskmask)) {
+              int p=((*srcp)>>srcshift)&15;
+              if (p>=image->ctc) {
+                p|=p<<2;
+                p|=p<<4;
+                dstp[0]=dstp[1]=dstp[2]=p;
+              } else {
+                const uint8_t *ct=ctab+p*4;
+                dstp[0]=ct[2];
+                dstp[1]=ct[1];
+                dstp[2]=ct[0];
+              }
+              dstp[3]=0xff;
+            }
+            if (maskmask==1) {
+              maskmask=0x80;
+              maskp++;
+            } else {
+              maskmask>>=1;
+            }
+            if (srcshift) {
+              srcshift=0;
+            } else {
+              srcshift=4;
+              srcp++;
+            }
+          }
+        } break;
+        
+      case 8: {
+          for (;xi-->0;dstp+=4,srcp++) {
+            if (!((*maskp)&maskmask)) {
+              int p=*srcp;
+              if (p>=image->ctc) {
+                dstp[0]=dstp[1]=dstp[2]=p;
+              } else {
+                const uint8_t *ct=ctab+p*4;
+                dstp[0]=ct[2];
+                dstp[1]=ct[1];
+                dstp[2]=ct[0];
+              }
+            }
+            if (maskmask==1) {
+              maskmask=0x80;
+              maskp++;
+            } else {
+              maskmask>>=1;
+            }
+          }
+        } break;
+        
+      default: return -1; // Is it ever 16, 24, or 32? Or something else?
+    }
+  }
+  
+  image->v=dst;
+  image->stride=dststride;
+  image->pixelsize=32;
+  image->planec=1;
   return 0;
 }
-
-#endif
 
 /* Decode image.
  */
@@ -276,15 +403,36 @@ int ico_image_decode(struct ico_image *image) {
     }
   #endif
   
-  // Otherwise BMP, and beware that the outer header is missing.
-  #if USE_bmp
-    struct bmp_image *bmp=bmp_decode(image->serial,image->serialc);
-    if (bmp) {
-      int err=ico_image_yoink_bmp(image,bmp);
-      bmp_image_del(bmp);
-      return err;
+  // When it's BMP, we don't actually need to use the "bmp" unit.
+  // And in fact we can't. The header is all mixed up between the ICO TOC and the BMP header.
+  // I am assuming that all BMP ICO have a color table and mask, according to the image TOC.
+  if (image->serialc>=4) {
+    const uint8_t *src=image->serial;
+    int hdrlen=src[0]|(src[1]<<8)|(src[2]<<16)|(src[3]<<24);
+    if ((hdrlen>=4)&&(hdrlen<image->serialc)) {
+      const uint8_t *ctab=src+hdrlen;
+      int ctablen=image->ctc*4;
+      if (hdrlen<=image->serialc-ctablen) {
+        int pixp=hdrlen+ctablen;
+        pixp=(pixp+3)&~3; // Pixels always begin on a 4-byte boundary.
+        const uint8_t *pixels=src+pixp;
+        int stride=((image->pixelsize*image->w+31)&~31)>>3; // Stride always a multiple of 4.
+        if (stride<INT_MAX/image->h) {
+          int pixelslen=stride*image->h;
+          if (pixp<=image->serialc-pixelslen) {
+            const uint8_t *mask=src+pixp+pixelslen;
+            int maskstride=((image->w+31)&~31)>>3; // Mask stride always a multiple of 4.
+            int masklen=maskstride*image->h;
+            if (pixp+pixelslen<=image->serialc-masklen) {
+              return ico_image_from_bmp(image,ctab,pixels,stride,mask,maskstride);
+            } else {
+              // Not sure whether BMP ICO always has a mask. We could proceed here if that happens.
+            }
+          }
+        }
+      }
     }
-  #endif
+  }
   
   return -1;
 }

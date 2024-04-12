@@ -115,7 +115,7 @@ const struct synth_builtin synth_builtin[0x80]={
   
 // 40..47: Solo String
   BLIP(0x28) // Violin TODO
-  ALIAS(0x29,0x28) // Viola TODO
+  ALIAS(0x29,0x05) // Viola TODO
   ALIAS(0x2a,0x28) // Cello TODO
   ALIAS(0x2b,0x28) // Contrabass TODO
   ALIAS(0x2c,0x28) // Tremolo Strings TODO

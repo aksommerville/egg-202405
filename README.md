@@ -21,7 +21,7 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] Windows.
 - - [ ] Preferred language for Mac and Windows.
 - [ ] Call JS from Wasm and vice-versa.
-- [ ] GUI for pcmprint. Build as a web app, in synthwerk, at least for now.
+- [x] GUI for pcmprint. Build as a web app, in synthwerk, at least for now.
 - [ ] Assess SfgPrinter performance, opportunities for optimization here if needed.
 - [ ] Synthesizer, native.
 - - [ ] GM instruments.
@@ -30,13 +30,13 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] fx: detune
 - - [ ] Pitch wheel
 - - [ ] Readhead should wrap around on song repeats.
-- [ ] Timing in MIDI conversion is still fucked up. See nearer-the-sky, they go out of sync toward the end.
+- [x] Timing in MIDI conversion is still fucked up. See nearer-the-sky, they go out of sync toward the end.
 - [ ] User-supplied HTTP permissions.
 - [ ] User-supplied storage permissions.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
 - [ ] Accelerometer input.
 - [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.
-- [ ] x11 app icon broken, after i changed from GIF to ICO
-- - [ ] Our ico and bmp decoder are all kinds of wrong.
+- [x] x11 app icon broken, after i changed from GIF to ICO
+- - [x] Our ico and bmp decoder are all kinds of wrong.
 - [ ] Web: Detect low frame rate and pause. Or at least kill the audio. (eg when browser window goes into background)
 

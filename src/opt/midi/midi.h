@@ -55,6 +55,7 @@ struct midi_file {
   int rate;
   int usperqnote;
   double framespertick;
+  double elapsed_ticks; // 0..1, collects roundoff error
   struct midi_track {
     const uint8_t *v;
     int c;

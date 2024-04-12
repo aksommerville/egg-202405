@@ -41,7 +41,7 @@ export const Instruments = [
 32,
 32,
 "blip",
-40,
+5,
 40,
 40,
 40,

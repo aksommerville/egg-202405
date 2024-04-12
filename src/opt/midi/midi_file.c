@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <math.h>
+#include <stdio.h>
 
 /* Delete.
  */
@@ -185,16 +186,6 @@ static int midi_track_acquire_delay(struct midi_file *file,struct midi_track *tr
   if ((seqlen=sr_vlq_decode(&tickc,track->v+track->p,track->c-track->p))<1) return -1;
   track->p+=seqlen;
   track->delay=tickc;
-  /*XXX Don't convert to frames here, that would allow tracks to slip away from each other over time.
-  if (!tickc) {
-    track->delay=0;
-  } else if (file->rate>0) {
-    track->delay=(int)lround(tickc*file->framespertick);
-    if (track->delay<1) track->delay=1;
-  } else {
-    track->delay=tickc;
-  }
-  /**/
   return 0;
 }
 
@@ -243,7 +234,7 @@ int midi_file_next(struct midi_event *event,struct midi_file *file) {
     }
   }
   if (finished) return -1;
-  int delay_frames=(int)lround(shortest_delay*file->framespertick);
+  int delay_frames=(int)(shortest_delay*file->framespertick);
   if (delay_frames<1) return 1;
   return delay_frames;
 }
@@ -253,15 +244,30 @@ int midi_file_next(struct midi_event *event,struct midi_file *file) {
 
 int midi_file_advance(struct midi_file *file,int framec) {
   if (framec<1) return 0;
-  int tickc=(int)lround(framec/file->framespertick);
-  if (tickc<1) tickc=1;
+  
+  double tickcf=framec/file->framespertick;
+  file->elapsed_ticks+=tickcf;
+  int tickc=(int)file->elapsed_ticks;
+  if (tickc<1) return 0;
+  
+  // Acquire missing delays, and ensure we're not ticking further than any track's delay.
+  // That would cause tracks to skew against each other in time.
   struct midi_track *track=file->trackv;
   int i=file->trackc;
   for (;i-->0;track++) {
     if (track->p>=track->c) continue;
-    if ((track->delay-=tickc)<0) {
-      track->delay=0;
+    if (track->delay<0) {
+      if (midi_track_acquire_delay(file,track)<0) return -1;
+      if (track->p>=track->c) continue;
     }
+    if (track->delay<tickc) tickc=track->delay;
+  }
+  if (tickc<1) return 0;
+  file->elapsed_ticks-=tickc;
+  
+  for (track=file->trackv,i=file->trackc;i-->0;track++) {
+    if (track->p>=track->c) continue;
+    track->delay-=tickc;
   }
   return 0;
 }

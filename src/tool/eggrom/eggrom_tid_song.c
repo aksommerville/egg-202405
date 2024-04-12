@@ -297,6 +297,7 @@ static int eggrom_song_compile_midi(struct sr_encoder *dst,const struct romw_res
  */
  
 int eggrom_song_compile(struct sr_encoder *dst,const struct romw_res *res) {
+  fprintf(stderr,"%s %s\n",__func__,res->path);
   if ((res->serialc>=4)&&!memcmp(res->serial,"MThd",4)) {
     return eggrom_song_compile_midi(dst,res);
   } else if ((res->serialc>=4)&&!memcmp(res->serial,"\xbe\xee\xeeP",4)) {

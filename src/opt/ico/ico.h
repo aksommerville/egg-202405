@@ -1,7 +1,8 @@
 /* ico.h
  * Required: serial
- * Optional: png bmp
- * Note that we are not useful without at least one of (png,bmp); ico is just a container format.
+ * Optional: png
+ * We do not use our sister "bmp" format; bmp embedded in ico is quirky enough to warrant its own implementation.
+ * Wish I'd god damn known that before writing the bmp unit :(
  *
  * Minimal interface to Microsoft Icon files.
  * Used by "favicon.ico", and I like them as general-purpose multi-size icons.
