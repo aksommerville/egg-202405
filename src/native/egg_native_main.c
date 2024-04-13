@@ -125,7 +125,10 @@ static int egg_native_init() {
     video_setup.iconw=egg.romiconw;
     video_setup.iconh=egg.romiconh;
   } else {
-    //TODO default app icon
+    egg_appicon_init();
+    video_setup.iconrgba=egg.appicon_rgba;
+    video_setup.iconw=egg.appiconw;
+    video_setup.iconh=egg.appiconh;
   }
   switch (egg.render_choice) {
     case 1: video_setup.access_mode=HOSTIO_VIDEO_ACCESS_GX; break;
@@ -340,3 +343,55 @@ int main(int argc,char **argv) {
   egg_native_quit(0);
   return 0;
 }
+
+/* App icon. (default only, when the ROM doesn't provide one).
+ */
+ 
+static const uint8_t egg_appicon_src[]={
+#define ROW(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) (a<<6)|(b<<4)|(c<<2)|d,(e<<6)|(f<<4)|(g<<2)|h,(i<<6)|(j<<4)|(k<<2)|l,(m<<6)|(n<<4)|(o<<2)|p,
+#define _ 0
+#define K 1
+#define W 2
+#define R 3
+  ROW(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_)
+  ROW(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_)
+  ROW(_,_,_,_,K,_,_,_,_,_,_,K,_,_,_,_)
+  ROW(_,_,_,K,W,K,_,_,_,_,K,W,K,_,_,_)
+  ROW(_,_,K,W,W,W,K,_,_,K,W,W,W,K,_,_)
+  ROW(_,_,K,W,W,W,K,_,_,K,W,W,W,K,_,_)
+  ROW(_,K,W,W,W,W,W,K,K,W,W,W,W,W,K,_)
+  ROW(_,K,W,W,W,W,W,K,K,W,W,W,W,W,K,_)
+  ROW(_,K,W,W,W,W,W,K,K,W,W,W,W,W,K,_)
+  ROW(_,_,K,W,W,W,K,_,_,K,W,W,W,K,_,_)
+  ROW(_,_,_,K,K,K,_,_,_,_,K,K,K,_,_,_)
+  ROW(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_)
+  ROW(_,R,_,_,_,_,_,_,_,_,_,_,_,_,R,_)
+  ROW(_,_,R,_,_,_,_,_,_,_,_,_,_,R,_,_)
+  ROW(_,_,_,R,R,R,R,R,R,R,R,R,R,_,_,_)
+  ROW(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_)
+#undef ROW
+};
+ 
+void egg_appicon_init() {
+  if (!(egg.appicon_rgba=malloc(16*16*4))) return;
+  const uint8_t *src=egg_appicon_src; // i2
+  int srcshift=6;
+  uint8_t *dst=egg.appicon_rgba;
+  int pxc=16*16;
+  for (;pxc-->0;dst+=4) {
+    switch (((*src)>>srcshift)&3) {
+      case _: dst[0]=dst[1]=dst[2]=dst[3]=0; break;
+      case K: dst[0]=dst[1]=dst[2]=0x00; dst[3]=0xff; break;
+      case W: dst[0]=dst[1]=dst[2]=dst[3]=0xff; break;
+      case R: dst[0]=0xff; dst[1]=0x00; dst[2]=0x00; dst[3]=0xff; break;
+    }
+    if (srcshift) srcshift-=2;
+    else { srcshift=6; src++; }
+  }
+  egg.appiconw=16;
+  egg.appiconh=16;
+}
+#undef _
+#undef K
+#undef W
+#undef R

@@ -9,10 +9,8 @@ Input is more agnostic, tries to give you raw events as much as possible.
 
 ## TODO
 
-- [x] Alternate render implementations.
-- - xxx Web (CanvasRenderingContext2D). Are there browsers that don't support WebGL? ...no important ones.
-- - - No point.
-- - [x] Native (soft)
+### High Priority
+
 - [ ] Lights-on app to manually validate all platform features.
 - - [ ] Test each entry point in Javascript.
 - - [ ] Test each entry point in WebAssembly.
@@ -22,6 +20,14 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] Windows.
 - - [ ] Preferred language for Mac and Windows.
 - [ ] Call JS from Wasm and vice-versa.
+- [ ] User-supplied HTTP permissions.
+- [ ] User-supplied storage permissions.
+- [ ] Accelerometer input.
+- [ ] softrender: Update (encfmt) with alpha hint when an image is used as destination, and initialize at decode.
+- [ ] softrender: Tint and global alpha. I think would be best to implement as blenders at softrender_draw.c, not sure.
+
+### Low Priority
+
 - [ ] Assess SfgPrinter performance, opportunities for optimization here if needed.
 - [ ] Synthesizer, native.
 - - [ ] GM instruments.
@@ -29,15 +35,8 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] fx: detune
 - - [ ] Pitch wheel
 - - [ ] Readhead should wrap around on song repeats.
-- [ ] User-supplied HTTP permissions.
-- [ ] User-supplied storage permissions.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
-- [ ] Accelerometer input.
 - [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.
 - [ ] Web: Detect low frame rate and pause. Or at least kill the audio. (eg when browser window goes into background)
-- [ ] Default app icon. Hard-code and deliver at egg_native_main.c:egg_native_init
 - [ ] render and softrender currently both require upload stride to be provided explicitly. Should we loosen that? Maybe allow (stride==0) for "oh come on, you know what i mean".
 - [ ] Do I need to forbid rendering from a texture onto itself? My heart says yes, but we're not forbidding it yet.
-- [x] x11fb runs 5 times slower than xegl, even when the game doesn't render anything. Is that expected? ...when scaling up, yes.
-- [ ] softrender: Update (encfmt) with alpha hint when an image is used as destination.
-- [ ] softrender: Tint and global alpha. I think would be best to implement as blenders at softrender_draw.c, not sure.

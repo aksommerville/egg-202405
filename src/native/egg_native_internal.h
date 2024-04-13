@@ -62,8 +62,8 @@ extern struct egg {
   struct egg_function_location loc_client_update;
   struct egg_function_location loc_client_render;
   
-  // bindBuffer(GL_ELEMENT_ARRAY_BUFFER) -- we need to track this to avoid sending wild pointers to glDrawElements
-  int webgl_eab_bound;
+  void *appicon_rgba;
+  int appiconw,appiconh;
   
   // Managed by egg_native_net.c.
   struct egg_net_op {
@@ -118,6 +118,8 @@ extern struct egg {
 
 int egg_native_configure(int argc,char **argv);
 void egg_configure_cleanup();
+
+void egg_appicon_init();
 
 void egg_native_rom_cleanup();
 int egg_native_rom_init();
