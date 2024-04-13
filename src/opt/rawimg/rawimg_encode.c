@@ -472,7 +472,7 @@ static struct rawimg *rawimg_decode_qoi(const uint8_t *src,int srcc) {
 
 #include "opt/rlead/rlead.h"
 
-static int rawimg_encode_rlead(struct sr_encoder *encoder,const struct rawimg *rawimg) {
+static int rawimg_encode_rlead(struct sr_encoder *encoder,const struct rawimg *rawimg,int alpha) {
   struct rawimg *killme=0;
   if (rawimg_is_y1(rawimg)<2) {
     if (!(killme=rawimg_new_copy(rawimg))) return -1;
@@ -487,6 +487,7 @@ static int rawimg_encode_rlead(struct sr_encoder *encoder,const struct rawimg *r
     .w=rawimg->w,
     .h=rawimg->h,
     .stride=rawimg->stride,
+    .alpha=alpha,
   };
   int err=rlead_encode(encoder,&rlead);
   rawimg_del(killme);
@@ -502,6 +503,11 @@ static struct rawimg *rawimg_decode_rlead(const uint8_t *src,int srcc) {
     return 0;
   }
   rlead->v=0; // handed off
+  if (rlead->alpha) {
+    rawimg->rmask=rawimg->gmask=rawimg->bmask=0;
+    rawimg->amask=1;
+    rawimg->chorder[0]='A';
+  }
   rlead_image_del(rlead);
   
   rawimg->bitorder='>';
@@ -725,7 +731,8 @@ int rawimg_encode(struct sr_encoder *encoder,const struct rawimg *rawimg) {
     if (!strcmp(rawimg->encfmt,"qoi")) return rawimg_encode_qoi(encoder,rawimg);
   #endif
   #if USE_rlead
-    if (!strcmp(rawimg->encfmt,"rlead")) return rawimg_encode_rlead(encoder,rawimg);
+    if (!strcmp(rawimg->encfmt,"rleadalpha")) return rawimg_encode_rlead(encoder,rawimg,1);
+    if (!strcmp(rawimg->encfmt,"rlead")) return rawimg_encode_rlead(encoder,rawimg,0);
   #endif
   #if USE_jpeg
     if (!strcmp(rawimg->encfmt,"jpeg")) return rawimg_encode_jpeg(encoder,rawimg);

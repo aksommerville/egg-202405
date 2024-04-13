@@ -25,6 +25,7 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - [ ] Accelerometer input.
 - [ ] softrender: Update (encfmt) with alpha hint when an image is used as destination, and initialize at decode.
 - [ ] softrender: Tint and global alpha. I think would be best to implement as blenders at softrender_draw.c, not sure.
+- [ ] web: We don't seem to be getting click events
 
 ### Low Priority
 
@@ -40,3 +41,5 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - [ ] Web: Detect low frame rate and pause. Or at least kill the audio. (eg when browser window goes into background)
 - [ ] render and softrender currently both require upload stride to be provided explicitly. Should we loosen that? Maybe allow (stride==0) for "oh come on, you know what i mean".
 - [ ] Do I need to forbid rendering from a texture onto itself? My heart says yes, but we're not forbidding it yet.
+- [ ] Mouse coords when softrender in play. Will require a new hostio_video hook i think.
+- [ ] Mouse and touch coords in web. Must account for scaling (do they already?)

@@ -14,6 +14,7 @@ void render_del(struct render *render) {
     while (render->texturec-->0) render_texture_cleanup(render->texturev+render->texturec);
     free(render->texturev);
   }
+  if (render->textmp) free(render->textmp);
   free(render);
 }
 
@@ -97,7 +98,7 @@ int render_texture_new(struct render *render) {
 static int render_texture_fmt_from_rawimg(struct rawimg *rawimg) {
   if (rawimg_is_rgba(rawimg)) return EGG_TEX_FMT_RGBA;
   if (rawimg_is_y8(rawimg)) return EGG_TEX_FMT_Y8;
-  if (rawimg_is_y1(rawimg)) return EGG_TEX_FMT_Y1;
+  if (rawimg_is_y1(rawimg)>=2) return EGG_TEX_FMT_Y1;
   if (rawimg->pixelsize==8) return EGG_TEX_FMT_A8;
   if ((rawimg->pixelsize==1)&&(rawimg->bitorder=='>')) return EGG_TEX_FMT_A1;
   return 0;
@@ -125,17 +126,61 @@ static int render_texture_measure(int w,int h,int stride,int fmt) {
   return stride*h;
 }
 
+/* Expand to 32 from 1 bit.
+ */
+ 
+static void render_expand_1bit(uint32_t *dst,const uint8_t *src,int w,int h,int srcstride,uint32_t zero,uint32_t one) {
+  int yi=h;
+  for (;yi-->0;dst+=w,src+=srcstride) {
+    const uint8_t *srcp=src;
+    uint32_t *dstp=dst;
+    uint8_t mask=0x80;
+    int xi=w;
+    for (;xi-->0;dstp++) {
+      *dstp=((*srcp)&mask)?one:zero;
+      if (mask==1) { mask=0x80; srcp++; }
+      else mask>>=1;
+    }
+  }
+}
+
 /* Upload pixels to a texture. Null is legal.
  */
  
-static int render_texture_upload(struct render_texture *texture,int w,int h,int stride,int fmt,const void *v) {
+static int render_texture_upload(struct render *render,struct render_texture *texture,int w,int h,int stride,int fmt,const void *v) {
   int ifmt,glfmt,type,chanc;
   switch (fmt) {
     case EGG_TEX_FMT_RGBA: chanc=4; ifmt=GL_RGBA; glfmt=GL_RGBA; type=GL_UNSIGNED_BYTE; break;
     case EGG_TEX_FMT_A8: chanc=1; ifmt=GL_ALPHA; glfmt=GL_LUMINANCE; type=GL_UNSIGNED_BYTE; break;
-    case EGG_TEX_FMT_A1: return -1;
     case EGG_TEX_FMT_Y8: chanc=1; ifmt=GL_LUMINANCE; glfmt=GL_LUMINANCE; type=GL_UNSIGNED_BYTE; break;
-    case EGG_TEX_FMT_Y1: return -1;
+    case EGG_TEX_FMT_A1: 
+    case EGG_TEX_FMT_Y1: {
+        int expstride=w<<2;
+        int explen=expstride*h;
+        if (explen>render->textmpa) {
+          void *nv=realloc(render->textmp,explen);
+          if (!nv) return -1;
+          render->textmp=nv;
+          render->textmpa=explen;
+        }
+        uint32_t zero,one;
+        uint8_t alphabytes[4]={0,0,0,0xff};
+        uint32_t alpha=*(uint32_t*)alphabytes;
+        if (fmt==EGG_TEX_FMT_A1) {
+          zero=0x00000000;
+          one=alpha;
+        } else {
+          zero=alpha;
+          one=0xffffffff;
+        }
+        render_expand_1bit(render->textmp,v,w,h,stride,zero,one);
+        v=render->textmp;
+        stride=expstride;
+        chanc=4;
+        ifmt=GL_RGBA;
+        glfmt=GL_RGBA;
+        type=GL_UNSIGNED_BYTE;
+      } break;
     default: return -1;
   }
   if (stride!=w*chanc) return -1;
@@ -165,7 +210,7 @@ int render_texture_load(struct render *render,int texid,int w,int h,int stride,i
       rawimg_del(rawimg);
       return -1;
     }
-    if (render_texture_upload(texture,rawimg->w,rawimg->h,rawimg->stride,fmt,rawimg->v)<0) {
+    if (render_texture_upload(render,texture,rawimg->w,rawimg->h,rawimg->stride,fmt,rawimg->v)<0) {
       rawimg_del(rawimg);
       return -1;
     }
@@ -185,7 +230,7 @@ int render_texture_load(struct render *render,int texid,int w,int h,int stride,i
    */
   int expectsrcc=render_texture_measure(w,h,stride,fmt);
   if ((expectsrcc<1)||(src&&(srcc<expectsrcc))) return -1;
-  if (render_texture_upload(texture,w,h,stride,fmt,src)<0) return -1;
+  if (render_texture_upload(render,texture,w,h,stride,fmt,src)<0) return -1;
   return 0;
 }
   
@@ -214,4 +259,27 @@ int render_texture_require_fb(struct render_texture *texture) {
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,texture->texid,0);
   glBindFramebuffer(GL_FRAMEBUFFER,0);
   return 0;
+}
+
+/* Transform coords.
+ */
+ 
+void render_coords_fb_from_screen(struct render *render,int *x,int *y) {
+  if ((render->outw>0)&&(render->outh>0)&&(render->texturec>=1)) {
+    int fbw=render->texturev[0].w;
+    int fbh=render->texturev[0].h;
+    *x=((*x-render->outx)*fbw)/render->outw;
+    *y=((*y-render->outy)*fbh)/render->outh;
+  }
+}
+
+void render_coords_screen_from_fb(struct render *render,int *x,int *y) {
+  if ((render->outw>0)&&(render->outh>0)&&(render->texturec>=1)) {
+    int fbw=render->texturev[0].w;
+    int fbh=render->texturev[0].h;
+    if ((fbw>0)&&(fbh>0)) {
+      *x=render->outx+(*x*render->outw)/fbw;
+      *y=render->outy+(*y*render->outh)/fbh;
+    }
+  }
 }

@@ -314,6 +314,12 @@ export class RenderGl {
   /* Internals.
    **************************************************************/
    
+  resized() {
+    if (this.textures[0]) {
+      this.loadTexture(this.textures[0], { v: null, w: this.canvas.width, h: this.canvas.height, stride: this.canvas.width << 2, fmt: 1 });
+    }
+  }
+   
   /* (texture) is from our list.
    * (image) is {v,w,h,fmt,stride} where (v) is null or ArrayBuffer.
    */
@@ -324,7 +330,8 @@ export class RenderGl {
       case 1: break; // RGBA, already initted like that
       case 2: ifmt = this.gl.ALPHA; fmt = this.gl.ALPHA; break;
       case 4: ifmt = this.gl.LUMINANCE; fmt = this.gl.LUMINANCE; break;
-      //TODO Are the 1-bit formats possible?
+      case 3: image = this.expand1(image, 0x00000000, 0x000000ff); break; // a1
+      case 5: image = this.expand1(image, 0x000000ff, 0xffffffff); break; // y1
       default: return -1;
     }
     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, ifmt, image.w, image.h, 0, fmt, type, image.v ? new Uint8Array(image.v) : null);
@@ -332,6 +339,38 @@ export class RenderGl {
     texture.h = image.h;
     texture.fmt = image.fmt;
     return 0;
+  }
+  
+  // Return an RGBA image from something 1-bit.
+  expand1(image, zero, one) {
+    const srcv = new Uint8Array(image.v);
+    const dststride = image.w << 2;
+    const dst = new Uint8Array(dststride * image.h);
+    for (let dstp=0, srcp=0, yi=image.h; yi-->0; srcp+=image.stride) {
+      for (let xi=image.w, srcmask=0x80, srcpp=srcp; xi-->0; ) {
+        if (srcv[srcpp] & srcmask) {
+          dst[dstp++] = one >> 24;
+          dst[dstp++] = one >> 16;
+          dst[dstp++] = one >> 8;
+          dst[dstp++] = one;
+        } else {
+          dst[dstp++] = zero >> 24;
+          dst[dstp++] = zero >> 16;
+          dst[dstp++] = zero >> 8;
+          dst[dstp++] = zero;
+        }
+        if (srcmask === 1) { srcmask = 0x80; srcpp++; }
+        else srcmask >>= 1;
+      }
+    }
+    console.log(`to 1bit`, { dst, srcv, image });
+    return {
+      v: dst.buffer,
+      w: image.w,
+      h: image.h,
+      fmt: 1, // RGBA
+      stride: dststride,
+    };
   }
   
   requireFramebuffer(texture) {

@@ -95,7 +95,7 @@ export class SysExtra {
       case 'l': pre = (~~unit.value || 0).toString(); break;
       case 'f': pre = (+unit.value).toString(); break; // TODO prec
       case 's': pre = (unit.value || "").toString(); if (unit.prec >= 0) pre = pre.substring(0, unit.prec); break;
-      case 'c': pre = (unit.value || "").toString()[0] || ' '; break;
+      case 'c': pre = String.fromCharCode(~~unit.value || 0x3f); break;
     }
     let spaces = "                              ";
     if (unit.fill === '0') {

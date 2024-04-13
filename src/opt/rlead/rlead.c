@@ -29,6 +29,7 @@ struct rlead_encoder {
   int w,h,stride,pxc;
   uint8_t dstbuf,dstmask;
   int using_filter;
+  const struct rlead_image *image;
 };
 
 static void rlead_encoder_cleanup(struct rlead_encoder *encoder) {
@@ -87,6 +88,7 @@ static int rlead_encode_inner(struct rlead_encoder *encoder) {
   uint8_t flags=0;
   if (encoder->filtered[0]&0x80) flags|=0x01; // initial color
   if (encoder->using_filter) flags|=0x02;
+  if (encoder->image->alpha) flags|=0x04;
 
   // 7-byte header: 0xbb,0xad,u16 w,u16 h,u8 flags(1=color,2=filter)
   if (sr_encode_raw(encoder->dst,"\xbb\xad",2)<0) return -1;
@@ -184,7 +186,7 @@ static int rlead_encoder_acquire_image(struct rlead_encoder *encoder,const uint8
  
 int rlead_encode(struct sr_encoder *dst,const struct rlead_image *image) {
   if (!dst||!image) return -1;
-  struct rlead_encoder encoder={.dst=dst};
+  struct rlead_encoder encoder={.dst=dst,.image=image};
   if (
     (rlead_encoder_acquire_image(&encoder,image->v,image->w,image->h,image->stride)<0)||
     (rlead_encode_inner(&encoder)<0)
@@ -264,6 +266,8 @@ static int rlead_decode_inner(struct rlead_image *image,const uint8_t *SRC,int s
     int c=image->stride*(image->h-1);
     for (;c-->0;rp++,wp++) (*wp)^=(*rp);
   }
+  
+  if (flags&4) image->alpha=1;
   
   return 0;
 }

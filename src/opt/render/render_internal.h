@@ -51,6 +51,13 @@ struct render {
   GLuint u_tile_alpha;
   GLuint u_tile_tint;
   GLuint u_tile_pointsize;
+  
+  // Temporary buffer for expanding A1 and Y1 textures.
+  void *textmp;
+  int textmpa;
+  
+  // Frame of last output framebuffer, in window coords.
+  int outx,outy,outw,outh;
 };
 
 int render_init_programs(struct render *render);

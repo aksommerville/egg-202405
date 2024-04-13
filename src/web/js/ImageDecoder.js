@@ -281,14 +281,14 @@ export class ImageDecoder {
     const flags = src[6];
     const stride = (w + 7) >> 3;
     const dst = new Uint8Array(stride * h);
-    let dstp = 0, dstx = 0;
+    let dstp = 0, dstx = 0, dsty = 0;
     let dstmask = 0x80;
     let srcp = 7;
     let srcmask = 0x80;
     let color = flags & 1;
     
     // Read stream.
-    while (srcp < srcc) {
+    while (srcp < src.length) {
       
       // Read next run length.
       let runlen = 0;
@@ -346,6 +346,7 @@ export class ImageDecoder {
           } else {
             dstmask >>= 1;
           }
+          dstx++;
           if (dstx >= w) {
             dstx = 0;
             dsty++;
@@ -363,7 +364,7 @@ export class ImageDecoder {
     
     // Undo filter if applicable.
     if (flags & 2) {
-      for (let rp=0, wp=rp+stride; wp<dst.length; rp++, wp++) {
+      for (let rp=0, wp=stride; wp<dst.length; rp++, wp++) {
         dst[wp] ^= dst[rp];
       }
     }
@@ -371,7 +372,7 @@ export class ImageDecoder {
     return {
       v: dst.buffer,
       w, h, stride,
-      fmt: 5, // EGG_TEX_FMT_Y1 (could just as well say 3==A1)
+      fmt: (flags & 4) ? 3 : 5, // EGG_TEX_FMT_A1 : EGG_TEX_FMT_Y1
     };
   }
 }

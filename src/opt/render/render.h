@@ -43,4 +43,7 @@ void render_draw_tile(
 
 void render_draw_to_main(struct render *render,int mainw,int mainh,int texid);
 
+void render_coords_fb_from_screen(struct render *render,int *x,int *y);
+void render_coords_screen_from_fb(struct render *render,int *x,int *y);
+
 #endif

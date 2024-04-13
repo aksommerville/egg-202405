@@ -408,6 +408,10 @@ void render_draw_to_main(struct render *render,int mainw,int mainh,int texid) {
   }
   dstx=(mainw>>1)-(w>>1);
   dsty=(mainh>>1)-(h>>1);
+  render->outx=dstx;
+  render->outy=dsty;
+  render->outw=w;
+  render->outh=h;
   
   struct render_vertex_decal vtxv[]={
     {dstx  ,dsty  ,0.0f,1.0f},

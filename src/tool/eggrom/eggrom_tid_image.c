@@ -13,6 +13,7 @@ static int eggrom_image_fmt_valid(const char *fmt) {
   if (!strcmp(fmt,"rawimg")) return 1;
   if (!strcmp(fmt,"qoi")) return 1;
   if (!strcmp(fmt,"rlead")) return 1;
+  if (!strcmp(fmt,"rleadalpha")) return 1;
   if (!strcmp(fmt,"ico")) return 1;
   return 0;
 }
@@ -79,6 +80,17 @@ static struct rawimg *eggrom_image_preprocess(struct rawimg *input) {
   return input;
 }
 
+/* Nonzero to encode RLEAD as alpha instead of luma.
+ */
+ 
+static int eggrom_image_should_force_alpha(const char *path,int pathc) {
+  while (pathc&&(path[pathc-1]!='.')) pathc--;
+  if (!pathc) return 0;
+  pathc--;
+  if ((pathc>=3)&&!memcmp(path+pathc-3,".a1",3)) return 1;
+  return 0;
+}  
+
 /* Reencode image if necessary.
  */
  
@@ -112,7 +124,11 @@ int eggrom_image_compile(struct sr_encoder *dst,const struct romw_res *res) {
   // For pixel size 1, only PNG beats RLEAD, and even then not always.
   // RLEAD is great, it must have been invented by somebody very clever.
   if (rawimg->pixelsize==1) {
-    if (eggrom_image_try_encode(dst,rawimg,"rlead")>0) return 0;
+    if (eggrom_image_should_force_alpha(res->path,res->pathc)) {
+      if (eggrom_image_try_encode(dst,rawimg,"rleadalpha")>0) return 0;
+    } else {
+      if (eggrom_image_try_encode(dst,rawimg,"rlead")>0) return 0;
+    }
   }
   
   // And now we're getting weird. Try all the other known formats, except ICO.

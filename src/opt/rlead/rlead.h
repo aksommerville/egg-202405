@@ -13,6 +13,7 @@ struct sr_encoder;
 struct rlead_image {
   void *v;
   int w,h,stride;
+  int alpha; // nonzero if pixels should be interpretted as alpha rather than luma (flags&0x04)
 };
 
 void rlead_image_cleanup(struct rlead_image *image);

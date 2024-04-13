@@ -154,6 +154,7 @@ int rawimg_is_y1(const struct rawimg *rawimg) {
   if (rawimg->pixelsize!=1) return 0;
   if (rawimg->bitorder=='<') return 0;
   if (rawimg->ctabc>0) return 1;
+  if (rawimg->amask) return 1;
   return 2;
 }
 

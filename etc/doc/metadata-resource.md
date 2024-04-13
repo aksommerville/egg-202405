@@ -21,6 +21,7 @@ It's fine to make up new keys. Wise to add a dot or space or something so it's n
 | author      | Game's author, for attribution purposes. |
 | publisher   | If different from author, this is the legal body distributing the game. |
 | copyright   | eg "(c) 2024 AK Sommerville" |
+| freedom     | Enum, see below. |
 | rating      | eg "ESRB:M", ratings from official agencies. |
 | advisory    | Whether rated or not, some freeform text to advise of potentially offensive content. |
 | genre       | See below. |
@@ -40,6 +41,21 @@ It's fine to make up new keys. Wise to add a dot or space or something so it's n
 | homepage    | URL of game's promotional website. |
 | restriction | Freeform text advising of legal restrictions. "Must be 18" or "Do not distribute in Germany"...? |
 | country     | "Made in USA" or wherever, if you feel like bragging about it. |
+
+## freedom
+
+This is a short identifier for machine consumption, as a summary of the game's license terms.
+Must be one of these values:
+
+- `restricted`: Assume that a license is required to play the game, and not allowed to redistribute or modify at all.
+- `limited`: Redistribution is allowed in some cases, but please review the license first.
+- `intact`: OK to redistribute but only if not modified at all.
+- `free`: Public domain or close to. Users may copy and modify the game without limit.
+
+I expect this to be helpful if there's ever a big collection of Egg games from disparate authors,
+and I want to automatedly copy everything I'm allowed to, into some public distribution.
+
+If omitted, assume "limited", ie don't assume anything without reviewing the formal license.
 
 ## Genre
 

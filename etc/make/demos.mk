@@ -21,15 +21,19 @@ demos_LDPOST:=$(demos_LDPOST_EXTRA)
 
 define DEMO_RULES
   #TODO Not adding demos_OPT_ENABLE here because I'm not sure that needs to exist.
-  demos_$1_SRCFILES:=$(filter src/demo/%,$(SRCFILES))
+  demos_$1_SRCFILES:=$(filter src/demo/$1/%,$(SRCFILES))
   demos_$1_CFILES:=$$(filter %.c %.cxx %.s %.m,$$(demos_$1_SRCFILES))
   demos_$1_OFILES:=$$(patsubst src/demo/%,$(demos_MIDDIR)/%.o,$$(basename $$(demos_$1_CFILES)))
   -include $$(demos_$1_OFILES:.o=.d)
   demos_$1_ROM:=$(demos_OUTDIR)/$1.egg
   all:$$(demos_$1_ROM)
   demos-all:$$(demos_$1_ROM)
-  demos_$1_WASMMOD:=$(demos_MIDDIR)/$1/1.wasm
-  $$(demos_$1_WASMMOD):$$(demos_$1_OFILES);$$(PRECMD) $(demos_LD) -o$$@ $$(demos_$1_OFILES) $(demos_LDPOST)
+  ifneq (,$(strip $$(demos_$1_OFILES)))
+    demos_$1_WASMMOD:=$(demos_MIDDIR)/$1/1.wasm
+    $$(demos_$1_WASMMOD):$$(demos_$1_OFILES);$$(PRECMD) $(demos_LD) -o$$@ $$(demos_$1_OFILES) $(demos_LDPOST)
+  else
+    demos_$1_WASMMOD:=
+  endif
   demos_$1_DATAFILES:=$$(filter src/demo/$1/data/%,$$(demos_$1_SRCFILES))
   $$(demos_$1_ROM):$$(demos_$1_WASMMOD) $$(demos_$1_DATAFILES) $(tools_eggrom_EXE);$$(PRECMD) $(tools_eggrom_EXE) -c -o$$@ $$(demos_$1_WASMMOD) src/demo/$1/data
 endef

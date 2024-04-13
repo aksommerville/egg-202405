@@ -142,6 +142,7 @@ export class Runtime {
     if ((w > 0) && (h > 0)) {
       this.canvas.width = w;
       this.canvas.height = h;
+      this.render.resized();
     }
   }
   

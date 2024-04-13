@@ -197,13 +197,15 @@ void egg_native_cb_text(struct hostio_video *driver,int codepoint) {
  */
  
 void egg_native_cb_mmotion(struct hostio_video *driver,int x,int y) {
+  if (egg.render) render_coords_fb_from_screen(egg.render,&x,&y);
+  //TODO under softrender it's more complicated; drivers do their own scaling
   egg.mousex=x;
   egg.mousey=y;
   if (egg.eventmask&(1<<EGG_EVENT_MMOTION)) {
     struct egg_event *event=egg_native_push_event();
     event->type=EGG_EVENT_MMOTION;
-    event->v[0]=x;
-    event->v[1]=y;
+    event->v[0]=egg.mousex;
+    event->v[1]=egg.mousey;
   }
 }
 
