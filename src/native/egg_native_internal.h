@@ -18,6 +18,7 @@
 #include "opt/localstore/localstore.h"
 #include "opt/http/http.h"
 #include "opt/render/render.h"
+#include "opt/softrender/softrender.h"
 #include "opt/synth/synth.h"
 #include "quickjs.h"
 
@@ -36,6 +37,7 @@ extern struct egg {
   char *video_device;
   int video_w,video_h;
   int fullscreen;
+  int render_choice; // (0,1,2)=(auto,render,softrender)
   char *audio_driver;
   char *audio_device;
   int audio_rate;
@@ -109,6 +111,7 @@ extern struct egg {
   struct romr romr;
   struct localstore localstore;
   struct render *render;
+  struct softrender *softrender;
   struct synth *synth;
   
 } egg;

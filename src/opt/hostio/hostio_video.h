@@ -28,6 +28,10 @@ struct hostio_video {
   int cursor_visible;
 };
 
+#define HOSTIO_VIDEO_ACCESS_ANY 0
+#define HOSTIO_VIDEO_ACCESS_GX  1
+#define HOSTIO_VIDEO_ACCESS_FB  2
+
 struct hostio_video_setup {
   const char *title;
   const void *iconrgba;
@@ -36,6 +40,7 @@ struct hostio_video_setup {
   int fullscreen;
   int fbw,fbh; // If (w,h) and (fullscreen) unspecified, let these guide window size decision.
   const char *device;
+  int access_mode;
 };
 
 struct hostio_video_fb_description {

@@ -30,6 +30,7 @@ static void egg_native_quit(int status) {
     fprintf(stderr,"%s: Abnormal exit.\n",egg.exename);
   }
   render_del(egg.render);
+  softrender_del(egg.softrender);
   hostio_del(egg.hostio);
   synth_del(egg.synth);
   wamr_del(egg.wamr);
@@ -126,20 +127,53 @@ static int egg_native_init() {
   } else {
     //TODO default app icon
   }
-  if (hostio_init_video(egg.hostio,egg.video_driver,&video_setup)<0) {
+  switch (egg.render_choice) {
+    case 1: video_setup.access_mode=HOSTIO_VIDEO_ACCESS_GX; break;
+    case 2: video_setup.access_mode=HOSTIO_VIDEO_ACCESS_FB; break;
+  }
+  if ((hostio_init_video(egg.hostio,egg.video_driver,&video_setup)<0)||!egg.hostio->video) {
     fprintf(stderr,"%s: Failed to initialize video.\n",egg.exename);
     return -2;
   }
-  if (!egg.hostio->video||!egg.hostio->video->type->gx_begin||!egg.hostio->video->type->gx_end) {
-    fprintf(stderr,"%s: Video driver does not support GX.\n",egg.exename);
-    return -2;
+  
+  /* Choose and initialize renderer.
+   */
+  switch (egg.render_choice) {
+    case 0: {
+        if (egg.hostio->video->type->gx_begin) egg.render=render_new();
+        else if (egg.hostio->video->type->fb_begin) egg.softrender=softrender_new();
+      } break;
+    case 1: egg.render=render_new(); break;
+    case 2: egg.softrender=softrender_new(); break;
   }
-  if (!(egg.render=render_new())) {
+  if (egg.render) {
+    if (!egg.hostio->video->type->gx_begin||!egg.hostio->video->type->gx_end) {
+      fprintf(stderr,"%s: Video driver '%s' does not support GX.\n",egg.exename,egg.hostio->video->type->name);
+      return -2;
+    }
+    if (render_texture_new(egg.render)!=1) return -1;
+    if (render_texture_load(egg.render,1,egg.romfbw,egg.romfbh,egg.romfbw<<2,EGG_TEX_FMT_RGBA,0,0)<0) return -1;
+  } else if (egg.softrender) {
+    if (!egg.hostio->video->type->fb_begin||!egg.hostio->video->type->fb_end||!egg.hostio->video->type->fb_describe) {
+      // We could create a GX context and shovel framebuffers into that. I think there's no point; just use regular render in that case.
+      fprintf(stderr,"%s: Video driver '%s' does not support direct framebuffer.\n",egg.exename,egg.hostio->video->type->name);
+      return -2;
+    }
+    struct hostio_video_fb_description desc={0};
+    if (egg.hostio->video->type->fb_describe(&desc,egg.hostio->video)<0) {
+      fprintf(stderr,"%s: Failed to acquire framebuffer description from driver '%s'.\n",egg.exename,egg.hostio->video->type->name);
+      return -2;
+    }
+    if ((err=softrender_init_texture_1(egg.softrender,&desc))<0) {
+      if (err!=-2) fprintf(stderr,
+        "%s: Failed to initialize soft renderer. size=%d,%d stride=%d pixelsize=%d\n",
+        egg.exename,desc.w,desc.h,desc.stride,desc.pixelsize
+      );
+    }
+  } else {
     fprintf(stderr,"%s: Failed to initialize renderer.\n",egg.exename);
     return -2;
   }
-  if (render_texture_new(egg.render)!=1) return -1;
-  if (render_texture_load(egg.render,1,egg.romfbw,egg.romfbh,egg.romfbw<<2,EGG_TEX_FMT_RGBA,0,0)<0) return -1;
   
   /* Initialize input drivers.
    */
@@ -182,6 +216,57 @@ static int egg_native_init() {
   return 0;
 }
 
+/* Render.
+ */
+ 
+static int egg_native_render_gx() {
+  int err;
+  if (egg.hostio->video->type->gx_begin(egg.hostio->video)<0) {
+    fprintf(stderr,"%s: Error entering GX context.\n",egg.exename);
+    return -2;
+  }
+  
+  render_draw_mode(egg.render,EGG_XFERMODE_ALPHA,0,0xff);
+  
+  if ((err=egg_native_call_client_render())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Error rendering game.\n",egg.exename);
+    return -2;
+  }
+  
+  render_draw_to_main(egg.render,egg.hostio->video->w,egg.hostio->video->h,1);
+
+  if (egg.hostio->video->type->gx_end(egg.hostio->video)<0) {
+    fprintf(stderr,"%s: Error exiting GX context.\n",egg.exename);
+    return -2;
+  }
+  return 0;
+}
+
+static int egg_native_render_fb() {
+  int err;
+  void *fb=egg.hostio->video->type->fb_begin(egg.hostio->video);
+  if (!fb) {
+    fprintf(stderr,"%s: Error entering direct-render context.\n",egg.exename);
+    return -2;
+  }
+  
+  softrender_set_main(egg.softrender,fb);
+  softrender_draw_mode(egg.softrender,EGG_XFERMODE_ALPHA,0,0xff);
+  
+  if ((err=egg_native_call_client_render())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Error rendering game.\n",egg.exename);
+    return -2;
+  }
+  
+  softrender_finalize_frame(egg.softrender);
+  
+  if (egg.hostio->video->type->fb_end(egg.hostio->video)<0) {
+    fprintf(stderr,"%s: Failed to commit direct-render frame.\n",egg.exename);
+    return -2;
+  }
+  return 0;
+}
+
 /* Update.
  */
  
@@ -210,20 +295,14 @@ static int egg_native_update() {
     }
   }
   
-  if (egg.hostio->video->type->gx_begin(egg.hostio->video)<0) {
-    fprintf(stderr,"%s: Error entering GX context.\n",egg.exename);
-    return -2;
-  }
-  render_draw_mode(egg.render,EGG_XFERMODE_ALPHA,0,0xff);
-  
-  if ((err=egg_native_call_client_render())<0) {
-    if (err!=-2) fprintf(stderr,"%s: Error rendering game.\n",egg.exename);
-    return -2;
-  }
-  
-  render_draw_to_main(egg.render,egg.hostio->video->w,egg.hostio->video->h,1);
-  if (egg.hostio->video->type->gx_end(egg.hostio->video)<0) {
-    fprintf(stderr,"%s: Error exiting GX context.\n",egg.exename);
+  if (egg.render) err=egg_native_render_gx();
+  else if (egg.softrender) err=egg_native_render_fb();
+  else err=-1;
+  if (err<0) {
+    if (err!=-2) fprintf(stderr,
+      "%s: Failed to render scene (%s)\n",
+      egg.exename,egg.render?"gx":egg.softrender?"soft":"no renderer"
+    );
     return -2;
   }
 

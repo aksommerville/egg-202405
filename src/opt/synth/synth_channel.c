@@ -20,7 +20,6 @@ static int synth_channel_init_builtin(struct synth *synth,struct synth_channel *
     );
     builtin=synth_builtin+builtin->alias;
   }
-  else fprintf(stderr,"ok program 0x%02x\n",channel->pid);
   switch (channel->mode=builtin->mode) {
     case 0: break;
     case SYNTH_CHANNEL_MODE_DRUM: return -1; // Not valid for builtins.
@@ -94,7 +93,6 @@ static int synth_channel_init_drums(struct synth *synth,struct synth_channel *ch
 
 struct synth_channel *synth_channel_new(struct synth *synth,uint8_t chid,int pid) {
   if ((pid<0)||(pid>=0x100)) return 0;
-  pid=0x08;//XXX
   struct synth_channel *channel=calloc(1,sizeof(struct synth_channel));
   if (!channel) return 0;
   channel->chid=chid;

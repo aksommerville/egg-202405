@@ -48,6 +48,7 @@ static void egg_native_configure_print_help(const char *topic,int topicc) {
     "  --video-device=NAME      If required by driver.\n"
     "  --fullscreen=BOOLEAN     Start in fullscreen mode.\n"
     "  --video-size=WxH         Initial window size, if supported.\n"
+    "  --render=auto|gx|soft    Choose renderer.\n"
     "  --audio-driver=LIST      Audio drivers in order of preference, see below.\n"
     "  --audio-device=NAME      If required by driver.\n"
     "  --audio-rate=HZ          Suggest audio output rate.\n"
@@ -143,6 +144,17 @@ static int egg_native_configure_kv(const char *k,int kc,const char *v,int vc) {
       return -2;
     } else {
       egg.lang=(v[0]<<8)|v[1];
+    }
+    return 0;
+  }
+  
+  if ((kc==6)&&!memcmp(k,"render",6)) {
+    if ((vc==4)&&!memcmp(v,"auto",4)) egg.render_choice=0;
+    else if ((vc==2)&&!memcmp(v,"gx",2)) egg.render_choice=1;
+    else if ((vc==4)&&!memcmp(v,"soft",4)) egg.render_choice=2;
+    else {
+      fprintf(stderr,"%s: Expected 'auto', 'gx', or 'soft' for renderer, found '%.*s'.\n",egg.exename,vc,v);
+      return -2;
     }
     return 0;
   }

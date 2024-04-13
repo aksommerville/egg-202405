@@ -10,7 +10,7 @@ int texid_tilesheet=0;
 int texid_title=0;
 int texid_rotate=0;
 
-#define SPRITEA 500
+#define SPRITEA 50
 static struct sprite {
   int16_t x,y;
   int16_t dx,dy;

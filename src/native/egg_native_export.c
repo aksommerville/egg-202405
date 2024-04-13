@@ -423,23 +423,30 @@ static JSValue egg_js_texture_del(JSContext *ctx,JSValueConst this,int argc,JSVa
   JSASSERTARGC(1)
   int32_t texid=0;
   JS_ToInt32(ctx,&texid,argv[0]);
-  render_texture_del(egg.render,texid);
+  if (egg.render) render_texture_del(egg.render,texid);
+  else if (egg.softrender) softrender_texture_del(egg.softrender,texid);
   return JS_NULL;
 }
 
 static void egg_wasm_texture_del(wasm_exec_env_t ee,int texid) {
-  render_texture_del(egg.render,texid);
+  if (egg.render) render_texture_del(egg.render,texid);
+  else if (egg.softrender) softrender_texture_del(egg.softrender,texid);
 }
 
 /* egg_texture_new
  */
  
 static JSValue egg_js_texture_new(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
-  return JS_NewInt32(ctx,render_texture_new(egg.render));
+  int texid;
+  if (egg.render) texid=render_texture_new(egg.render);
+  else if (egg.softrender) texid=softrender_texture_new(egg.softrender);
+  return JS_NewInt32(ctx,texid);
 }
 
 static int egg_wasm_texture_new(wasm_exec_env_t ee) {
-  return render_texture_new(egg.render);
+  if (egg.render) return render_texture_new(egg.render);
+  if (egg.softrender) return softrender_texture_new(egg.softrender);
+  return -1;
 }
 
 /* egg_texture_load_image
@@ -454,14 +461,20 @@ static JSValue egg_js_texture_load_image(JSContext *ctx,JSValueConst this,int ar
   const void *serial=0;
   int serialc=romr_get_qualified(&serial,&egg.romr,EGG_TID_image,qual,imageid);
   if (serialc<=0) return JS_NewInt32(ctx,-1);
-  return JS_NewInt32(ctx,render_texture_load(egg.render,texid,0,0,0,0,serial,serialc));
+  int err=-1;
+  if (egg.render) err=render_texture_load(egg.render,texid,0,0,0,0,serial,serialc);
+  else if (egg.softrender) err=softrender_texture_load(egg.softrender,texid,0,0,0,0,serial,serialc);
+  return JS_NewInt32(ctx,err);
 }
 
 static int egg_wasm_texture_load_image(wasm_exec_env_t ee,int texid,int qual,int imageid) {
   const void *serial=0;
   int serialc=romr_get_qualified(&serial,&egg.romr,EGG_TID_image,qual,imageid);
   if (serialc<=0) return -1;
-  return render_texture_load(egg.render,texid,0,0,0,0,serial,serialc);
+  int err=-1;
+  if (egg.render) err=render_texture_load(egg.render,texid,0,0,0,0,serial,serialc);
+  else if (egg.softrender) err=softrender_texture_load(egg.softrender,texid,0,0,0,0,serial,serialc);
+  return err;
 }
 
 /* egg_texture_upload
@@ -479,11 +492,16 @@ static JSValue egg_js_texture_upload(JSContext *ctx,JSValueConst this,int argc,J
   const uint8_t *v=0;
   size_t c=0;
   if (!(v=JS_GetArrayBuffer(ctx,&c,argv[5]))) return JS_NewInt32(ctx,-1);
-  return JS_NewInt32(ctx,render_texture_load(egg.render,texid,w,h,stride,fmt,v,c));
+  int err=-1;
+  if (egg.render) err=render_texture_load(egg.render,texid,w,h,stride,fmt,v,c);
+  else if (egg.softrender) err=softrender_texture_load(egg.softrender,texid,w,h,stride,fmt,v,c);
+  return JS_NewInt32(ctx,err);
 }
 
 static int egg_wasm_texture_upload(wasm_exec_env_t ee,int texid,int w,int h,int stride,int fmt,const void *src,int srcc) {
-  return render_texture_load(egg.render,texid,w,h,stride,fmt,src,srcc);
+  if (egg.render) return render_texture_load(egg.render,texid,w,h,stride,fmt,src,srcc);
+  if (egg.softrender) return softrender_texture_load(egg.softrender,texid,w,h,stride,fmt,src,srcc);
+  return -1;
 }
 
 /* egg_texture_get_header
@@ -494,7 +512,8 @@ static JSValue egg_js_texture_get_header(JSContext *ctx,JSValueConst this,int ar
   int32_t texid=0;
   JS_ToInt32(ctx,&texid,argv[0]);
   int w=0,h=0,fmt=0;
-  render_texture_get_header(&w,&h,&fmt,egg.render,texid);
+  if (egg.render) render_texture_get_header(&w,&h,&fmt,egg.render,texid);
+  else if (egg.softrender) softrender_texture_get_header(&w,&h,&fmt,egg.softrender,texid);
   JSValue result=JS_NewObject(ctx);
   JS_SetPropertyStr(ctx,result,"w",JS_NewInt32(ctx,w));
   JS_SetPropertyStr(ctx,result,"h",JS_NewInt32(ctx,h));
@@ -503,7 +522,8 @@ static JSValue egg_js_texture_get_header(JSContext *ctx,JSValueConst this,int ar
 }
 
 static void egg_wasm_texture_get_header(wasm_exec_env_t ee,int *w,int *h,int *fmt,int texid) {
-  render_texture_get_header(w,h,fmt,egg.render,texid);
+  if (egg.render) render_texture_get_header(w,h,fmt,egg.render,texid);
+  else if (egg.softrender) softrender_texture_get_header(w,h,fmt,egg.softrender,texid);
 }
 
 /* egg_texture_clear
@@ -513,12 +533,14 @@ static JSValue egg_js_texture_clear(JSContext *ctx,JSValueConst this,int argc,JS
   JSASSERTARGC(1)
   int32_t texid=0;
   JS_ToInt32(ctx,&texid,argv[0]);
-  render_texture_clear(egg.render,texid);
+  if (egg.render) render_texture_clear(egg.render,texid);
+  else if (egg.softrender) softrender_texture_clear(egg.softrender,texid);
   return JS_NULL;
 }
 
 static void egg_wasm_texture_clear(wasm_exec_env_t ee,int texid) {
-  render_texture_clear(egg.render,texid);
+  if (egg.render) render_texture_clear(egg.render,texid);
+  else if (egg.softrender) softrender_texture_clear(egg.softrender,texid);
 }
 
 /* egg_draw_mode
@@ -530,12 +552,14 @@ static JSValue egg_js_draw_mode(JSContext *ctx,JSValueConst this,int argc,JSValu
   JS_ToInt32(ctx,&xfermode,argv[0]);
   JS_ToInt32(ctx,&replacement,argv[1]);
   JS_ToInt32(ctx,&alpha,argv[2]);
-  render_draw_mode(egg.render,xfermode,replacement,alpha);
+  if (egg.render) render_draw_mode(egg.render,xfermode,replacement,alpha);
+  else if (egg.softrender) softrender_draw_mode(egg.softrender,xfermode,replacement,alpha);
   return JS_NULL;
 }
 
 static void egg_wasm_draw_mode(wasm_exec_env_t ee,int xfermode,int replacement,int alpha) {
-  render_draw_mode(egg.render,xfermode,replacement,alpha);
+  if (egg.render) render_draw_mode(egg.render,xfermode,replacement,alpha);
+  else if (egg.softrender) softrender_draw_mode(egg.softrender,xfermode,replacement,alpha);
 }
 
 /* egg_draw_rect
@@ -550,12 +574,14 @@ static JSValue egg_js_draw_rect(JSContext *ctx,JSValueConst this,int argc,JSValu
   JS_ToInt32(ctx,&w,argv[3]);
   JS_ToInt32(ctx,&h,argv[4]);
   JS_ToInt32(ctx,&pixel,argv[5]);
-  render_draw_rect(egg.render,texid,x,y,w,h,pixel);
+  if (egg.render) render_draw_rect(egg.render,texid,x,y,w,h,pixel);
+  else if (egg.softrender) softrender_draw_rect(egg.softrender,texid,x,y,w,h,pixel);
   return JS_NULL;
 }
 
 static void egg_wasm_draw_rect(wasm_exec_env_t ee,int texid,int x,int y,int w,int h,int pixel) {
-  render_draw_rect(egg.render,texid,x,y,w,h,pixel);
+  if (egg.render) render_draw_rect(egg.render,texid,x,y,w,h,pixel);
+  else if (egg.softrender) softrender_draw_rect(egg.softrender,texid,x,y,w,h,pixel);
 }
 
 /* egg_draw_decal
@@ -573,7 +599,8 @@ static JSValue egg_js_draw_decal(JSContext *ctx,JSValueConst this,int argc,JSVal
   JS_ToInt32(ctx,&w,argv[6]);
   JS_ToInt32(ctx,&h,argv[7]);
   JS_ToInt32(ctx,&xform,argv[8]);
-  render_draw_decal(egg.render,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
+  if (egg.render) render_draw_decal(egg.render,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
+  else if (egg.softrender) softrender_draw_decal(egg.softrender,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
   return JS_NULL;
 }
 
@@ -585,7 +612,8 @@ static void egg_wasm_draw_decal(
   int w,int h,
   int xform
 ) {
-  render_draw_decal(egg.render,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
+  if (egg.render) render_draw_decal(egg.render,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
+  else if (egg.softrender) softrender_draw_decal(egg.softrender,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
 }
 
 /* egg_draw_tile
@@ -603,15 +631,17 @@ static JSValue egg_js_draw_tile(JSContext *ctx,JSValueConst this,int argc,JSValu
   if (!vtxv||(a<=0)) return JS_NULL;
   a/=6;
   if (c>a) return JS_NULL;
-  render_draw_tile(egg.render,dsttexid,srctexid,vtxv,c);
+  if (egg.render) render_draw_tile(egg.render,dsttexid,srctexid,vtxv,c);
+  else if (egg.softrender) softrender_draw_tile(egg.softrender,dsttexid,srctexid,vtxv,c);
   return JS_NULL;
 }
 
 static void egg_wasm_draw_tile(wasm_exec_env_t ee,int dsttexid,int srctexid,int vaddr,int c) {
   if (c<1) return;
-  void *v=wamr_validate_pointer(egg.wamr,1,vaddr,c*sizeof(struct egg_draw_tile));
-  if (!v) return;
-  render_draw_tile(egg.render,dsttexid,srctexid,v,c);
+  void *vtxv=wamr_validate_pointer(egg.wamr,1,vaddr,c*sizeof(struct egg_draw_tile));
+  if (!vtxv) return;
+  if (egg.render) render_draw_tile(egg.render,dsttexid,srctexid,vtxv,c);
+  else if (egg.softrender) softrender_draw_tile(egg.softrender,dsttexid,srctexid,vtxv,c);
 }
 
 /* egg_audio_play_song

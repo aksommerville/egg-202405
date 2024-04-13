@@ -77,7 +77,12 @@ static int hostio_init_with_defaults(struct hostio_init_context *ctx) {
  
 static int hostio_video_init_1(const void *_type,struct hostio_init_context *ctx) {
   const struct hostio_video_type *type=_type;
+  const struct hostio_video_setup *setup=ctx->setup;
   if (type->appointment_only&&!ctx->names) return 0;
+  switch (setup->access_mode) {
+    case HOSTIO_VIDEO_ACCESS_GX: if (!type->gx_begin) return 0; break;
+    case HOSTIO_VIDEO_ACCESS_FB: if (!type->fb_begin) return 0; break;
+  }
   if (ctx->hostio->video=hostio_video_new(type,&ctx->hostio->video_delegate,ctx->setup)) {
     return 1;
   }

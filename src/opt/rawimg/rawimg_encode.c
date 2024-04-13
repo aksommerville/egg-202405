@@ -384,15 +384,12 @@ static struct rawimg *rawimg_decode_ico(const uint8_t *src,int srcc) {
     ico_file_del(file);
     return 0;
   }
-  fprintf(stderr,"ico image: %dx%d\n",image->w,image->h);
   struct rawimg *rawimg=rawimg_new_handoff(image->v,image->w,image->h,image->stride,image->pixelsize);
   if (!rawimg) {
     ico_file_del(file);
     return 0;
   }
   image->v=0; // handed off
-  
-  //TODO !!! Need color table.
   
   if (image->pixelsize==32) {
     memcpy(rawimg->chorder,"RGBA",4);
@@ -402,7 +399,10 @@ static struct rawimg *rawimg_decode_ico(const uint8_t *src,int srcc) {
     rawimg->bmask=(rawimg->rmask>>16)|(rawimg->rmask<<16);
     rawimg->amask=(rawimg->rmask>>24)|(rawimg->rmask<<24);
   } else {
-    // TODO Need ico to pass along more details from underlying PNG and BMP, so we can populate format.
+    // Decoded ico images will always be 32-bit RGBA.
+    ico_file_del(file);
+    rawimg_del(rawimg);
+    return 0;
   }
 
   ico_file_del(file);
