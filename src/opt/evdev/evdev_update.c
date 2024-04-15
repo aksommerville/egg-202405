@@ -194,7 +194,10 @@ int evdev_update(struct evdev *evdev) {
   
   for (p=evdev->pollfdv,i=pollfdc;i-->0;p++) {
     if (!p->revents) continue;
-    if (evdev_update_file(evdev,p->fd)<0) return -1;
+    if (evdev_update_file(evdev,p->fd)<0) {
+      fprintf(stderr,"evdev_update_file: error\n");
+      return -1;
+    }
   }
   
   return 0;

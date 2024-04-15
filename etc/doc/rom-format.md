@@ -50,7 +50,7 @@ Zero-length resources are legal but at runtime are not distinguishable from miss
 It is helpful to keep your resource IDs packed as much as possible; you have to spend 1 byte to skip each unused rid.
 
 Every resource is uniquely identified by a 40-bit integer: 8 tid, 16 qual, 16 rid.
-`qual` is usually zero. Otherwise it depends on the type, but will usually be a big-endian ISO 631 language code.
+`qual` is usually zero. Otherwise it depends on the type, but will usually be a big-endian ISO 639 language code.
 Length of individual resources is limited to 1 MB.
 
 ## Resource Types

@@ -299,7 +299,7 @@ double egg_time_real();
 void egg_time_get(int *year,int *month,int *day,int *hour,int *minute,int *second,int *milli);
 
 /* Fill (dst) with languages the user prefers, in order of her preference.
- * Big-endian ISO 631 codes, eg English "en" = 0x656e.
+ * Big-endian ISO 639 codes, eg English "en" = 0x656e.
  * Be prepared for an empty response, we don't necessarily know this on every platform.
  */
 int egg_get_user_languages(int *dst,int dsta);

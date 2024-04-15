@@ -17,6 +17,16 @@ export class Rom {
     return this.resv.find(res => ((res.tid === tid) && (res.qual === qual) && (res.rid === rid)))?.v;
   }
   
+  getResourceIdsByIndex(p) {
+    const res = this.resv[p];
+    if (!res) return {tid:0,qual:0,rid:0};
+    return {
+      tid: res.tid || 0,
+      qual: res.qual || 0,
+      rid: res.rid || 0,
+    };
+  }
+  
   _initDefault() {
     this.resv = []; // {tid,qual,rid,v:Uint8Array}
   }

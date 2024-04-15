@@ -57,7 +57,7 @@ static void egg_native_configure_print_help(const char *topic,int topicc) {
     "  --input-driver=LIST      Input drivers. Will try to load all. See below.\n"
     "  --input-device=NAME      If required by driver.\n"
     "  --store=PATH             File for persistent data, per-game.\n"
-    "  --lang=NAME              ISO 631 eg \"en\"=English. Overrides LANG variable.\n"
+    "  --lang=NAME              ISO 639 eg \"en\"=English. Overrides LANG variable.\n"
     "\n"
   );
   {

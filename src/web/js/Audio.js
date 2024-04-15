@@ -69,7 +69,7 @@ export class Audio {
     const serial = this.rom.getResource(Rom.TID_song, qual, songid);
     if (!serial || !serial.length) return;
     try {
-      this.song = new Song(serial, this, repeat);
+      this.song = new Song(serial, this, repeat, qual, songid);
     } catch (e) {
       console.error(`Failed to play song:${qual}:${songid}.`, e);
       return;
@@ -187,9 +187,11 @@ export class Audio {
 const SONG_READAHEAD_WINDOW_S = 0.500;
  
 class Song {
-  constructor(src, audio, repeat) {
+  constructor(src, audio, repeat, qual, songid) {
     this.audio = audio;
     this.repeat = repeat;
+    this.qual = qual;
+    this.songid = songid;
     if (!(src instanceof Uint8Array)) throw new Error(`Expected Uint8Array`);
     if (src.length < 42) throw new Error(`Invalid song`);
     if ((src[0] !== 0xbe) || (src[1] !== 0xee) || (src[2] !== 0xee) || (src[3] !== 0x50)) throw new Error(`Invalid song`);
@@ -210,6 +212,10 @@ class Song {
     this.startTime = audio.context.currentTime;
     this.readp = this.startp;
     this.readTime = this.startTime;
+  }
+  
+  isResource(qual, songid) {
+    return ((qual === this.qual) && (songid === this.songid));
   }
   
   update() {

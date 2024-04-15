@@ -292,12 +292,11 @@ export declare function log(fmt: string, ...args: any[]): void;
 export declare function time_real(): number;
 
 /* Current real local time, split out.
- * OK to pass null for fields you don't need.
  */
 export declare function time_get(): { year: number, month: number, day: number, hour: number, minute: number, second: number, milli: number };
 
 /* Fill (dst) with languages the user prefers, in order of her preference.
- * Big-endian ISO 631 codes, eg English "en" = 0x656e.
+ * Big-endian ISO 639 codes, eg English "en" = 0x656e.
  * Be prepared for an empty response, we don't necessarily know this on every platform.
  */
 export declare function get_user_languages(): number[];

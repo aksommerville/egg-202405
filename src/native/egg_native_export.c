@@ -39,7 +39,6 @@ void egg_audio_play_sound(int qual,int soundid,double trim,double pan) {
 }
 
 double egg_audio_get_playhead() {
-  fprintf(stderr,"%s\n",__func__);//TODO
   // Do not lock driver.
   return synth_get_playhead(egg.synth);//TODO also ask the audio driver its buffer position
 }
@@ -491,7 +490,11 @@ static JSValue egg_js_texture_upload(JSContext *ctx,JSValueConst this,int argc,J
   JS_ToInt32(ctx,&fmt,argv[4]);
   const uint8_t *v=0;
   size_t c=0;
-  if (!(v=JS_GetArrayBuffer(ctx,&c,argv[5]))) return JS_NewInt32(ctx,-1);
+  if (!JS_IsNull(argv[5])) {
+    if (!(v=JS_GetArrayBuffer(ctx,&c,argv[5]))) {
+      return JS_NewInt32(ctx,-1);
+    }
+  }
   int err=-1;
   if (egg.render) err=render_texture_load(egg.render,texid,w,h,stride,fmt,v,c);
   else if (egg.softrender) err=softrender_texture_load(egg.softrender,texid,w,h,stride,fmt,v,c);

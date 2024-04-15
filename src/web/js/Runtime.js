@@ -242,7 +242,7 @@ export class Runtime {
       audio_play_sound: (qual, soundid, trim, pan) => this.audio.audio_play_sound(qual, soundid, trim, pan),
       audio_get_playhead: () => this.audio.audio_get_playhead(),
       res_get: (tid, qual, rid) => this.rom.getResource(tid, qual, rid),
-      res_id_by_index: (index) => this.rom.resv[index]?.v,
+      res_id_by_index: (index) => this.rom.getResourceIdsByIndex(index),
       store_set: (k, v) => this.sysExtra.store_set(k, v),
       store_get: (k) => this.sysExtra.store_get(k),
       store_key_by_index: (index) => this.sysExtra.store_key_by_index(index),

@@ -132,8 +132,8 @@ export class Input {
       case "touchmove": state = 2; break;
     }
     for (const touch of e.changedTouches) {
-      const x = touch.clientX - bounds.x;
-      const y = touch.clientY - bounds.y;
+      const x = ((touch.clientX - bounds.x) * this.canvas.width) / bounds.width;
+      const y = ((touch.clientY - bounds.y) * this.canvas.height) / bounds.height;
       this.pushEvent(Input.EVENT_TOUCH, touch.identifier, state, x, y);
     }
   }
@@ -239,8 +239,8 @@ export class Input {
   
   onMouseEvent(e) {
     const bounds = this.canvas.getBoundingClientRect();
-    const x = e.x - bounds.x;
-    const y = e.y - bounds.y;
+    const x = ((e.x - bounds.x) * this.canvas.width) / bounds.width;
+    const y = ((e.y - bounds.y) * this.canvas.height) / bounds.height;
     switch (e.type) {
       case "mousemove": this.pushEvent(Input.EVENT_MMOTION, x, y); break;
       case "mousedown": {
@@ -248,7 +248,14 @@ export class Input {
           if (this.mouseButtonsDown.has(e.button)) return;
           this.mouseButtonsDown.add(e.button);
           e.preventDefault();
-          this.pushEvent(Input.EVENT_MBUTTON, e.button, 1, x, y);
+          let button;
+          switch (e.button) {
+            case 0: button = 1; break; // left
+            case 1: button = 3; break; // middle
+            case 2: button = 2; break; // right
+            default: button = e.button;
+          }
+          this.pushEvent(Input.EVENT_MBUTTON, button, 1, x, y);
         } break;
       case "mouseup": {
           if (!this.mouseButtonsDown.has(e.button)) return;
@@ -301,12 +308,14 @@ export class Input {
       }
     }
     
-    // Likewise, if user wants text and it looks like text.
-    if (this.evtmask & (1 << Input.EVENT_TEXT)) {
-      if (e.key?.length === 1) {
-        this.pushEvent(Input.EVENT_TEXT, e.key.charCodeAt(0));
-        e.preventDefault();
-        e.stopPropagation();
+    // Likewise, if user wants text and it looks like text. (but not for "keyup" of course).
+    if (e.type !== "keyup") {
+      if (this.evtmask & (1 << Input.EVENT_TEXT)) {
+        if (e.key?.length === 1) {
+          this.pushEvent(Input.EVENT_TEXT, e.key.charCodeAt(0));
+          e.preventDefault();
+          e.stopPropagation();
+        }
       }
     }
   }

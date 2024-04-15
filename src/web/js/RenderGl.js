@@ -363,7 +363,6 @@ export class RenderGl {
         else srcmask >>= 1;
       }
     }
-    console.log(`to 1bit`, { dst, srcv, image });
     return {
       v: dst.buffer,
       w: image.w,
@@ -457,7 +456,6 @@ RenderGl.vsrc_raw = `
   varying vec4 vcolor;
   void main() {
     vec2 npos=(apos*2.0)/screensize-1.0;
-    npos.y=-npos.y;
     gl_Position=vec4(npos,0.0,1.0);
     vcolor=acolor;
   }
@@ -481,7 +479,6 @@ RenderGl.vsrc_decal = `
   varying vec2 vtexcoord;
   void main() {
     vec2 npos=(apos*2.0)/screensize-1.0;
-    npos.y=-npos.y;
     gl_Position=vec4(npos,0.0,1.0);
     vtexcoord=atexcoord;
   }
@@ -512,7 +509,6 @@ RenderGl.vsrc_tile = `
   varying mat2 vmat;
   void main() {
     vec2 npos=(apos*2.0)/screensize-1.0;
-    npos.y=-npos.y;
     gl_Position=vec4(npos,0.0,1.0);
     vsrcp=vec2(
       mod(atileid,16.0),
@@ -541,6 +537,7 @@ RenderGl.fsrc_tile = `
   varying mat2 vmat;
   void main() {
     vec2 texcoord=gl_PointCoord;
+    texcoord.y=1.0-texcoord.y;
     texcoord=vmat*(texcoord-0.5)+0.5;
     texcoord=vsrcp+texcoord/16.0;
     gl_FragColor=texture2D(sampler,texcoord);

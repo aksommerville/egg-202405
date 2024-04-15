@@ -71,7 +71,11 @@ int evdev_device_update(struct evdev *evdev,struct evdev_device *device) {
   if (device->fd<0) return -1;
   struct input_event buf[32];
   int eventc=read(device->fd,buf,sizeof(buf));
-  if (eventc<=0) return -1;
+  if (eventc<=0) {
+    if (evdev->delegate.cb_disconnect) evdev->delegate.cb_disconnect(evdev,device);
+    evdev_device_disconnect(evdev,device);
+    return 0;
+  }
   if (evdev->delegate.cb_button) {
     eventc/=sizeof(struct input_event);
     const struct input_event *event=buf;

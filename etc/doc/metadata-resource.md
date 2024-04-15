@@ -27,7 +27,7 @@ It's fine to make up new keys. Wise to add a dot or space or something so it's n
 | genre       | See below. |
 | tags        | See below. |
 | framebuffer | "WxH", decimal. Runtime may use to guide selection of window size. |
-| language    | Comma-delimited ISO 631 language codes, in order of your preference. The original should come first. |
+| language    | Comma-delimited ISO 639 language codes, in order of your preference. The original should come first. |
 | required    | Comma-delimited list of features that the game is not expected to work without (see below). |
 | optional    | Like (required), but only suggesting "we're better if this is enabled". |
 | iconImage   | Decimal rid of an image resource. Recommend 32x32 pixels. |
