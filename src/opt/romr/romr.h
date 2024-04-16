@@ -83,4 +83,11 @@ int romr_get(void *dstpp,const struct romr *romr,uint8_t tid,uint16_t rid);
 uint16_t romr_get_language(const struct romr *romr);
 void romr_set_language(struct romr *romr,uint16_t lang);
 
+/* Enumerate resource IDs for non-empty resources.
+ * This is more expensive than it sounds (considerably more so than fetching resources!),
+ * because it skips zero-length resources.
+ */
+void romr_id_by_index(int *tid,int *qual,int *rid,const struct romr *romr,int p);
+int romr_for_valid_resources(const struct romr *romr,int (*cb)(int tid,int qual,int rid,void *userdata),void *userdata);
+
 #endif

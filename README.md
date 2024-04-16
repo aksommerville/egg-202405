@@ -13,7 +13,7 @@ Input is more agnostic, tries to give you raw events as much as possible.
 
 - [ ] Lights-on app to manually validate all platform features.
 - - [x] Test each entry point in Javascript.
-- - [ ] Test each entry point in WebAssembly.
+- - [x] Test each entry point in WebAssembly.
 - - [ ] Test each entry point natively. (Same as the wasm test, just build differently)
 - [ ] Additional native platforms.
 - - [ ] MacOS.
@@ -33,6 +33,10 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - [ ] Serve WebSocket from the dev server, just an echo service or something, for testing.
 - [ ] Native: OpenSSL for HTTP and WebSocket.
 - [ ] Web is allowing unreasonably long updates. (Run lojs Time test, and pause via dev tools)
+- [ ] Need realloc et al for web.
+- - Either we supply these via the platform, or do not supply in the native platform, and force devs to bring their own stdlib.
+- - I think "bring your own stdlib" is a pretty stupid policy. ...but it's not really so: We would provide that lib too, just it's baked into the ROM.
+- - Figure out what all is being provided in native, and ensure web provides the same.
 
 ### Low Priority
 
@@ -52,7 +56,7 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - [ ] Mouse coords when softrender in play. Will require a new hostio_video hook i think.
 - [x] Mouse and touch coords in web. Must account for scaling (do they already?)
 - [ ] Res type, event type, etc symbols where Javascript can reach them. I don't want to expose them out of the runtime, tho that is an option.
-- [ ] JS native: res_id_by_index() reports empty resources. It shouldn't. Haven't checked native C.
+- [x] JS native: res_id_by_index() reports empty resources. It shouldn't. Same via native, must be in romr.
 - [ ] `eggrom -t` does it too, make it skip them.
 - [x] web: res_id_by_index() highly broken. See lojs Audio.
 - [ ] Really need a "get string resource" helper for the JS API, that returns strings.

@@ -228,6 +228,7 @@ void egg_res_id_by_index(int *tid,int *qual,int *rid,int index);
  * User may impose arbitrary limits, outside the game's control.
  * If the platform knows a field won't persist, we won't fake it, it will fail at set.
  * Set an empty value to delete a field.
+ * **Lengths must be provided everywhere, you can't give <0 to measure to NUL**
  */
 int egg_store_set(const char *k,int kc,const char *v,int vc);
 int egg_store_get(char *dst,int dsta,const char *k,int kc);

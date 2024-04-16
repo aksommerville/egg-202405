@@ -1,0 +1,14 @@
+# lowasm: Lights-On Test ROM, WebAssembly version.
+
+title=Lights-On, WebAssembly
+author=AK Sommerville
+copyright=(c) 2024 AK Sommerville
+freedom=free
+genre=Demo
+framebuffer=320x180
+language=en
+iconImage=1
+description=Test ROM, exposing hopefully all Egg behavior in an interactive way. WebAssembly only.
+multiplayer=single
+version=0.0.1
+timestamp=2024-04-13

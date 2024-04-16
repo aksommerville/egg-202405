@@ -226,3 +226,46 @@ void romr_set_language(struct romr *romr,uint16_t lang) {
   romr->qual_by_tid[EGG_TID_image]=lang;
   romr->qual_by_tid[EGG_TID_sound]=lang;
 }
+
+/* Iterate non-empty resources.
+ */
+ 
+struct romr_iterate_context {
+  int skip,tid,qual,rid;
+};
+ 
+static int romr_id_by_index_cb(int tid,int qual,int rid,void *userdata) {
+  struct romr_iterate_context *ctx=userdata;
+  if (ctx->skip-->0) return 0;
+  ctx->tid=tid;
+  ctx->qual=qual;
+  ctx->rid=rid;
+  return 1;
+}
+ 
+void romr_id_by_index(int *tid,int *qual,int *rid,const struct romr *romr,int p) {
+  if (tid) *tid=0;
+  if (qual) *qual=0;
+  if (rid) *rid=0;
+  if (p<0) return;
+  struct romr_iterate_context ctx={.skip=p};
+  if (romr_for_valid_resources(romr,romr_id_by_index_cb,&ctx)) {
+    *tid=ctx.tid;
+    *qual=ctx.qual;
+    *rid=ctx.rid;
+  }
+}
+
+int romr_for_valid_resources(const struct romr *romr,int (*cb)(int tid,int qual,int rid,void *userdata),void *userdata) {
+  const struct romr_bucket *bucket=romr->bucketv;
+  int bucketi=romr->bucketc,err;
+  for (;bucketi-->0;bucket++) {
+    const struct romr_res *res=bucket->resv;
+    int resi=bucket->resc,rid=1;
+    for (;resi-->0;res++,rid++) {
+      if (!res->c) continue;
+      if (err=cb(bucket->tid,bucket->qual,rid,userdata)) return err;
+    }
+  }
+  return 0;
+}

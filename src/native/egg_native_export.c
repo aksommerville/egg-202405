@@ -55,21 +55,7 @@ int egg_res_get(void *dst,int dsta,int tid,int qual,int rid) {
 }
 
 void egg_res_id_by_index(int *tid,int *qual,int *rid,int index) {
-  if (tid) *tid=0;
-  if (qual) *qual=0;
-  if (rid) *rid=0;
-  if (index<0) return;
-  const struct romr_bucket *bucket=egg.romr.bucketv;
-  int bucketi=egg.romr.bucketc;
-  for (;bucketi-->0;bucket++) {
-    if (index<bucket->resc) {
-      *tid=bucket->tid;
-      *qual=bucket->qual;
-      *rid=index+1;
-      return;
-    }
-    index-=bucket->resc;
-  }
+  romr_id_by_index(tid,qual,rid,&egg.romr,index);
 }
 
 /* Persistent store.
@@ -501,7 +487,12 @@ static JSValue egg_js_texture_upload(JSContext *ctx,JSValueConst this,int argc,J
   return JS_NewInt32(ctx,err);
 }
 
-static int egg_wasm_texture_upload(wasm_exec_env_t ee,int texid,int w,int h,int stride,int fmt,const void *src,int srcc) {
+static int egg_wasm_texture_upload(wasm_exec_env_t ee,int texid,int w,int h,int stride,int fmt,int srcaddr,int srcc) {
+  void *src=0;
+  if (srcaddr) {
+    if (srcc<1) return -1;
+    if (!(src=wamr_validate_pointer(egg.wamr,1,srcaddr,srcc))) return -1;
+  }
   if (egg.render) return render_texture_load(egg.render,texid,w,h,stride,fmt,src,srcc);
   if (egg.softrender) return softrender_texture_load(egg.softrender,texid,w,h,stride,fmt,src,srcc);
   return -1;
@@ -1113,7 +1104,7 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_texture_del",egg_wasm_texture_del,"(i)"},
   {"egg_texture_new",egg_wasm_texture_new,"()i"},
   {"egg_texture_load_image",egg_wasm_texture_load_image,"(iii)i"},
-  {"egg_texture_upload",egg_wasm_texture_upload,"(iiiii*~)i"},
+  {"egg_texture_upload",egg_wasm_texture_upload,"(iiiiiii)i"},
   {"egg_texture_get_header",egg_wasm_texture_get_header,"(***i)"},
   {"egg_texture_clear",egg_wasm_texture_clear,"(i)"},
   {"egg_draw_mode",egg_wasm_draw_mode,"(iii)"},
