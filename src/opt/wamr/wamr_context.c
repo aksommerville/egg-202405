@@ -110,7 +110,7 @@ int wamr_link_function(struct wamr *wamr,int modid,int fnid,const char *name) {
     memset(function,0,sizeof(struct wamr_function));
     function->fnid=fnid;
     
-    if (!(function->finst=wasm_runtime_lookup_function(module->instance,name,0))) {
+    if (!(function->finst=wasm_runtime_lookup_function(module->instance,name))) {
       module->functionc--;
       wamr_function_cleanup(function);
       return -1;

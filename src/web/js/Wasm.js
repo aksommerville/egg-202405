@@ -29,6 +29,7 @@ export class Wasm {
       modff: (x, yp) => { const fract = x % 1; this.memF32[yp >> 2] = x - fract; return fract; },
       fmodf: (x, y) => x % y,
       memcpy: (dst, src, c) => this.memcpy(dst, src, c),
+      __main_argc_argv: () => { throw new Error('not implemented'); }, // required with wasi libc
     };
   }
   
@@ -59,8 +60,57 @@ export class Wasm {
   }
   
   generateOptions() {
+    const invalid = () => { throw new Error(`not implemented`); };
     return {
       env: this.env,
+      wasi_snapshot_preview1: {
+        args_get: invalid,
+        args_sizes_get: invalid,
+        clock_res_get: invalid,
+        clock_time_get: invalid,
+        environ_get: invalid,
+        environ_sizes_get: invalid,
+        fd_advise: invalid,
+        fd_allocate: invalid,
+        fd_close: invalid,
+        fd_datasync: invalid,
+        fd_fdstat_get: invalid,
+        fd_fdstat_set_flags: invalid,
+        fd_fdstat_set_rights: invalid,
+        fd_filestat_get: invalid,
+        fd_filestat_set_size: invalid,
+        fd_filestat_set_times: invalid,
+        fd_pread: invalid,
+        fd_prestat_dir_name: invalid,
+        fd_prestat_get: invalid,
+        fd_pwrite: invalid,
+        fd_read: invalid,
+        fd_readdir: invalid,
+        fd_renumber: invalid,
+        fd_seek: invalid,
+        fd_sync: invalid,
+        fd_tell: invalid,
+        fd_write: invalid,
+        path_create_directory: invalid,
+        path_filestat_get: invalid,
+        path_filestat_set_times: invalid,
+        path_link: invalid,
+        path_open: invalid,
+        path_readlink: invalid,
+        path_remove_directory: invalid,
+        path_rename: invalid,
+        path_symlink: invalid,
+        path_unlink_file: invalid,
+        poll_oneoff: invalid,
+        proc_exit: invalid,
+        proc_raise: invalid,
+        random_get: invalid,
+        sched_yield: invalid,
+        sock_accept: invalid,
+        sock_recv: invalid,
+        sock_send: invalid,
+        sock_shutdown: invalid,
+      },
     };
   }
   

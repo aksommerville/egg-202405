@@ -17,11 +17,6 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] MacOS.
 - - [ ] Windows.
 - - [ ] Preferred language for Mac and Windows.
-- xxx Call JS from Wasm and vice-versa.
-- - [x] Update lojs with a test of it.
-- - [x] And lowasm
-- - This is more complicated than it sounds. Not impossible but lots of effort and risk.
-- - I'm thinking there's not much value in it. Developer will write her game in JS or C, why would anybody mix them?
 - [ ] User-supplied HTTP permissions.
 - [ ] User-supplied storage permissions.
 - [ ] Accelerometer input.
@@ -33,10 +28,14 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - [ ] Serve WebSocket from the dev server, just an echo service or something, for testing.
 - [ ] Native: OpenSSL for HTTP and WebSocket.
 - [ ] Web is allowing unreasonably long updates. (Run lojs Time test, and pause via dev tools)
-- [ ] Need realloc et al for web.
+- [x] Need realloc et al for web.
 - - Either we supply these via the platform, or do not supply in the native platform, and force devs to bring their own stdlib.
 - - I think "bring your own stdlib" is a pretty stupid policy. ...but it's not really so: We would provide that lib too, just it's baked into the ROM.
 - - Figure out what all is being provided in native, and ensure web provides the same.
+- - *** It's possible to build without `-nostdlib`, if we implement a stub `wasi_snapshot_preview1` in Wasm.js.
+- - But then native fails: out/rom/lowasm.egg:wasm_runtime_load: WASM module load failed: unsupported opcode fc 0a
+- - - Per https://pengowray.github.io/wasm-ops/: fc 0a is a proposed memcpy opcode.
+- - - Updated wasm-micro-runtime and now it works :D
 - [ ] Cleaner solution for native builds. Get everything linux-specific out of etc/make/demos.mk
 
 ### Low Priority

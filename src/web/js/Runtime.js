@@ -395,7 +395,7 @@ export class Runtime {
   wasm_store_get(dst, dsta, k, kc) {
     k = this.wasm.stringFromMemory(k, kc);
     const src = this.sysExtra.store_get(k);
-    return this.wasm_safeWrite(dst, dsta, src);
+    return this.wasm.safeWrite(dst, dsta, src);
   }
   
   wasm_store_key_by_index(dst, dsta, p) {
