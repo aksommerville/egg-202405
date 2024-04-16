@@ -29,6 +29,8 @@ extern struct server {
     char *path;
   } *pendingv;
   int pendingc,pendinga;
+  struct http_websocket **wsv;
+  int wsc,wsa;
 } server;
 
 #endif

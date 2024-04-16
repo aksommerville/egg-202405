@@ -171,7 +171,7 @@ export class Net {
     if (p < 0) return;
     const ws = this.ws[p];
     this.ws.splice(p, 1);
-    ws.sock.disconnect();
+    ws.sock.close();
   }
   
   ws_get_message(wsid, msgid) {
@@ -190,6 +190,6 @@ export class Net {
     const ws = this.ws.find(w => w.wsid === wsid);
     if (!ws) return;
     if (!ws.status) return;
-    ws.send(opcode, v);
+    ws.sock.send(v);
   }
 }

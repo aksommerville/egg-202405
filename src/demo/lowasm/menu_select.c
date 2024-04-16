@@ -209,15 +209,47 @@ static void _select_network_activate(struct menu *menu) {
         int reqid=egg_http_request("GET","http://localhost:8080/index.html",0,0);
         egg_log("HTTP request id %d",reqid);
       } break;
-    case 3: break;//TODO connect or disconnect websocket
+    case 3: {
+        const char *url="ws://localhost:8080/ws";
+        int wsid=egg_ws_connect(url);
+        egg_log("Connect to %s: wsid=%d",url,wsid);
+      } break;
   }
 }
 
 static void _select_network_event(struct menu *menu,const struct egg_event *event) {
   switch (event->type) {
-    case EGG_EVENT_HTTP_RSP: break;//TODO log request id, status, and length
-    case EGG_EVENT_WS_CONNECT: break;//TODO update labels
-    case EGG_EVENT_WS_DISCONNECT: break;//TODO update labels
+    case EGG_EVENT_HTTP_RSP: {
+        int reqid=event->v[0];
+        int status=event->v[1];
+        int length=event->v[2];
+        char *serial=calloc(length+1,1);
+        if (serial) {
+          egg_http_get_body(serial,length,reqid);
+          egg_log("HTTP Response, reqid=%d, status=%d:\n%.*s",reqid,status,length,serial);
+          free(serial);
+        }
+      } break;
+    case EGG_EVENT_WS_CONNECT: {
+        int wsid=event->v[0];
+        egg_log("WS_CONNECT wsid=%d",wsid);
+        egg_ws_send(wsid,1,"This is the only thing this WebSocket will send.",48);
+      } break;
+    case EGG_EVENT_WS_DISCONNECT: {
+        int wsid=event->v[0];
+        egg_log("WS_DISCONNECT wsid=%d",wsid);
+      } break;
+    case EGG_EVENT_WS_MESSAGE: {
+        int wsid=event->v[0];
+        int msgid=event->v[1];
+        int length=event->v[2];
+        char *serial=calloc(1,length+1);
+        if (serial) {
+          egg_ws_get_message(serial,length,wsid,msgid);
+          egg_log("WS_MESSAGE, wsid=%d msgid=%d: %.*s",wsid,msgid,length,serial);
+          free(serial);
+        }
+      } break;
   }
   _select_event(menu,event);
 }
@@ -233,7 +265,7 @@ struct menu *lowasm_menu_new_network() {
   _select_add_option(menu,"Watch log for responses.");
   _select_add_option(menu,"");
   _select_add_option(menu,"HTTP request");
-  _select_add_option(menu,"WebSocket (TODO)");
+  _select_add_option(menu,"WebSocket");
   return menu;
 }
 

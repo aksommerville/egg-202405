@@ -273,6 +273,7 @@ export declare function ws_get_message(wsid: number, msgid: number): string;
 
 /* Queue a message for delivery.
  * No I/O during this call, and you won't be notified of the status.
+ * (opcode) is ignored. TODO: Adjust this API, have it follow the same rules as WebSocket.send().
  */
 export declare function ws_send(wsid: number, opcode: number, v: string): void;
 

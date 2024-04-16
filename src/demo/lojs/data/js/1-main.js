@@ -794,7 +794,7 @@ function enterNetworkMenu() {
         if (wsconnected) {
           const msg = "Hello this is the client.";
           egg.log(`Sending over Websocket: ${msg}`);
-          egg.ws_send(wsid, 0, msg);
+          egg.ws_send(gwsid, 0, msg);
         }
       }
     },
@@ -990,7 +990,8 @@ function onDisconnect(devid) {
 }
 
 function onHttpResponse(reqid, status, length) {
-  egg.log(`HTTP_RSP reqid=${reqid} status=${status} length=${length}`);
+  const body = egg.http_get_body(reqid);
+  egg.log(`HTTP_RSP reqid=${reqid} status=${status} length=${length} body=${body}`);
 }
 
 function onWsConnect(wsid) {
@@ -1011,7 +1012,8 @@ function onWsDisconnect(wsid) {
 }
 
 function onWsMessage(wsid, msgid, length) {
-  egg.log(`WS_MESSAGE wsid=${wsid} msgid=${msgid} length=${length}`);
+  const msg = egg.ws_get_message(wsid, msgid);
+  egg.log(`WS_MESSAGE wsid=${wsid} msgid=${msgid} length=${length}: ${msg}`);
 }
 
 function egg_client_update(elapsed) {

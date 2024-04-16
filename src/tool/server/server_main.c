@@ -253,12 +253,57 @@ static int server_cb_list_games(struct http_xfer *req,struct http_xfer *rsp) {
   return http_xfer_set_status(rsp,200,"OK");
 }
 
+/* Trivial beacon WebSocket.
+ */
+ 
+static int server_cb_ws_message(struct http_websocket *ws,int opcode,const void *v,int c) {
+  if ((opcode==8)||(opcode<0)) {
+    int i=server.wsc;
+    while (i-->0) {
+      if (server.wsv[i]==ws) {
+        server.wsc--;
+        memmove(server.wsv+i,server.wsv+i+1,sizeof(void*)*(server.wsc-i));
+        fprintf(stderr,"Lost WebSocket connection.\n");
+        return 0;
+      }
+    }
+    return 0;
+  }
+  fprintf(stderr,"%s %p opcode=%d c=%d\n",__func__,ws,opcode,c);
+  const uint8_t *row=v;
+  int p=0; for (;p<c;p+=32,row+=32) {
+    int i=0; for (;(p+i<c)&&(i<32);i++) {
+      fprintf(stderr," %02x",row[i]);
+    }
+    fprintf(stderr,"\n");
+  }
+  return 0;
+}
+ 
+static int server_cb_ws(struct http_xfer *req,struct http_xfer *rsp) {
+  struct http_websocket *ws=http_websocket_check_upgrade(req,rsp);
+  if (!ws) return http_xfer_set_status(rsp,400,"Failed to upgrade");
+  http_websocket_set_callback(ws,server_cb_ws_message);
+  if (server.wsc>=server.wsa) {
+    int na=server.wsa+8;
+    if (na>INT_MAX/sizeof(void*)) return -1;
+    void *nv=realloc(server.wsv,sizeof(void*)*na);
+    if (!nv) return -1;
+    server.wsv=nv;
+    server.wsa=na;
+  }
+  server.wsv[server.wsc++]=ws;
+  fprintf(stderr,"Accepted WebSocket connection.\n");
+  return 0;
+}
+
 /* Dispatch HTTP requests.
  */
  
 static int server_cb_serve(struct http_xfer *req,struct http_xfer *rsp,void *userdata) {
   return http_dispatch(req,rsp,
     HTTP_METHOD_GET,"/list-games",server_cb_list_games,
+    HTTP_METHOD_GET,"/ws",server_cb_ws,
     HTTP_METHOD_GET,"/**",server_cb_serve_static
   );
 }
@@ -362,6 +407,19 @@ static int server_rebuild_pollfdv() {
   return pollfdc;
 }
 
+/* Send something to all websockets.
+ */
+ 
+static int server_poke_websockets() {
+  if (server.wsc<1) return 0;
+  int i=server.wsc;
+  while (i-->0) {
+    http_websocket_send(server.wsv[i],1,"From Server With Luff.",22);
+  }
+  fprintf(stderr,"Sent a message to %d WebSockets.\n",server.wsc);
+  return 0;
+}
+
 /* Main.
  */
  
@@ -404,6 +462,7 @@ int main(int argc,char **argv) {
   
   fprintf(stderr,"%s: Serving on %d. SIGINT to quit.\n",server.exename,server.port);
   int status=0;
+  int wscyclec=0;
   while (!server.sigc) {
     int pollfdc=server_rebuild_pollfdv();
     if (pollfdc<0) { status=1; break; }
@@ -420,6 +479,10 @@ int main(int argc,char **argv) {
           }
         }
       }
+    }
+    if (++wscyclec>=100) { // 10 s or so
+      wscyclec=0;
+      server_poke_websockets();
     }
   }
   

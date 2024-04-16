@@ -251,7 +251,7 @@ export class Runtime {
       http_get_header: (reqid, k) => this.net.http_get_header(reqid, k),
       http_get_body: (reqid) => this.net.http_get_body(reqid),
       ws_connect: (url) => this.net.ws_connect(url),
-      ws_disconnect: (wsid) => this.net.ws_disconnect(url),
+      ws_disconnect: (wsid) => this.net.ws_disconnect(wsid),
       ws_get_message: (wsid, msgid) => this.net.ws_get_message(wsid, msgid),
       ws_send: (wsid, opcode, v) => this.net.ws_send(wsid, opcode, v),
       time_real: () => Date.now() / 1000,

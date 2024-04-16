@@ -161,6 +161,7 @@ static int eggrom_x_finish() {
  */
  
 static int eggrom_t_1(uint8_t tid,uint16_t qual,uint16_t rid,const void *v,int c,void *userdata) {
+  if (!c) return 0;
   switch (eggrom.format) {
   
     case 0: {

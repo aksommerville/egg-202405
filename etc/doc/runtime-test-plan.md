@@ -1,0 +1,95 @@
+# Egg Runtime Test Plan
+
+After porting the runtime to a new platform, or after substantial changes, run through this checklist manually.
+
+## Native Platforms Only
+
+- [ ] Validate all graphics with both `--render=gx` and `--render=soft`.
+- [ ] Run with all drivers (`egg --help` for lists).
+- [ ] Window title from ROM file.
+- [ ] Window icon from ROM file.
+- Validate with both `lojs.egg` and `lowasm.egg`:
+- - [ ] Joysticks connect, disconnect, report sane VID+PID, and report events.
+- - [ ] Touch, if hardware supports.
+- - [ ] Mouse motion must use framebuffer coords: 320x180, regardless of scaling.
+- - [ ] Mouse buttons must be: (1,2,3)=(left,right,middle)
+- - [ ] Mouse wheel naturally is Y: -up +down
+- - [ ] Hold shift to make it use X: -left +right
+- - [ ] Accelerometer, if hardware supports.
+- - [ ] Keyboard reports USB-HID usage codes (0x00070004..0x000700ff), with value (0,1,2)=(off,on,repeat).
+- - [ ] Keyboard reports Unicode code points for On and Repeat events.
+- - [ ] Unicode reacts as expected to Shift.
+- - [ ] Audio: Play songs and sounds.
+- - [ ] "Force" makes a request for the same song restart it. Without Force, it must keep playing.
+- - [ ] Validate Repeat for songs: Playhead must return to zero. (song 2 is very short)
+- - [ ] Play song 0 to silence it.
+- - [ ] Validate Trim for sounds.
+- - [ ] Xform Clipping Test: Visually validate all 8 transforms, and ensure no weirdness when clipped at edge.
+- - - The source image has a transparent background and black elbows at each corner.
+- - [ ] Too Many Sprites: Run with thousands of sprites and monitor CPU usage. With soft render, expect problems.
+- - [ ] Global Tint and Alpha: The two columns must be identical.
+- - [ ] '': The "50%" rows must be half transparent.
+- - [ ] '': The full-tint rows must show pure primary colors, with the image's silhouette.
+- - [ ] Offscreen Render: Two images, cherry on the left and coin on the right.
+- - [ ] '': Each image has colored corners: (NW,NE,SW,SE)=(Black,Red,Green,Blue)
+- - [ ] '': Confirm cherry's stem points up and right, and coin face is upright facing left. I've seen upside-down problems.
+- - [ ] List Resources: No zero-length resources.
+- - [ ] List Resources: Nothing after the first blank row (skip right a few pages to confirm).
+- - [ ] List Resources: Gut-check IDs and lengths
+- - [ ] Strings By Language: Left/Right and confirm the strings translate.
+- - [ ] Persistence: Choose something for all 3 fields, quit the runtime, relaunch: Your choices should persist.
+- - [ ] Persistence: Confirm save file *does not* get created when disabled via command line (TODO).
+- - Network: Test with `make serve` running.
+- - - [ ] HTTP GET drops a sane response in the log.
+- - - [ ] WebSocket sends and receives, check log.
+- - [ ] Misc/Log: Validate output in log.
+- - [ ] Misc/Time: Validate timing, esp split-out current time.
+- - [ ] Misc/Time: Hard-pause and confirm that real time elapsed keeps counting but game time does not. Update times should stay around 15-30 ms.
+- - [ ] Misc/Languages: Launch with "LANG=" or "LANGUAGES=" or "--lang=", confirm it gets picked up here.
+- - [ ] Misc/Languages: Confirm against whatever the default platform mechanism is. (TODO Windows, MacOS)
+- - [ ] "Is terminable?" Should always be true for native runtimes, since there is a concept of "quit to OS".
+
+## Web Platform
+
+- [ ] Page title from ROM file.
+- [ ] Favicon from ROM file.
+- Validate with both `lojs.egg` and `lowasm.egg`:
+- - [ ] Joysticks connect, disconnect, report sane VID+PID, and report events.
+- - [ ] Touch. (use devtools mobile preview mode if needed)
+- - [ ] Mouse motion must use framebuffer coords: 320x180, regardless of scaling.
+- - [ ] Mouse buttons must be: (1,2,3)=(left,right,middle)
+- - [ ] Mouse wheel naturally is Y: -up +down
+- - [ ] Hold shift to make it use X: -left +right
+- - [ ] Accelerometer, if hardware supports.
+- - [ ] Keyboard reports USB-HID usage codes (0x00070004..0x000700ff), with value (0,1,2)=(off,on,repeat).
+- - [ ] Keyboard reports Unicode code points for On and Repeat events.
+- - [ ] Unicode reacts as expected to Shift.
+- - [ ] Audio: Play songs and sounds.
+- - [ ] "Force" makes a request for the same song restart it. Without Force, it must keep playing.
+- - [ ] Validate Repeat for songs: Playhead must return to zero. (song 2 is very short)
+- - [ ] Play song 0 to silence it.
+- - [ ] Validate Trim for sounds.
+- - [ ] Xform Clipping Test: Visually validate all 8 transforms, and ensure no weirdness when clipped at edge.
+- - - The source image has a transparent background and black elbows at each corner.
+- - [ ] Too Many Sprites: Run with thousands of sprites and monitor CPU usage. With soft render, expect problems.
+- - [ ] Global Tint and Alpha: The two columns must be identical.
+- - [ ] '': The "50%" rows must be half transparent.
+- - [ ] '': The full-tint rows must show pure primary colors, with the image's silhouette.
+- - [ ] Offscreen Render: Two images, cherry on the left and coin on the right.
+- - [ ] '': Each image has colored corners: (NW,NE,SW,SE)=(Black,Red,Green,Blue)
+- - [ ] '': Confirm cherry's stem points up and right, and coin face is upright facing left. I've seen upside-down problems.
+- - [ ] List Resources: No zero-length resources.
+- - [ ] List Resources: Nothing after the first blank row (skip right a few pages to confirm).
+- - [ ] List Resources: Gut-check IDs and lengths
+- - [ ] Strings By Language: Left/Right and confirm the strings translate.
+- - [ ] Persistence: Choose something for all 3 fields, reload page: Your choices should persist.
+- - Network: Test with `make serve` running.
+- - - [ ] HTTP GET drops a sane response in the log.
+- - - [ ] WebSocket sends and receives, check log.
+- - [ ] Misc/Log: Validate output in log.
+- - [ ] Misc/Time: Validate timing, esp split-out current time.
+- - [ ] Misc/Time: Hard-pause and confirm that real time elapsed keeps counting but game time does not. Update times should stay around 15-30 ms.
+- - - The hardest of pauses is in dev tools debugger.
+- - [ ] Misc/Languages: Add a few in your browser settings, confirm they show up here.
+- - [ ] "Is terminable?" Should always be false for browsers.
+- - [ ] "Terminate" should work anyway, it should stop execution and show black.
