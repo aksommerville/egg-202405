@@ -34,6 +34,7 @@ static void egg_native_quit(int status) {
   hostio_del(egg.hostio);
   synth_del(egg.synth);
   wamr_del(egg.wamr);
+  qjs_del(egg.qjs);
   egg_native_net_cleanup();
   egg_native_rom_cleanup();
   egg_native_input_cleanup();

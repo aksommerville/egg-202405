@@ -6,6 +6,10 @@
  *   egg_native_event.c -- egg_event_next,egg_event_enable
  *   egg_native_input.c -- input
  */
+ 
+#ifndef EGG_ENABLE_VM
+  #error "Please define EGG_ENABLE_VM to 0 or 1"
+#endif
 
 #include "egg_native_internal.h"
 #include "quickjs.h"
@@ -199,6 +203,7 @@ void egg_log(const char *fmt,...) {
 /* js: log
  */
 
+#if EGG_ENABLE_VM
 static JSValue egg_js_log(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   if (argc<1) return JS_NULL;
   const char *fmt=JS_ToCString(ctx,argv[0]);
@@ -240,10 +245,12 @@ static JSValue egg_js_log(JSContext *ctx,JSValueConst this,int argc,JSValueConst
   JS_FreeCString(ctx,fmt);
   return JS_NULL;
 }
+#endif
 
 /* wasm: log
  */
- 
+
+#if EGG_ENABLE_VM
 static void egg_wasm_log(wasm_exec_env_t ee,const char *fmt,uint32_t vargs) {
   if (!fmt) return;
   char tmp[256];
@@ -280,10 +287,12 @@ static void egg_wasm_log(wasm_exec_env_t ee,const char *fmt,uint32_t vargs) {
   }
   fprintf(stderr,"GAME: %.*s\n",tmpc,tmp);
 }
+#endif
 
 /* egg_event_next
  */
 
+#if EGG_ENABLE_VM
 static JSValue egg_js_event_next(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSValue dst=JS_NewArray(ctx);
   int dstp=0;
@@ -308,10 +317,12 @@ static JSValue egg_js_event_next(JSContext *ctx,JSValueConst this,int argc,JSVal
 static int egg_wasm_event_next(wasm_exec_env_t ee,struct egg_event *eventv,int eventa) {
   return egg_event_next(eventv,eventa);
 }
+#endif
 
 /* egg_event_enable
  */
 
+#if EGG_ENABLE_VM
 static JSValue egg_js_event_enable(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(2)
   int32_t type=0,state=0;
@@ -324,10 +335,12 @@ static JSValue egg_js_event_enable(JSContext *ctx,JSValueConst this,int argc,JSV
 static int egg_wasm_event_enable(wasm_exec_env_t ee,int evttype,int evtstate) {
   return egg_event_enable(evttype,evtstate);
 }
+#endif
 
 /* egg_input_device_get_name
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_input_device_get_name(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t devid=0;
@@ -341,10 +354,12 @@ static JSValue egg_js_input_device_get_name(JSContext *ctx,JSValueConst this,int
 static int egg_wasm_input_device_get_name(wasm_exec_env_t ee,char *dst,int dsta,int devid) {
   return egg_input_device_get_name(dst,dsta,devid);
 }
+#endif
 
 /* egg_input_device_get_ids
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_input_device_get_ids(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t devid=0;
@@ -361,10 +376,12 @@ static JSValue egg_js_input_device_get_ids(JSContext *ctx,JSValueConst this,int 
 static void egg_wasm_input_device_get_ids(wasm_exec_env_t ee,int *vid,int *pid,int *version,int devid) {
   return egg_input_device_get_ids(vid,pid,version,devid);
 }
+#endif
 
 /* egg_input_device_get_button
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_input_device_get_button(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(2)
   int32_t devid=0,index=-1;
@@ -385,10 +402,12 @@ static JSValue egg_js_input_device_get_button(JSContext *ctx,JSValueConst this,i
 static void egg_wasm_input_device_get_button(wasm_exec_env_t ee,int *btnid,int *hidusage,int *lo,int *hi,int *value,int devid,int index) {
   egg_input_device_get_button(btnid,hidusage,lo,hi,value,devid,index);
 }
+#endif
 
 /* egg_input_device_disconnect
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_input_device_disconnect(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t devid=0;
@@ -400,10 +419,12 @@ static JSValue egg_js_input_device_disconnect(JSContext *ctx,JSValueConst this,i
 static void egg_wasm_input_device_disconnect(wasm_exec_env_t ee,int devid) {
   egg_input_device_disconnect(devid);
 }
+#endif
 
 /* egg_texture_del
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_texture_del(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t texid=0;
@@ -417,10 +438,17 @@ static void egg_wasm_texture_del(wasm_exec_env_t ee,int texid) {
   if (egg.render) render_texture_del(egg.render,texid);
   else if (egg.softrender) softrender_texture_del(egg.softrender,texid);
 }
+#endif
+
+void egg_texture_del(int texid) {
+  if (egg.render) render_texture_del(egg.render,texid);
+  else if (egg.softrender) softrender_texture_del(egg.softrender,texid);
+}
 
 /* egg_texture_new
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_texture_new(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   int texid;
   if (egg.render) texid=render_texture_new(egg.render);
@@ -433,26 +461,18 @@ static int egg_wasm_texture_new(wasm_exec_env_t ee) {
   if (egg.softrender) return softrender_texture_new(egg.softrender);
   return -1;
 }
+#endif
+
+int egg_texture_new() {
+  if (egg.render) return render_texture_new(egg.render);
+  if (egg.softrender) return softrender_texture_new(egg.softrender);
+  return -1;
+}
 
 /* egg_texture_load_image
  */
- 
-static JSValue egg_js_texture_load_image(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
-  JSASSERTARGC(3)
-  int32_t texid=0,qual=0,imageid=0;
-  JS_ToInt32(ctx,&texid,argv[0]);
-  JS_ToInt32(ctx,&qual,argv[1]);
-  JS_ToInt32(ctx,&imageid,argv[2]);
-  const void *serial=0;
-  int serialc=romr_get_qualified(&serial,&egg.romr,EGG_TID_image,qual,imageid);
-  if (serialc<=0) return JS_NewInt32(ctx,-1);
-  int err=-1;
-  if (egg.render) err=render_texture_load(egg.render,texid,0,0,0,0,serial,serialc);
-  else if (egg.softrender) err=softrender_texture_load(egg.softrender,texid,0,0,0,0,serial,serialc);
-  return JS_NewInt32(ctx,err);
-}
 
-static int egg_wasm_texture_load_image(wasm_exec_env_t ee,int texid,int qual,int imageid) {
+int egg_texture_load_image(int texid,int qual,int imageid) {
   const void *serial=0;
   int serialc=romr_get_qualified(&serial,&egg.romr,EGG_TID_image,qual,imageid);
   if (serialc<=0) return -1;
@@ -461,10 +481,33 @@ static int egg_wasm_texture_load_image(wasm_exec_env_t ee,int texid,int qual,int
   else if (egg.softrender) err=softrender_texture_load(egg.softrender,texid,0,0,0,0,serial,serialc);
   return err;
 }
+ 
+#if EGG_ENABLE_VM
+static JSValue egg_js_texture_load_image(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(3)
+  int32_t texid=0,qual=0,imageid=0;
+  JS_ToInt32(ctx,&texid,argv[0]);
+  JS_ToInt32(ctx,&qual,argv[1]);
+  JS_ToInt32(ctx,&imageid,argv[2]);
+  int err=egg_texture_load_image(texid,qual,imageid);
+  return JS_NewInt32(ctx,err);
+}
+
+static int egg_wasm_texture_load_image(wasm_exec_env_t ee,int texid,int qual,int imageid) {
+  return egg_texture_load_image(texid,qual,imageid);
+}
+#endif
 
 /* egg_texture_upload
  */
  
+int egg_texture_upload(int texid,int w,int h,int stride,int fmt,const void *src,int srcc) {
+  if (egg.render) return render_texture_load(egg.render,texid,w,h,stride,fmt,src,srcc);
+  if (egg.softrender) return softrender_texture_load(egg.softrender,texid,w,h,stride,fmt,src,srcc);
+  return -1;
+}
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_texture_upload(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(6)
   int32_t texid=0,w=0,h=0,stride=0,fmt=0;
@@ -481,10 +524,7 @@ static JSValue egg_js_texture_upload(JSContext *ctx,JSValueConst this,int argc,J
       return JS_NewInt32(ctx,-1);
     }
   }
-  int err=-1;
-  if (egg.render) err=render_texture_load(egg.render,texid,w,h,stride,fmt,v,c);
-  else if (egg.softrender) err=softrender_texture_load(egg.softrender,texid,w,h,stride,fmt,v,c);
-  return JS_NewInt32(ctx,err);
+  return JS_NewInt32(ctx,egg_texture_upload(texid,w,h,stride,fmt,v,c));
 }
 
 static int egg_wasm_texture_upload(wasm_exec_env_t ee,int texid,int w,int h,int stride,int fmt,int srcaddr,int srcc) {
@@ -493,14 +533,14 @@ static int egg_wasm_texture_upload(wasm_exec_env_t ee,int texid,int w,int h,int 
     if (srcc<1) return -1;
     if (!(src=wamr_validate_pointer(egg.wamr,1,srcaddr,srcc))) return -1;
   }
-  if (egg.render) return render_texture_load(egg.render,texid,w,h,stride,fmt,src,srcc);
-  if (egg.softrender) return softrender_texture_load(egg.softrender,texid,w,h,stride,fmt,src,srcc);
-  return -1;
+  return egg_texture_upload(texid,w,h,stride,fmt,src,srcc);
 }
+#endif
 
 /* egg_texture_get_header
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_texture_get_header(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t texid=0;
@@ -519,10 +559,17 @@ static void egg_wasm_texture_get_header(wasm_exec_env_t ee,int *w,int *h,int *fm
   if (egg.render) render_texture_get_header(w,h,fmt,egg.render,texid);
   else if (egg.softrender) softrender_texture_get_header(w,h,fmt,egg.softrender,texid);
 }
+#endif
+
+void egg_texture_get_header(int *w,int *h,int *fmt,int texid) {
+  if (egg.render) render_texture_get_header(w,h,fmt,egg.render,texid);
+  else if (egg.softrender) softrender_texture_get_header(w,h,fmt,egg.softrender,texid);
+}
 
 /* egg_texture_clear
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_texture_clear(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t texid=0;
@@ -536,10 +583,17 @@ static void egg_wasm_texture_clear(wasm_exec_env_t ee,int texid) {
   if (egg.render) render_texture_clear(egg.render,texid);
   else if (egg.softrender) softrender_texture_clear(egg.softrender,texid);
 }
+#endif
+
+void egg_texture_clear(int texid) {
+  if (egg.render) render_texture_clear(egg.render,texid);
+  else if (egg.softrender) softrender_texture_clear(egg.softrender,texid);
+}
 
 /* egg_draw_mode
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_draw_mode(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(3)
   int32_t xfermode=0,replacement=0,alpha=0;
@@ -555,10 +609,17 @@ static void egg_wasm_draw_mode(wasm_exec_env_t ee,int xfermode,int replacement,i
   if (egg.render) render_draw_mode(egg.render,xfermode,replacement,alpha);
   else if (egg.softrender) softrender_draw_mode(egg.softrender,xfermode,replacement,alpha);
 }
+#endif
+
+void egg_draw_mode(int xfermode,uint32_t tint,uint8_t alpha) {
+  if (egg.render) render_draw_mode(egg.render,xfermode,tint,alpha);
+  else if (egg.softrender) softrender_draw_mode(egg.softrender,xfermode,tint,alpha);
+}
 
 /* egg_draw_rect
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_draw_rect(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(6)
   int32_t texid=0,x=0,y=0,w=0,h=0,pixel=0;
@@ -577,10 +638,17 @@ static void egg_wasm_draw_rect(wasm_exec_env_t ee,int texid,int x,int y,int w,in
   if (egg.render) render_draw_rect(egg.render,texid,x,y,w,h,pixel);
   else if (egg.softrender) softrender_draw_rect(egg.softrender,texid,x,y,w,h,pixel);
 }
+#endif
+
+void egg_draw_rect(int texid,int x,int y,int w,int h,uint32_t pixel) {
+  if (egg.render) render_draw_rect(egg.render,texid,x,y,w,h,pixel);
+  else if (egg.softrender) softrender_draw_rect(egg.softrender,texid,x,y,w,h,pixel);
+}
 
 /* egg_draw_decal
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_draw_decal(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(9)
   int32_t dsttexid=0,srctexid=0,dstx=0,dsty=0,srcx=0,srcy=0,w=0,h=0,xform=0;
@@ -609,10 +677,23 @@ static void egg_wasm_draw_decal(
   if (egg.render) render_draw_decal(egg.render,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
   else if (egg.softrender) softrender_draw_decal(egg.softrender,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
 }
+#endif
+
+void egg_draw_decal(
+  int dsttexid,int srctexid,
+  int dstx,int dsty,
+  int srcx,int srcy,
+  int w,int h,
+  int xform
+) {
+  if (egg.render) render_draw_decal(egg.render,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
+  else if (egg.softrender) softrender_draw_decal(egg.softrender,dsttexid,srctexid,dstx,dsty,srcx,srcy,w,h,xform);
+}
 
 /* egg_draw_tile
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_draw_tile(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(4)
   int32_t dsttexid=0,srctexid=0,c=0;
@@ -637,10 +718,17 @@ static void egg_wasm_draw_tile(wasm_exec_env_t ee,int dsttexid,int srctexid,int 
   if (egg.render) render_draw_tile(egg.render,dsttexid,srctexid,vtxv,c);
   else if (egg.softrender) softrender_draw_tile(egg.softrender,dsttexid,srctexid,vtxv,c);
 }
+#endif
+
+void egg_draw_tile(int dsttexid,int srctexid,const struct egg_draw_tile *vtxv,int c) {
+  if (egg.render) render_draw_tile(egg.render,dsttexid,srctexid,vtxv,c);
+  else if (egg.softrender) softrender_draw_tile(egg.softrender,dsttexid,srctexid,vtxv,c);
+}
 
 /* egg_audio_play_song
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_audio_play_song(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(4)
   int32_t qual=0,songid=0,force=0,repeat=0;
@@ -655,10 +743,12 @@ static JSValue egg_js_audio_play_song(JSContext *ctx,JSValueConst this,int argc,
 static void egg_wasm_audio_play_song(wasm_exec_env_t ee,int qual,int songid,int force,int repeat) {
   egg_audio_play_song(qual,songid,force,repeat);
 }
+#endif
 
 /* egg_audio_play_sound
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_audio_play_sound(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(4)
   int32_t qual=0,soundid=0;
@@ -674,10 +764,12 @@ static JSValue egg_js_audio_play_sound(JSContext *ctx,JSValueConst this,int argc
 static void egg_wasm_audio_play_sound(wasm_exec_env_t ee,int qual,int soundid,double trim,double pan) {
   egg_audio_play_sound(qual,soundid,trim,pan);
 }
+#endif
 
 /* egg_audio_get_playhead
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_audio_get_playhead(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   return JS_NewFloat64(ctx,egg_audio_get_playhead());
 }
@@ -685,10 +777,12 @@ static JSValue egg_js_audio_get_playhead(JSContext *ctx,JSValueConst this,int ar
 static double egg_wasm_audio_get_playhead(wasm_exec_env_t ee) {
   return egg_audio_get_playhead();
 }
+#endif
 
 /* egg_res_get
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_res_get(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(3)
   int32_t tid=0,qual=0,rid=0;
@@ -706,10 +800,12 @@ static JSValue egg_js_res_get(JSContext *ctx,JSValueConst this,int argc,JSValueC
 static int egg_wasm_res_get(wasm_exec_env_t ee,void *dst,int dsta,int tid,int qual,int rid) {
   return egg_res_get(dst,dsta,tid,qual,rid);
 }
+#endif
 
 /* egg_res_id_by_index
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_res_id_by_index(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t p=-1;
@@ -726,10 +822,12 @@ static JSValue egg_js_res_id_by_index(JSContext *ctx,JSValueConst this,int argc,
 static void egg_wasm_res_id_by_index(wasm_exec_env_t ee,int *tid,int *qual,int *rid,int index) {
   egg_res_id_by_index(tid,qual,rid,index);
 }
+#endif
 
 /* egg_store_set
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_store_set(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(2)
   size_t kc=0,vc=0;
@@ -744,10 +842,12 @@ static JSValue egg_js_store_set(JSContext *ctx,JSValueConst this,int argc,JSValu
 static int egg_wasm_store_set(wasm_exec_env_t ee,const char *k,int kc,const char *v,int vc) {
   return egg_store_set(k,kc,v,vc);
 }
+#endif
 
 /* get_store_get
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_store_get(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   size_t kc=0;
@@ -779,10 +879,12 @@ static JSValue egg_js_store_get(JSContext *ctx,JSValueConst this,int argc,JSValu
 static int egg_wasm_store_get(wasm_exec_env_t ee,char *dst,int dsta,const char *k,int kc) {
   return egg_store_get(dst,dsta,k,kc);
 }
+#endif
 
 /* egg_store_key_by_index
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_store_key_by_index(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t p=-1;
@@ -796,10 +898,12 @@ static JSValue egg_js_store_key_by_index(JSContext *ctx,JSValueConst this,int ar
 static int egg_wasm_store_key_by_index(wasm_exec_env_t ee,char *dst,int dsta,int index) {
   return egg_store_key_by_index(dst,dsta,index);
 }
+#endif
 
 /* egg_http_request
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_http_request(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGRANGE(2,3)
   const char *method=JS_ToCString(ctx,argv[0]);
@@ -824,10 +928,12 @@ static JSValue egg_js_http_request(JSContext *ctx,JSValueConst this,int argc,JSV
 static int egg_wasm_http_request(wasm_exec_env_t ee,const char *method,const char *url,const void *body,int bodyc) {
   return egg_http_request(method,url,body,bodyc);
 }
+#endif
 
 /* egg_http_get_status
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_http_get_status(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t reqid=-1;
@@ -838,10 +944,12 @@ static JSValue egg_js_http_get_status(JSContext *ctx,JSValueConst this,int argc,
 static int egg_wasm_http_get_status(wasm_exec_env_t ee,int reqid) {
   return egg_http_get_status(reqid);
 }
+#endif
 
 /* egg_http_get_header
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_http_get_header(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(2)
   int32_t reqid=-1;
@@ -858,10 +966,12 @@ static JSValue egg_js_http_get_header(JSContext *ctx,JSValueConst this,int argc,
 static int egg_wasm_http_get_header(wasm_exec_env_t ee,char *dst,int dsta,int reqid,const char *k,int kc) {
   return egg_http_get_header(dst,dsta,reqid,k,kc);
 }
+#endif
 
 /* egg_http_get_body
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_http_get_body(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t reqid=-1;
@@ -888,10 +998,12 @@ static JSValue egg_js_http_get_body(JSContext *ctx,JSValueConst this,int argc,JS
 static int egg_wasm_http_get_body(wasm_exec_env_t ee,void *dst,int dsta,int reqid) {
   return egg_http_get_body(dst,dsta,reqid);
 }
+#endif
 
 /* egg_ws_connect
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_ws_connect(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   const char *url=JS_ToCString(ctx,argv[0]);
@@ -904,10 +1016,12 @@ static JSValue egg_js_ws_connect(JSContext *ctx,JSValueConst this,int argc,JSVal
 static int egg_wasm_ws_connect(wasm_exec_env_t ee,const char *url) {
   return egg_ws_connect(url);
 }
+#endif
 
 /* egg_ws_disconnect
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_ws_disconnect(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(1)
   int32_t wsid=-1;
@@ -919,10 +1033,12 @@ static JSValue egg_js_ws_disconnect(JSContext *ctx,JSValueConst this,int argc,JS
 static void egg_wasm_ws_disconnect(wasm_exec_env_t ee,int wsid) {
   egg_ws_disconnect(wsid);
 }
+#endif
 
 /* egg_ws_get_message
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_ws_get_message(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(2)
   int32_t wsid=-1,msgid=-1;
@@ -950,10 +1066,12 @@ static JSValue egg_js_ws_get_message(JSContext *ctx,JSValueConst this,int argc,J
 static int egg_wasm_ws_get_message(wasm_exec_env_t ee,void *dst,int dsta,int wsid,int msgid) {
   return egg_ws_get_message(dst,dsta,wsid,msgid);
 }
+#endif
 
 /* egg_ws_send
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_ws_send(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   JSASSERTARGC(3)
   int32_t wsid=-1,opcode=1;
@@ -969,10 +1087,12 @@ static JSValue egg_js_ws_send(JSContext *ctx,JSValueConst this,int argc,JSValueC
 static void egg_wasm_ws_send(wasm_exec_env_t ee,int wsid,int opcode,const void *v,int c) {
   egg_ws_send(wsid,opcode,v,c);
 }
+#endif
 
 /* egg_time_real
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_time_real(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   return JS_NewFloat64(ctx,egg_time_real());
 }
@@ -980,10 +1100,12 @@ static JSValue egg_js_time_real(JSContext *ctx,JSValueConst this,int argc,JSValu
 static double egg_wasm_time_real(wasm_exec_env_t ee) {
   return egg_time_real();
 }
+#endif
 
 /* egg_time_get
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_time_get(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   int year=0,month=0,day=0,hour=0,minute=0,second=0,milli=0;
   egg_time_get(&year,&month,&day,&hour,&minute,&second,&milli);
@@ -1001,10 +1123,12 @@ static JSValue egg_js_time_get(JSContext *ctx,JSValueConst this,int argc,JSValue
 static void egg_wasm_time_get(wasm_exec_env_t ee,int *year,int *month,int *day,int *hour,int *minute,int *second,int *milli) {
   egg_time_get(year,month,day,hour,minute,second,milli);
 }
+#endif
 
 /* egg_get_user_languages
  */
- 
+
+#if EGG_ENABLE_VM
 static JSValue egg_js_get_user_languages(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   int tmp[32];
   int tmpc=egg_get_user_languages(tmp,sizeof(tmp)/sizeof(tmp[0]));
@@ -1019,10 +1143,12 @@ static JSValue egg_js_get_user_languages(JSContext *ctx,JSValueConst this,int ar
 static int egg_wasm_get_user_languages(wasm_exec_env_t ee,int *dst,int dsta) {
   return egg_get_user_languages(dst,dsta);
 }
+#endif
 
 /* egg_request_termination
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_request_termination(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   egg_request_termination();
   return JS_NULL;
@@ -1031,11 +1157,13 @@ static JSValue egg_js_request_termination(JSContext *ctx,JSValueConst this,int a
 static void egg_wasm_request_termination(wasm_exec_env_t ee) {
   egg_request_termination();
 }
+#endif
 
 /* egg_is_terminable
  * Our answer is always one; don't bother calling the inner implementation.
  */
  
+#if EGG_ENABLE_VM
 static JSValue egg_js_is_terminable(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
   return JS_NewInt32(ctx,1);
 }
@@ -1043,11 +1171,12 @@ static JSValue egg_js_is_terminable(JSContext *ctx,JSValueConst this,int argc,JS
 static int egg_wasm_is_terminable(wasm_exec_env_t ee) {
   return 1;
 }
+#endif
 
 /* Main export tables.
- * GL is listed here for wasm; the JS version is a bit further down (it's wrapped in a context object, like browsers do).
  */
  
+#if EGG_ENABLE_VM
 static const JSCFunctionListEntry egg_native_js_exports[]={
   JS_CFUNC_DEF("log",0,egg_js_log),
   JS_CFUNC_DEF("event_next",0,egg_js_event_next),
@@ -1136,12 +1265,13 @@ static NativeSymbol egg_native_wasm_exports[]={
   //TODO Figure out what we want to expose from libc, and do it right.
   {"rand",egg_wasm_rand,"()i"},
 };
+#endif
 
 /* Main entry point, expose all the above thru QuickJS and wasm-micro-runtime.
  */
  
 int egg_native_install_runtime_exports() {
-  
+  #if EGG_ENABLE_VM
   JSContext *ctx=qjs_get_context(egg.qjs);
   JSValue eggjs=JS_NewObject(ctx);
   const JSCFunctionListEntry *func=egg_native_js_exports;
@@ -1154,5 +1284,23 @@ int egg_native_install_runtime_exports() {
   JS_FreeValue(ctx,globals);
   
   if (wamr_set_exports(egg.wamr,egg_native_wasm_exports,sizeof(egg_native_wasm_exports)/sizeof(egg_native_wasm_exports[0]))<0) return -1;
+  #endif
   return 0;
 }
+
+/* Stubs for wamr and qjs object lifecycle.
+ * We're the only place that knows they actually don't exist, in full-native builds.
+ */
+ 
+#if !EGG_ENABLE_VM
+struct qjs *qjs_new() {
+  return (struct qjs*)"";
+}
+void qjs_del(struct qjs *qjs) {
+}
+struct wamr *wamr_new() {
+  return (struct wamr*)"";
+}
+void wamr_del(struct wamr *wamr) {
+}
+#endif

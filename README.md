@@ -11,16 +11,17 @@ Input is more agnostic, tries to give you raw events as much as possible.
 
 ### High Priority
 
-- [ ] Lights-on app to manually validate all platform features.
+- [x] Lights-on app to manually validate all platform features.
 - - [x] Test each entry point in Javascript.
 - - [x] Test each entry point in WebAssembly.
-- - [ ] Test each entry point natively. (Same as the wasm test, just build differently)
+- - [x] Test each entry point natively. (Same as the wasm test, just build differently)
 - [ ] Additional native platforms.
 - - [ ] MacOS.
 - - [ ] Windows.
 - - [ ] Preferred language for Mac and Windows.
 - [ ] Call JS from Wasm and vice-versa.
 - - [ ] Update lojs with a test of it.
+- - [ ] And lowasm
 - [ ] User-supplied HTTP permissions.
 - [ ] User-supplied storage permissions.
 - [ ] Accelerometer input.
@@ -37,6 +38,7 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - Either we supply these via the platform, or do not supply in the native platform, and force devs to bring their own stdlib.
 - - I think "bring your own stdlib" is a pretty stupid policy. ...but it's not really so: We would provide that lib too, just it's baked into the ROM.
 - - Figure out what all is being provided in native, and ensure web provides the same.
+- [ ] Cleaner solution for native builds. Get everything linux-specific out of etc/make/demos.mk
 
 ### Low Priority
 
@@ -67,3 +69,4 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - Means attackers can arrange an MD5 sum for any given ROM file. (and other hashes? research)
 - - Call this out in docs: If you depend on a ROM's hash, you must also check its length.
 - - Egg itself doesn't use ROM hashes.
+- [ ] Refactor egg_native_export.c and egg_native_rom.c to make the native/bundled/external decision clearer, it's a mess right now.

@@ -50,13 +50,19 @@ linux_CFILES:=$(filter \
   $(addprefix src/opt/,$(addsuffix /%,$(linux_OPT_ENABLE))) \
 ,$(CFILES)) \
 
-linux_OFILES:=$(filter-out $(linux_MIDDIR)/native/egg_native_rom.%,$(patsubst src/%,$(linux_MIDDIR)/%.o,$(basename $(linux_CFILES))))
+linux_OFILES:=$(filter-out \
+  $(linux_MIDDIR)/native/egg_native_rom.% \
+  $(linux_MIDDIR)/native/egg_native_export.% \
+  ,$(patsubst src/%,$(linux_MIDDIR)/%.o,$(basename $(linux_CFILES))))
 
 # src/native/egg_native_rom.c is special; it gets built 3 different ways for the 3 different ROM file sources.
+# Similar weirdness for src/native/egg_native_export.c.
 linux_OFILES+= \
   $(linux_MIDDIR)/native/egg_native_rom.native.o \
   $(linux_MIDDIR)/native/egg_native_rom.bundled.o \
-  $(linux_MIDDIR)/native/egg_native_rom.external.o
+  $(linux_MIDDIR)/native/egg_native_rom.external.o \
+  $(linux_MIDDIR)/native/egg_native_export.native.o \
+  $(linux_MIDDIR)/native/egg_native_export.virtual.o
 
 -include $(linux_OFILES:.o=.d)
 
@@ -69,19 +75,36 @@ $(linux_MIDDIR)/native/egg_native_rom.native.o:src/native/egg_native_rom.c;$(PRE
 $(linux_MIDDIR)/native/egg_native_rom.bundled.o:src/native/egg_native_rom.c;$(PRECMD) $(linux_CC) -o$@ $< -DEGG_ROM_SOURCE=BUNDLED
 $(linux_MIDDIR)/native/egg_native_rom.external.o:src/native/egg_native_rom.c;$(PRECMD) $(linux_CC) -o$@ $< -DEGG_ROM_SOURCE=EXTERNAL
 
+$(linux_MIDDIR)/native/egg_native_export.native.o:src/native/egg_native_export.c;$(PRECMD) $(linux_CC) -o$@ $< -DEGG_ENABLE_VM=0
+$(linux_MIDDIR)/native/egg_native_export.virtual.o:src/native/egg_native_export.c;$(PRECMD) $(linux_CC) -o$@ $< -DEGG_ENABLE_VM=1
+
 linux_EXE:=$(linux_OUTDIR)/$(APPNAME_LOWER)
 all:$(linux_EXE)
-linux_OFILES_EXE:=$(filter-out $(linux_MIDDIR)/native/egg_native_rom.native.o $(linux_MIDDIR)/native/egg_native_rom.bundled.o,$(linux_OFILES))
+linux_OFILES_EXE:=$(filter-out \
+  $(linux_MIDDIR)/native/egg_native_rom.native.o \
+  $(linux_MIDDIR)/native/egg_native_rom.bundled.o \
+  $(linux_MIDDIR)/native/egg_native_export.native.o \
+  ,$(linux_OFILES))
 $(linux_EXE):$(linux_OFILES_EXE);$(PRECMD) $(linux_LD) -o$@ $(linux_OFILES_EXE) $(linux_LDPOST)
 
 linux_BUNDLED_LIB:=$(linux_OUTDIR)/libegg-bundled.a
 all:$(linux_BUNDLED_LIB)
-linux_OFILES_BUNDLED_LIB:=$(filter-out $(linux_MIDDIR)/native/egg_native_rom.native.o $(linux_MIDDIR)/native/egg_native_rom.external.o,$(linux_OFILES))
+linux_OFILES_BUNDLED_LIB:=$(filter-out \
+  $(linux_MIDDIR)/native/egg_native_rom.native.o \
+  $(linux_MIDDIR)/native/egg_native_rom.external.o \
+  $(linux_MIDDIR)/native/egg_native_export.native.o \
+  ,$(linux_OFILES))
 $(linux_BUNDLED_LIB):$(linux_OFILES_BUNDLED_LIB);$(PRECMD) $(linux_AR) $@ $(linux_OFILES_BUNDLED_LIB)
 
 linux_NATIVE_LIB:=$(linux_OUTDIR)/libegg-native.a
 all:$(linux_NATIVE_LIB)
-linux_OFILES_NATIVE_LIB:=$(filter-out $(linux_MIDDIR)/native/egg_native_rom.bundled.o $(linux_MIDDIR)/native/egg_native_rom.external.o,$(linux_OFILES))
+linux_OFILES_NATIVE_LIB:=$(filter-out \
+  $(linux_MIDDIR)/native/egg_native_rom.bundled.o \
+  $(linux_MIDDIR)/native/egg_native_rom.external.o \
+  $(linux_MIDDIR)/native/egg_native_export.virtual.o \
+  $(linux_MIDDIR)/opt/wamr/% \
+  $(linux_MIDDIR)/opt/qjs/% \
+  ,$(linux_OFILES))
 $(linux_NATIVE_LIB):$(linux_OFILES_NATIVE_LIB);$(PRECMD) $(linux_AR) $@ $(linux_OFILES_NATIVE_LIB)
 
 linux-run:$(linux_EXE) demos-all;$(linux_EXE) $(linux_RUN_ARGS)

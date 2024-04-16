@@ -206,7 +206,7 @@ struct menu *lowasm_menu_new_storage() {
 static void _select_network_activate(struct menu *menu) {
   switch (MENU->optionp) {
     case 2: {
-        int reqid=egg_http_request("GET","http://localhost:8080/index.html");
+        int reqid=egg_http_request("GET","http://localhost:8080/index.html",0,0);
         egg_log("HTTP request id %d",reqid);
       } break;
     case 3: break;//TODO connect or disconnect websocket
