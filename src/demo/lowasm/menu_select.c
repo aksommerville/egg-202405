@@ -249,7 +249,6 @@ static void _select_misc_activate(struct menu *menu) {
     case 1: lowasm_menu_new_time(); break;
     case 2: lowasm_menu_new_languages(); break;
     case 4: egg_request_termination(); break;
-    case 5: break;//TODO call js
   }
 }
  
@@ -268,7 +267,6 @@ struct menu *lowasm_menu_new_misc() {
   _select_add_option(menu,"Languages");
   _select_add_option(menu,termlbl);
   _select_add_option(menu,"Terminate");
-  _select_add_option(menu,"Call JS from Wasm");
   return menu;
 }
 

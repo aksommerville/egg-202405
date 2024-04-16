@@ -817,7 +817,6 @@ function enterMiscMenu() {
       { label: "Languages", cb: () => showLanguages() },
       { label: `Is Terminable? ${egg.is_terminable()?"TRUE":"FALSE"}`, cb: () => {} },
       { label: "Terminate", cb: () => egg.request_termination() },
-      { label: "Call WASM from JS", cb: () => callWasmFromJs() },
     ],
     itemp: 0,
   };
@@ -877,10 +876,6 @@ function showLanguages() {
       tileRenderer.end();
     },
   };
-}
-
-function callWasmFromJs() {
-  //TODO
 }
 
 /* Cleanup.

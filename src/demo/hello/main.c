@@ -23,9 +23,10 @@ void egg_client_quit() {
   egg_log("egg_client_quit");
 }
 
+//int jsAddTwoIntegers(int a,int b); // I can't see this working...
+int egg_call_js(const char *fnname,int *v,int c);
+
 int egg_client_init() {
-  egg_log("egg_client_init");
-  egg_log("This message has %d variadic arguments (%s:%d:%s).",4,__FILE__,__LINE__,__func__);
   
   egg_texture_get_header(&screenw,&screenh,0,1);
   
