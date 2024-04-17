@@ -155,7 +155,10 @@ static int http_socket_newfd_remote(struct http_socket *sock,const char *url,int
  */
  
 int http_socket_configure_server(struct http_socket *sock,int local_only,int port) {
-  if (sock->fd>=0) return -1;
+  if (sock->fd>=0) {
+    close(sock->fd);
+    sock->fd=-1;
+  }
   if (http_socket_newfd_local(sock,local_only,port)<0) return -1;
   int one=1;
   setsockopt(sock->fd,SOL_SOCKET,SO_REUSEADDR,&one,sizeof(one));
@@ -181,7 +184,10 @@ int http_socket_configure_server_stream(struct http_socket *sock) {
  */
 
 int http_socket_configure_client_stream(struct http_socket *sock,struct http_xfer *req,const char *url,int urlc) {
-  if (sock->fd>=0) return -1;
+  if (sock->fd>=0) {
+    close(sock->fd);
+    sock->fd=-1;
+  }
   if (http_socket_newfd_remote(sock,url,urlc)<0) return -1;
   if (connect(sock->fd,(struct sockaddr*)sock->saddr,sock->saddrc)<0) return -1;
   sock->role=HTTP_SOCKET_ROLE_CLIENT_STREAM;
@@ -195,7 +201,10 @@ int http_socket_configure_client_stream(struct http_socket *sock,struct http_xfe
  */
  
 int http_socket_configure_websocket_client(struct http_socket *sock,const char *url,int urlc) {
-  if (sock->fd>=0) return -1;
+  if (sock->fd>=0) {
+    close(sock->fd);
+    sock->fd=-1;
+  }
   if (http_socket_newfd_remote(sock,url,urlc)<0) return -1;
   if (connect(sock->fd,(struct sockaddr*)sock->saddr,sock->saddrc)<0) return -1;
   if (!(sock->ws=http_websocket_new(sock->ctx))) return -1;
