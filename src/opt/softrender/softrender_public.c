@@ -254,10 +254,36 @@ int softrender_texture_load(struct softrender *softrender,int texid,int w,int h,
     if (srcc<stride*h) return -1;
     if (softrender_texture_resize(rawimg,w,h,fmt,pixelsize,stride,minstride)<0) return -1;
     softrender_texture_replace(rawimg,stride,src);
+    
+    // Determine hint.
+    rawimg->encfmt=softrender_hint_opaque;
+    const uint32_t *row=rawimg->v;
+    int wstride=rawimg->stride>>2;
+    int yi=rawimg->h;
+    for (;yi-->0;row+=rawimg->stride) {
+      const uint32_t *p=row;
+      int xi=rawimg->w;
+      for (;xi-->0;p++) {
+        if (!*p) rawimg->encfmt=softrender_hint_zeroalpha;
+        else {
+          #if BYTE_ORDER==BIG_ENDIAN
+            uint8_t a=(*p);
+          #else
+            uint32_t a=(*p)>>24;
+          #endif
+          if (a!=0xff) {
+            rawimg->encfmt=0;
+            return 0;
+          }
+        }
+      }
+    }
+    
   } else {
     if (srcc) return -1;
     if (softrender_texture_resize(rawimg,w,h,fmt,pixelsize,stride,minstride)<0) return -1;
     softrender_texture_zero(rawimg);
+    rawimg->encfmt=softrender_hint_zeroalpha;
   }
   return 0;
 }
@@ -294,6 +320,7 @@ void softrender_texture_clear(struct softrender *softrender,int texid) {
   if ((texid<1)||(texid>softrender->texturec)) return;
   struct rawimg *rawimg=softrender->texturev[texid-1];
   if (!rawimg) return;
+  if (rawimg->encfmt!=softrender_hint_opaque) rawimg->encfmt=softrender_hint_zeroalpha;
   softrender_texture_zero(rawimg);
 }
 

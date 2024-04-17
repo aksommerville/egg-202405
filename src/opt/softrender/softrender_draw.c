@@ -114,13 +114,276 @@ static uint32_t softrender_blend_rgbx_rgba(uint32_t prv,uint32_t src,struct soft
 //TODO Proper RGBA blending. For now, we will treat all (dst) as opaque.
 #define softrender_blend_rgba_rgba softrender_blend_rgbx_rgba
 
+static uint32_t softrender_blend_rgba_rgba_tint(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *img) {
+  uint8_t tr=softrender->tint>>24,tg=softrender->tint>>16,tb=softrender->tint>>8,ta=softrender->tint;
+  uint8_t pa=0xff-ta;
+  #if BYTE_ORDER==BIG_ENDIAN
+    uint8_t srca=src;
+    if (softrender->alpha!=0xff) srca=(srca*softrender->alpha)>>8;
+    if (!srca) return prv;
+    uint8_t dsta=0xff-srca;
+    uint8_t dstr=prv>>24,srcr=src>>24; srcr=(srcr*pa+tr*ta)>>8;
+    uint8_t dstg=prv>>16,srcg=src>>16; srcg=(srcg*pa+tg*ta)>>8;
+    uint8_t dstb=prv>> 8,srcb=src>> 8; srcb=(srcb*pa+tb*ta)>>8;
+  #else
+    uint8_t srca=src>>24;
+    if (softrender->alpha!=0xff) srca=(srca*softrender->alpha)>>8;
+    if (!srca) return prv;
+    uint8_t dsta=0xff-srca;
+    uint8_t dstr=prv    ,srcr=src    ; srcr=(srcr*pa+tr*ta)>>8; 
+    uint8_t dstg=prv>> 8,srcg=src>> 8; srcg=(srcg*pa+tg*ta)>>8; 
+    uint8_t dstb=prv>>16,srcb=src>>16; srcb=(srcb*pa+tb*ta)>>8; 
+  #endif
+  if (srca==0xff) {
+    dstr=srcr;
+    dstg=srcg;
+    dstb=srcb;
+  } else {
+    dstr=(dstr*dsta+srcr*srca)>>8;
+    dstg=(dstg*dsta+srcg*srca)>>8;
+    dstb=(dstb*dsta+srcb*srca)>>8;
+  }
+  #if BYTE_ORDER==BIG_ENDIAN
+    return (dstr<<24)|(dstg<<16)|(dstb<<8)|0xff;
+  #else
+    return dstr|(dstg<<8)|(dstb<<16)|0xff000000;
+  #endif
+}
+
+static uint32_t softrender_blend_rgba_rgba_alpha(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *img) {
+  #if BYTE_ORDER==BIG_ENDIAN
+    uint8_t srca=src;
+    srca=(srca*softrender->alpha)>>8;
+    if (!srca) return prv;
+    if (srca==0xff) return src;
+    uint8_t dsta=0xff-srca;
+    uint8_t dstr=prv>>24,srcr=src>>24; dstr=(dstr*dsta+srcr*srca)>>8;
+    uint8_t dstg=prv>>16,srcg=src>>16; dstg=(dstg*dsta+srcg*srca)>>8;
+    uint8_t dstb=prv>> 8,srcb=src>> 8; dstb=(dstb*dsta+srcb*srca)>>8;
+    return (dstr<<24)|(dstg<<16)|(dstb<<8)|0xff;
+  #else
+    uint8_t srca=src>>24;
+    srca=(srca*softrender->alpha)>>8;
+    if (!srca) return prv;
+    if (srca==0xff) return src;
+    uint8_t dsta=0xff-srca;
+    uint8_t dstr=prv    ,srcr=src    ; dstr=(dstr*dsta+srcr*srca)>>8;
+    uint8_t dstg=prv>> 8,srcg=src>> 8; dstg=(dstg*dsta+srcg*srca)>>8;
+    uint8_t dstb=prv>>16,srcb=src>>16; dstb=(dstb*dsta+srcb*srca)>>8;
+    return dstr|(dstg<<8)|(dstb<<16)|0xff000000;
+  #endif
+}
+
+static uint32_t softrender_blend_rgba_y1_tint(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *img) {
+  uint8_t tr=softrender->tint>>24,tg=softrender->tint>>16,tb=softrender->tint>>8,ta=softrender->tint;
+  uint8_t pa=0xff-ta;
+  uint8_t srcy=(src&1)?0xff:0x00;
+  uint8_t srcr=(srcy*pa+tr*ta)>>8;
+  uint8_t srcg=(srcy*pa+tg*ta)>>8;
+  uint8_t srcb=(srcy*pa+tb*ta)>>8;
+  #if BYTE_ORDER==BIG_ENDIAN
+    uint8_t dstr=prv>>24; 
+    uint8_t dstg=prv>>16;
+    uint8_t dstb=prv>> 8;
+  #else
+    uint8_t dstr=prv    ;
+    uint8_t dstg=prv>> 8;
+    uint8_t dstb=prv>>16;
+  #endif
+  if (softrender->alpha==0xff) {
+    dstr=srcr;
+    dstg=srcg;
+    dstb=srcb;
+  } else {
+    uint8_t dsta=0xff-softrender->alpha;
+    dstr=(dstr*dsta+srcr*softrender->alpha)>>8;
+    dstg=(dstg*dsta+srcg*softrender->alpha)>>8;
+    dstb=(dstb*dsta+srcb*softrender->alpha)>>8;
+  }
+  #if BYTE_ORDER==BIG_ENDIAN
+    return (dstr<<24)|(dstg<<16)|(dstb<<8)|0xff;
+  #else
+    return dstr|(dstg<<8)|(dstb<<16)|0xff000000;
+  #endif
+}
+
+static uint32_t softrender_blend_rgba_y1_alpha(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *img) {
+  uint8_t srcy=(src&1)?0xff:0x00;
+  uint8_t srca=softrender->alpha;
+  uint8_t dsta=0xff-srca;
+  #if BYTE_ORDER==BIG_ENDIAN
+    uint8_t dstr=prv>>24; dstr=(dstr*dsta+srcy*srca)>>8;
+    uint8_t dstg=prv>>16; dstg=(dstg*dsta+srcy*srca)>>8;
+    uint8_t dstb=prv>> 8; dstb=(dstb*dsta+srcy*srca)>>8;
+    return (dstr<<24)|(dstg<<16)|(dstb<<8)|0xff;
+  #else
+    uint8_t dstr=prv    ; dstr=(dstr*dsta+srcy*srca)>>8;
+    uint8_t dstg=prv>> 8; dstg=(dstg*dsta+srcy*srca)>>8;
+    uint8_t dstb=prv>>16; dstb=(dstb*dsta+srcy*srca)>>8;
+    return dstr|(dstg<<8)|(dstb<<16)|0xff000000;
+  #endif
+}
+
+static uint32_t softrender_blend_rgba_y1(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *rawimg) {
+  #if BYTE_ORDER==BIG_ENDIAN
+    return (src&1)?0xffffffff:0x000000ff;
+  #else
+    return (src&1)?0xffffffff:0xff000000;
+  #endif
+}
+
+static uint32_t softrender_blend_rgba_y8_tint(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *img) {
+  uint8_t tr=softrender->tint>>24,tg=softrender->tint>>16,tb=softrender->tint>>8,ta=softrender->tint;
+  uint8_t pa=0xff-ta;
+  uint8_t srcy=src;
+  uint8_t srcr=(srcy*pa+tr*ta)>>8;
+  uint8_t srcg=(srcy*pa+tg*ta)>>8;
+  uint8_t srcb=(srcy*pa+tb*ta)>>8;
+  #if BYTE_ORDER==BIG_ENDIAN
+    uint8_t dstr=prv>>24; 
+    uint8_t dstg=prv>>16;
+    uint8_t dstb=prv>> 8;
+  #else
+    uint8_t dstr=prv    ;
+    uint8_t dstg=prv>> 8;
+    uint8_t dstb=prv>>16;
+  #endif
+  if (softrender->alpha==0xff) {
+    dstr=srcr;
+    dstg=srcg;
+    dstb=srcb;
+  } else {
+    uint8_t dsta=0xff-softrender->alpha;
+    dstr=(dstr*dsta+srcr*softrender->alpha)>>8;
+    dstg=(dstg*dsta+srcg*softrender->alpha)>>8;
+    dstb=(dstb*dsta+srcb*softrender->alpha)>>8;
+  }
+  #if BYTE_ORDER==BIG_ENDIAN
+    return (dstr<<24)|(dstg<<16)|(dstb<<8)|0xff;
+  #else
+    return dstr|(dstg<<8)|(dstb<<16)|0xff000000;
+  #endif
+}
+
+static uint32_t softrender_blend_rgba_y8_alpha(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *img) {
+  uint8_t srcy=src;
+  uint8_t srca=softrender->alpha;
+  uint8_t dsta=0xff-srca;
+  #if BYTE_ORDER==BIG_ENDIAN
+    uint8_t dstr=prv>>24; dstr=(dstr*dsta+srcy*srca)>>8;
+    uint8_t dstg=prv>>16; dstg=(dstg*dsta+srcy*srca)>>8;
+    uint8_t dstb=prv>> 8; dstb=(dstb*dsta+srcy*srca)>>8;
+    return (dstr<<24)|(dstg<<16)|(dstb<<8)|0xff;
+  #else
+    uint8_t dstr=prv    ; dstr=(dstr*dsta+srcy*srca)>>8;
+    uint8_t dstg=prv>> 8; dstg=(dstg*dsta+srcy*srca)>>8;
+    uint8_t dstb=prv>>16; dstb=(dstb*dsta+srcy*srca)>>8;
+    return dstr|(dstg<<8)|(dstb<<16)|0xff000000;
+  #endif
+}
+
+static uint32_t softrender_blend_rgba_y8(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *rawimg) {
+  uint8_t y=src;
+  uint32_t rgba=y<<8; rgba|=rgba<<16;
+  #if BYTE_ORDER==BIG_ENDIAN
+    rgba|=0x000000ff;
+  #else
+    rgba|=0xff000000;
+  #endif
+  return rgba;
+}
+
+static uint32_t softrender_blend_rgba_a1_tint(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *rawimg) {
+  if (!(src&1)) return prv;
+  uint8_t srcr=softrender->tint>>24;
+  uint8_t srcg=softrender->tint>>16;
+  uint8_t srcb=softrender->tint>> 8;
+  #if BYTE_ORDER==BIG_ENDIAN
+    return (srcr<<24)|(srcg<<16)|(srcb<<8)|0xff;
+  #else
+    return srcr|(srcg<<8)|(srcb<<16)|0xff000000;
+  #endif
+}
+
+static uint32_t softrender_blend_rgba_a8_tint(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *rawimg) {
+  uint8_t srca=src;
+  if (!srca) return prv;
+  uint8_t srcr=softrender->tint>>24;
+  uint8_t srcg=softrender->tint>>16;
+  uint8_t srcb=softrender->tint>> 8;
+  #if BYTE_ORDER==BIG_ENDIAN
+    uint8_t dstr=prv>>24;
+    uint8_t dstg=prv>>16;
+    uint8_t dstb=prv>> 8;
+  #else
+    uint8_t dstr=prv>> 8;
+    uint8_t dstg=prv>>16;
+    uint8_t dstb=prv>>24;
+  #endif
+  if (srca!=0xff) {
+    uint8_t dsta=0xff-srca;
+    dstr=(dstr*dsta+srcr*srca)>>8;
+    dstg=(dstg*dsta+srcg*srca)>>8;
+    dstb=(dstb*dsta+srcb*srca)>>8;
+  }
+  #if BYTE_ORDER==BIG_ENDIAN
+    return (dstr<<24)|(dstg<<16)|(dstb<<8)|0xff;
+  #else
+    return dstr|(dstg<<8)|(dstb<<16)|0xff000000;
+  #endif
+}
+
+static uint32_t softrender_blend_rgba_a1(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *rawimg) {
+  #if BYTE_ORDER==BIG_ENDIAN
+    if (src&1) return 0x000000ff;
+  #else
+    if (src&1) return 0xff000000;
+  #endif
+  return prv;
+}
+
+static uint32_t softrender_blend_rgba_a8(uint32_t prv,uint32_t src,struct softrender *softrender,const struct rawimg *rawimg) {
+  uint8_t a=src;
+  if (!a) return prv;
+  #if BYTE_ORDER==BIG_ENDIAN
+    if (a==0xff) return 0x000000ff;
+  #else
+    if (a==0xff) return 0xff000000;
+  #endif
+  uint8_t dsta=0xff-a;
+  #if BYTE_ORDER==BIG_ENDIAN
+    uint8_t r=prv>>24; r=(r*dsta)>>8;
+    uint8_t g=prv>>16; g=(g*dsta)>>8;
+    uint8_t b=prv>> 8; b=(b*dsta)>>8;
+    return (r<<24)|(g<<16)|(b<<8)|0xff;
+  #else
+    uint8_t r=prv    ; r=(r*dsta)>>8;
+    uint8_t g=prv>> 8; g=(g*dsta)>>8;
+    uint8_t b=prv>>16; b=(b*dsta)>>8;
+    return r|(g<<8)|(b<<16)|0xff000000;
+  #endif
+}
+
 static softrender_blend_fn softrender_get_blend(const struct rawimg *dstimg,const struct rawimg *srcimg,const struct softrender *softrender) {
-  //TODO (softrender->alpha)
-  //TODO (softrender->tint), is that our problem here?
-  if (dstimg->pixelsize==srcimg->pixelsize) switch (dstimg->pixelsize) {
-    case 1: break;
-    case 8: break;
+  // We're not accounting for every possiblity. TODO
+  if (dstimg->pixelsize==32) switch (srcimg->pixelsize) {
+    case 1: {
+        if (((softrender->tint&0xff)==0xff)&&srcimg->amask) return softrender_blend_rgba_a1_tint;
+        if (srcimg->amask) return softrender_blend_rgba_a1;
+        if (softrender->tint&0xff) return softrender_blend_rgba_y1_tint;
+        if (softrender->alpha!=0xff) return softrender_blend_rgba_y1_alpha;
+        return softrender_blend_rgba_y1;
+      } break;
+    case 8: {
+        if (((softrender->tint&0xff)==0xff)&&srcimg->amask) return softrender_blend_rgba_a8_tint;
+        if (srcimg->amask) return softrender_blend_rgba_a8;
+        if (softrender->tint&0xff) return softrender_blend_rgba_y8_tint;
+        if (softrender->alpha!=0xff) return softrender_blend_rgba_y8_alpha;
+        return softrender_blend_rgba_y8;
+      } break;
     case 32: {
+        if (softrender->tint&0xff) return softrender_blend_rgba_rgba_tint; // possibly also alpha
+        if (softrender->alpha!=0xff) return softrender_blend_rgba_rgba_alpha;
         if (srcimg->encfmt==softrender_hint_zeroalpha) return softrender_blend_rgba_zeroalpha;
         if (dstimg->encfmt==softrender_hint_opaque) {
           if (srcimg->encfmt==softrender_hint_opaque) return 0;
@@ -246,6 +509,7 @@ void softrender_draw_rect(struct softrender *softrender,int texid,int x,int y,in
   if ((texid<1)||(texid>softrender->texturec)) return;
   struct rawimg *rawimg=softrender->texturev[texid-1];
   if (!rawimg) return;
+  if (rawimg->encfmt!=softrender_hint_opaque) rawimg->encfmt=0;
   if (x<0) { w+=x; x=0; }
   if (y<0) { h+=y; y=0; }
   if (x>rawimg->w-w) w=rawimg->w-x;
@@ -331,6 +595,7 @@ void softrender_draw_decal(
   struct rawimg *dstimg=softrender->texturev[dsttexid-1];
   struct rawimg *srcimg=softrender->texturev[srctexid-1];
   if (!dstimg||!srcimg) return;
+  if (dstimg->encfmt!=softrender_hint_opaque) dstimg->encfmt=0;
   
   // Clip (dst). Assume that (src) is in bounds. It will fail fully when we initialize iterators, if not.
   int dstw=w,dsth=h,srcw=w,srch=h;
@@ -394,6 +659,7 @@ void softrender_draw_tile(
   struct rawimg *dstimg=softrender->texturev[dsttexid-1];
   struct rawimg *srcimg=softrender->texturev[srctexid-1];
   if (!dstimg||!srcimg) return;
+  if (dstimg->encfmt!=softrender_hint_opaque) dstimg->encfmt=0;
   
   int colw=srcimg->w>>4;
   int rowh=srcimg->h>>4;

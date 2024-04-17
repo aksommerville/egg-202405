@@ -163,6 +163,7 @@ void egg_draw_rect(int texid,int x,int y,int w,int h,uint32_t pixel);
  * In (dst), output always begins at (dstx,dsty), and size is (w,h) or (h,w) depending on EGG_XFORM_SWAP.
  * XREV and YREV always refer to the source X and Y axes.
  * So, XREV changes your nose direction and YREV your hat direction, regardless of SWAP.
+ * (srcx,srcy,w,h) must be in bounds of (srctexid), behavior is deliberately undefined if not.
  */
 void egg_draw_decal(
   int dsttexid,int srctexid,
