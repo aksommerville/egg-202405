@@ -4,8 +4,6 @@
 demos_MIDDIR:=mid/demo
 demos_OUTDIR:=out/rom
 
-demos_OPT_ENABLE+=
-
 demos_CCWARN:=-Werror -Wimplicit -Wno-comment -Wno-parentheses
 demos_CCINC:=-Isrc -I$(demos_MIDDIR)
 demos_CCDEF:=$(patsubst %,-DUSE_%=1,$(demos_OPT_ENABLE))
@@ -20,7 +18,6 @@ demos_LD:=$(WASI_SDK)/bin/clang $(demos_LDOPT)
 demos_LDPOST:=$(demos_LDPOST_EXTRA) 
 
 define DEMO_RULES
-  #TODO Not adding demos_OPT_ENABLE here because I'm not sure that needs to exist.
   demos_$1_SRCFILES:=$(filter src/demo/$1/%,$(SRCFILES))
   demos_$1_CFILES:=$$(filter %.c %.cxx %.s %.m,$$(demos_$1_SRCFILES))
   demos_$1_OFILES:=$$(patsubst src/demo/%,$(demos_MIDDIR)/%.o,$$(basename $$(demos_$1_CFILES)))
@@ -46,13 +43,12 @@ $(demos_MIDDIR)/%.o:src/demo/%.cxx;$(PRECMD) $(demos_CXX) -o$@ $<
 $(demos_MIDDIR)/%.o:src/demo/%.s;$(PRECMD) $(demos_AS) -o$@ $<
 $(demos_MIDDIR)/%.o:src/demo/%.m;$(PRECMD) $(demos_OBJC) -o$@ $<
 
-#--- XXX TEMP ---
-# Demos written in WebAssembly can also produce a native executable.
-#TODO Figure out how to combine this with the native build rules. Probably it belongs in the target makefiles, not here.
-# This implementation is requiring that the game's code be exclusively in C. We could optionally include the Javascript runtime, but it gets a little complicated.
-# (I'm thinking, why do you want a native executable if the game uses Javascript?)
+#------------------------------------------------------------------------------
+# Everything below this point is for building the C-only demos in true-native mode.
+# Technically, we could bake QuickJS into them too, and allow JS code, but what's the point?
+# Bundled executables would work the same way.
 
-demos_LIBEGG:=out/linux/libegg-native.a
+ifneq (,$(strip $(demos_NATIVE_CC)))
 
 define DEMO_NATIVE_RULES
   demos_$1_NATIVE_ARCHIVE:=$(demos_MIDDIR)/native/$1/data.eggar
@@ -67,13 +63,14 @@ define DEMO_NATIVE_RULES
   demos_$1_NATIVE_DATAFILES:=$$(filter src/demo/$1/data/%,$$(demos_$1_NATIVE_SRCFILES))
   $$(demos_$1_NATIVE_ARCHIVE_C):$$(demos_$1_NATIVE_ARCHIVE);$$(PRECMD) node etc/tool/cbin.js -o$$@ $$< --name=egg_bundled_rom
   $$(demos_$1_NATIVE_ARCHIVE):$$(demos_$1_NATIVE_DATAFILES) $(tools_eggrom_EXE);$$(PRECMD) $(tools_eggrom_EXE) -c -o$$@ src/demo/$1/data
-  $$(demos_$1_EXE):$$(demos_$1_NATIVE_OFILES) $(demos_LIBEGG);$$(PRECMD) gcc -o$$@ $$(demos_$1_NATIVE_OFILES) $(demos_LIBEGG) \
-    -ldrm -lgbm -lEGL -lX11 -lGL -lEGL -lXinerama -lasound -lpulse-simple -lm -lz -ljpeg -lpthread $(CURL_SDK)/build/lib/libcurl.a -lssl -lcrypto
-    #$(QJS_SDK)/libquickjs.a $(WAMR_SDK)/build/libvmlib.a
+  $$(demos_$1_EXE):$$(demos_$1_NATIVE_OFILES) $(demos_NATIVE_LIBEGG) \
+    ;$$(PRECMD) $(demos_NATIVE_LD) -o$$@ $$(demos_$1_NATIVE_OFILES) $(demos_NATIVE_LIBEGG) $(demos_NATIVE_LDPOST)
 endef
 
 demos_NATIVE:=$(filter lowasm,$(demos_DEMOS))
 $(foreach D,$(demos_NATIVE),$(eval $(call DEMO_NATIVE_RULES,$D)))
 
-$(demos_MIDDIR)/native/%.o:src/demo/%.c;$(PRECMD) gcc -c -MMD -O2 -Isrc -Werror -Wimplicit -o$@ $< -I$(CURL_SDK)/include
-$(demos_MIDDIR)/native/%.o:$(demos_MIDDIR)/native/%.c;$(PRECMD) gcc -c -MMD -O2 -Isrc -Werror -Wimplicit -o$@ $< -I$(CURL_SDK)/include
+$(demos_MIDDIR)/native/%.o:src/demo/%.c;$(PRECMD) $(demos_NATIVE_CC) -o$@ $<
+$(demos_MIDDIR)/native/%.o:$(demos_MIDDIR)/native/%.c;$(PRECMD) $(demos_NATIVE_CC) -o$@ $<
+
+endif

@@ -30,29 +30,24 @@ Once you've done that, `make` should build the whole project.
 
 ## TODO
 
-### High Priority
-
-- [ ] Additional native platforms.
-- - [ ] MacOS.
-- - [ ] Windows.
-- - [ ] Preferred language for Mac and Windows.
-- [x] Accelerometer input.
-- - xxx Update lojs. ...made a new demo "mobile" instead
-- - xxx Update lowasm
-- [ ] Cleaner solution for native builds. Get everything linux-specific out of etc/make/demos.mk
-
-### Low Priority
-
-- [ ] Assess SfgPrinter performance, opportunities for optimization here if needed.
+- [ ] Windows
+- - [ ] Drivers.
+- - [ ] Languages.
+- [ ] MacOS.
+- - [ ] Drivers.
+- - [ ] Languages.
+- - [ ] Build sensible app bundle.
+- [ ] Pi. We'll need the BCM video driver, beyond that it's really just linux.
 - [ ] Synthesizer, native.
 - - [ ] GM instruments.
+- - [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.
+- - [ ] egg_audio_get_playhead(native): Loop. Right now it just keeps counting after the song repeats.
 - [ ] Synthesizer, web.
 - - [ ] fx: detune
 - - [ ] Pitch wheel
 - - [ ] Readhead should wrap around on song repeats.
+- - [ ] Assess SfgPrinter performance, opportunities for optimization here if needed.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
-- [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.
-- [ ] egg_audio_get_playhead(native): Loop. Right now it just keeps counting after the song repeats.
 - [ ] Runtime.js: See `updatePanicCount`. Do a hard-pause instead of terminate.
 - [ ] render and softrender currently both require upload stride to be provided explicitly. Should we loosen that? Maybe allow (stride==0) for "oh come on, you know what i mean".
 - [ ] Do I need to forbid rendering from a texture onto itself? My heart says yes, but we're not forbidding it yet.

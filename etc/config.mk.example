@@ -41,10 +41,17 @@ web_LDPOST_EXTRA:=
 
 #----------------------------------------------------------------
 
-demos_OPT_ENABLE:=
+# For Egg files (ie WASI)
 demos_CC_EXTRA:=
 demos_LD_EXTRA:=
 demos_LDPOST_EXTRA:=
+
+# For true-native builds (Optional. Should match "linux_" or whatever your native platform is)
+demos_NATIVE_OPT_ENABLE:=
+demos_NATIVE_CC:=
+demos_NATIVE_LD:=
+demos_NATIVE_LDPOST:=
+demos_NATIVE_LIBEGG:=
 
 #----------------------------------------------------------------
 
