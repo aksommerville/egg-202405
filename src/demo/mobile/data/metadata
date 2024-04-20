@@ -1,0 +1,14 @@
+# mobile: For testing touch and accelerometer input.
+
+title=Mobile Input Test
+author=AK Sommerville
+copyright=(c) 2024 AK Sommerville
+freedom=free
+genre=Demo
+framebuffer=300x400
+language=en
+#iconImage=1
+description=Enables touch and accelerometer input, and logs events.
+multiplayer=single
+version=0.0.1
+timestamp=2024-04-20

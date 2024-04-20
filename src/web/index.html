@@ -12,6 +12,7 @@
 <html>
 <head>
 <title>Egg Dev Server</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0"/>
 <style>
 html {
   background-color: #222;
@@ -55,7 +56,7 @@ function terminate() {
 }
 function loadGame(name) {
   this.terminate();
-  window.fetch("/" + name).then(rsp => {
+  window.fetch("./" + name).then(rsp => {
     if (!rsp.ok) throw rsp;
     return rsp.arrayBuffer();
   }).then(serial => {
@@ -107,7 +108,8 @@ window.addEventListener("load", () => {
 <body>
 <button onclick="terminate()">Terminate</button>
 <div id="gameslist"></div>
-<canvas id="game" width="640" height="360"></canvas>
+<!--<canvas id="game" width="640" height="360"></canvas>-->
+<canvas id="game"></canvas>
 <div id="error" class="hidden"></div>
 </body>
 </html>

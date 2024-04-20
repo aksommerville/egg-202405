@@ -69,8 +69,10 @@ static int egg_event_get_hard_state(int evttype) {
       }
       
     /* TOUCH is never available. TODO It's perfectly possible for a PC to have a touchscreen. Can we accomodate those?
+     * About the same deal for ACCELEROMETER.
      */
     case EGG_EVENT_TOUCH: return EGG_EVTSTATE_IMPOSSIBLE;
+    case EGG_EVENT_ACCELEROMETER: return EGG_EVTSTATE_IMPOSSIBLE;
   }
   return 0;
 }
@@ -125,6 +127,7 @@ int egg_event_enable(int evttype,int evtstate) {
     case EGG_EVENT_TEXT: ACCEPT RETURN
     
     case EGG_EVENT_TOUCH: ACCEPT RETURN
+    case EGG_EVENT_ACCELEROMETER: ACCEPT RETURN
     
   }
   #undef ACCEPT
@@ -145,7 +148,7 @@ int egg_native_event_init() {
     (1<<EGG_EVENT_WS_DISCONNECT)|
     (1<<EGG_EVENT_WS_MESSAGE)|
     (1<<EGG_EVENT_KEY)|
-    // MMOTION, MBUTTON, MWHEEL, TEXT, TOUCH: off by default
+    // MMOTION, MBUTTON, MWHEEL, TEXT, TOUCH, ACCELEROMETER: off by default
   0;
   return 0;
 }

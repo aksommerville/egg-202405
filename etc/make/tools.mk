@@ -50,5 +50,6 @@ tools_TOOLS:=$(filter-out common,$(notdir $(wildcard src/tool/*)))
 $(foreach T,$(tools_TOOLS),$(eval $(call TOOL_RULES,$T)))
 
 serve:$(tools_server_EXE) demos-all src/web/js/Instruments.js;$(tools_server_EXE) --port=8080 --htdocs=src/web --makeable-dir=out/rom
+serve-public:$(tools_server_EXE) demos-all src/web/js/Instruments.js;$(tools_server_EXE) --port=8080 --htdocs=src/web --makeable-dir=out/rom --listen-remote
 
 synthwerk:$(tools_synthwerk_EXE);$(tools_synthwerk_EXE)

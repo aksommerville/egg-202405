@@ -41,19 +41,20 @@ void egg_client_render();
 /* Input.
  ***********************************************************************/
  
-#define EGG_EVENT_INPUT         1 /* [devid,btnid,value,_] */
-#define EGG_EVENT_CONNECT       2 /* [devid,mapping,_,_] */
-#define EGG_EVENT_DISCONNECT    3 /* [devid,_,_,_] */
-#define EGG_EVENT_HTTP_RSP      4 /* [reqid,status,length,_] */
-#define EGG_EVENT_WS_CONNECT    5 /* [wsid,_,_,_] */
-#define EGG_EVENT_WS_DISCONNECT 6 /* [wsid,_,_,_] */
-#define EGG_EVENT_WS_MESSAGE    7 /* [wsid,msgid,length,_] */
-#define EGG_EVENT_MMOTION       8 /* [x,y,_,_] */
-#define EGG_EVENT_MBUTTON       9 /* [btnid,value,x,y] */
-#define EGG_EVENT_MWHEEL       10 /* [dx,dy,x,y] */
-#define EGG_EVENT_KEY          11 /* [hidusage,value,_,_] */
-#define EGG_EVENT_TEXT         12 /* [codepoint,_,_,_] */
-#define EGG_EVENT_TOUCH        13 /* [id,state(0,1,2),x,y] */
+#define EGG_EVENT_INPUT          1 /* [devid,btnid,value,_] */
+#define EGG_EVENT_CONNECT        2 /* [devid,mapping,_,_] */
+#define EGG_EVENT_DISCONNECT     3 /* [devid,_,_,_] */
+#define EGG_EVENT_HTTP_RSP       4 /* [reqid,status,length,_] */
+#define EGG_EVENT_WS_CONNECT     5 /* [wsid,_,_,_] */
+#define EGG_EVENT_WS_DISCONNECT  6 /* [wsid,_,_,_] */
+#define EGG_EVENT_WS_MESSAGE     7 /* [wsid,msgid,length,_] */
+#define EGG_EVENT_MMOTION        8 /* [x,y,_,_] */
+#define EGG_EVENT_MBUTTON        9 /* [btnid,value,x,y] */
+#define EGG_EVENT_MWHEEL        10 /* [dx,dy,x,y] */
+#define EGG_EVENT_KEY           11 /* [hidusage,value,_,_] */
+#define EGG_EVENT_TEXT          12 /* [codepoint,_,_,_] */
+#define EGG_EVENT_TOUCH         13 /* [id,state(0,1,2),x,y] */
+#define EGG_EVENT_ACCELEROMETER 14 /* [x,y,z,_] ms/s**2 s16.16 */
 
 /* Native platforms will usually only be able to use RAW here.
  * But if we become able to canonicalize gamepad layouts, eventually we may do so.

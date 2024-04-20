@@ -33,6 +33,7 @@ export enum EventType {
   KEY           = 11, /* [hidusage,value,_,_] */
   TEXT          = 12, /* [codepoint,_,_,_] */
   TOUCH         = 13, /* [id,state(0,1,2),x,y] */
+  ACCELEROMETER = 14, /* [x,y,z,_] ms/s**2 s16.16 */
 };
 
 export enum GamepadMapping {

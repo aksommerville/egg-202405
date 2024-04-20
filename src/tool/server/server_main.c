@@ -457,6 +457,7 @@ int main(int argc,char **argv) {
   server.exename="server";
   if ((argc>=1)&&argv[0]&&argv[0][0]) server.exename=argv[0];
   server.port=8080;
+  int local_only=1;
   int argi=1; for (;argi<argc;argi++) {
     const char *arg=argv[argi];
     if (!memcmp(arg,"--port=",7)) {
@@ -465,13 +466,15 @@ int main(int argc,char **argv) {
       if (server_arg_htdocs(arg+9)<0) return 1;
     } else if (!memcmp(arg,"--makeable-dir=",15)) {
       if (server_arg_makeable_dir(arg+15)<0) return 1;
+    } else if (!strcmp(arg,"--listen-remote")) {
+      local_only=0;
     } else {
       server.htdocsc=server.makeabledirc=0; // force Usage
       break;
     }
   }
   if (!server.htdocsc&&!server.makeabledirc) {
-    fprintf(stderr,"Usage: %s [--port=8080] [--htdocs=DIR...] [--makeable-dir=DIR...]\n",server.exename);
+    fprintf(stderr,"Usage: %s [--port=8080] [--htdocs=DIR...] [--makeable-dir=DIR...] [--listen-remote]\n",server.exename);
     return 1;
   }
   
@@ -485,11 +488,12 @@ int main(int argc,char **argv) {
     .cb_serve=server_cb_serve,
   };
   if (!(server.http=http_context_new(&http_delegate))) return 1;
-  if (http_listen(server.http,1,server.port)<0) {
+  if (http_listen(server.http,local_only,server.port)<0) {
     fprintf(stderr,"%s: Failed to open TCP server on port %d\n",server.exename,server.port);
     return 1;
   }
   
+  if (!local_only) fprintf(stderr,"%s:WARNING: Serving on external-facing interfaces per '--listen-remote'.\n",server.exename);
   fprintf(stderr,"%s: Serving on %d. SIGINT to quit.\n",server.exename,server.port);
   int status=0;
   int wscyclec=0;

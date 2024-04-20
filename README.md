@@ -9,6 +9,25 @@ Games written in C can also be built true-native.
 Video and audio, we provide a small opinionated API.
 Input is more agnostic, tries to give you raw events as much as possible.
 
+## Prereqs
+
+- *Mandatory*:
+- QuickJS [https://github.com/bellard/quickjs]
+- wasm-micro-runtime [https://github.com/bytecodealliance/wasm-micro-runtime]
+- libcurl [https://github.com/curl/curl].
+- - Must build from source, with `-DENABLE_WEBSOCKETS=ON -DBUILD_STATIC_LIBS=ON`
+- - I'm using a preview of version 8.8.0
+- *For build-time tooling*:
+- zlib [https://zlib.net]
+- - You should already have this, and we don't do anything exotic with it.
+- wasi-sdk [https://github.com/WebAssembly/wasi-sdk]
+- - I'm on version 16.0.
+
+There are more optional and platform-specific prereqs; see makefiles.
+
+After cloning, run `make` and you'll be prompted to update the new config file `etc/config.mk`.
+Once you've done that, `make` should build the whole project.
+
 ## TODO
 
 ### High Priority
@@ -17,17 +36,13 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] MacOS.
 - - [ ] Windows.
 - - [ ] Preferred language for Mac and Windows.
-- [x] User-supplied HTTP permissions.
-- [x] User-supplied storage permissions.
-- [ ] Accelerometer input.
-- - [ ] Update lojs
-- - [ ] Update lowasm
-- [x] Web is allowing unreasonably long updates. (Run lojs Time test, and pause via dev tools)
+- [x] Accelerometer input.
+- - xxx Update lojs. ...made a new demo "mobile" instead
+- - xxx Update lowasm
 - [ ] Cleaner solution for native builds. Get everything linux-specific out of etc/make/demos.mk
 
 ### Low Priority
 
-- [x] http_get_header is not workable, remove it. ...with curlwrap, now it is workable. Keep it.
 - [ ] Assess SfgPrinter performance, opportunities for optimization here if needed.
 - [ ] Synthesizer, native.
 - - [ ] GM instruments.
@@ -38,7 +53,6 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
 - [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.
 - [ ] egg_audio_get_playhead(native): Loop. Right now it just keeps counting after the song repeats.
-- [x] Web: Detect low frame rate and pause. Or at least kill the audio. (eg when browser window goes into background)
 - [ ] Runtime.js: See `updatePanicCount`. Do a hard-pause instead of terminate.
 - [ ] render and softrender currently both require upload stride to be provided explicitly. Should we loosen that? Maybe allow (stride==0) for "oh come on, you know what i mean".
 - [ ] Do I need to forbid rendering from a texture onto itself? My heart says yes, but we're not forbidding it yet.

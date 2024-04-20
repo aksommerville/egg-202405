@@ -1,7 +1,7 @@
 #include "lowasm_internal.h"
 
 #define ANIM_FRAME_TIME 0.250
-#define SPRITE_LIMIT 16384
+#define SPRITE_LIMIT 8192
 #define TOP_SPEED 200 /* px/s, but it's actually half of this */
 
 struct menu_tms {

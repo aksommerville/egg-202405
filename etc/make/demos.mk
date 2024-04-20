@@ -10,7 +10,7 @@ demos_CCWARN:=-Werror -Wimplicit -Wno-comment -Wno-parentheses
 demos_CCINC:=-Isrc -I$(demos_MIDDIR)
 demos_CCDEF:=$(patsubst %,-DUSE_%=1,$(demos_OPT_ENABLE))
 demos_CCOPT:=-c -MMD -O3 $(demos_CCWARN) $(demos_CCINC) $(demos_CCDEF) $(demos_CC_EXTRA)
-demos_LDOPT:=$(demos_LD_EXTRA) -Wl,--no-entry -Wl,--export-table -Wl,--export-all -Wl,--import-undefined -Wl,--allow-undefined -Wl,--initial-memory=1048576
+demos_LDOPT:=$(demos_LD_EXTRA) -Wl,--no-entry -Wl,--export-table -Wl,--export-all -Wl,--import-undefined -Wl,--allow-undefined -Wl,--initial-memory=10485760
 
 demos_CC:=$(WASI_SDK)/bin/clang $(demos_CCOPT)
 demos_AS:=$(WASI_SDK)/bin/clang -xassembler-with-cpp $(demos_CCOPT)

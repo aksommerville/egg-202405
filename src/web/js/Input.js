@@ -18,6 +18,8 @@ export class Input {
       (1<<Input.EVENT_WS_MESSAGE)|
       // MMOTION, MBUTTON, MWHEEL, TEXT: off by default
       (1<<Input.EVENT_KEY)|
+      (1<<Input.EVENT_TOUCH)|
+      // ACCELEROMETER: off by default
     0;
     
     this.cursorVisible = false;
@@ -39,9 +41,43 @@ export class Input {
     this.canvas.addEventListener("touchcancel", this.touchListener);
     this.canvas.addEventListener("touchmove", this.touchListener);
     
+    this.accel = null;
+    this.accelListener = null;
+    /*XXX
     // TODO Accelerometer. Looks easy to support, just need to define it in the public API.
     // Need to switch on and off when event mask changes, like cursor.
     // https://developer.mozilla.org/en-US/docs/Web/API/Accelerometer
+    this.tmpmsg = document.createElement("DIV");
+    this.tmpmsg.style.position = "fixed";
+    this.tmpmsg.style.backgroundColor = "#000";
+    this.tmpmsg.style.color = "#fff";
+    this.tmpmsg.style.left = "0vw";
+    this.tmpmsg.style.right = "100vw";
+    this.tmpmsg.style.top = "80vh";
+    this.tmpmsg.style.zIndex = "100";
+    this.tmpmsg.innerText = "starting up";
+    if (this.window.navigator.permissions) this.tmpmsg.innerText += " has permissions";
+    if (this.window.Accelerometer) this.tmpmsg.innerText += " has Accelerometer";
+    document.body.appendChild(this.tmpmsg);
+    if (this.window.navigator.permissions) {
+      this.tmpmsg.innerText = `requesting accelerometer...`;
+      this.window.navigator.permissions.query({ name: "accelerometer" }).then(result => {
+        console.log(`accelerometer permissions`, result);
+        if (result.state === "denied") {
+          // well just fucking brilliant... my phone either doesn't support Accelerometer or denies across the board.
+          // Maybe that's due to the insecure connection? I'm not set up to serve HTTPS. Fuck.
+          // ...can I upload these to aksommerville.com on a temporary basis?
+          // ...ok it works, it must be an HTTPS thing. We're getting (x,y,z) that appears to be in m/s**2, nine-point-something on the earthward axis at idle.
+          this.tmpmsg.innerText = "DENIED";
+          return;
+        }
+        const acc = new Accelerometer({ referenceFrame: "device" });
+        acc.addEventListener("error", event => this.tmpmsg.innerText = event.error.message);
+        acc.addEventListener("reading", event => this.onAccelerometerReading(acc.x, acc.y, acc.z));
+        acc.start();
+      });
+    }
+    /**/
   }
   
   detach() {
@@ -62,6 +98,13 @@ export class Input {
       this.canvas.removeEventListener("touchcancel", this.touchListener);
       this.canvas.removeEventListener("touchmove", this.touchListener);
       this.touchListener = null;
+    }
+    if (this.accel) {
+      if (this.accelListener) {
+        this.accel.removeEventListener("reading", this.accelListener);
+        this.accelListener = null;
+      }
+      this.accel.stop();
     }
   }
   
@@ -92,6 +135,7 @@ export class Input {
       case Input.EVENT_KEY: return 0;
       case Input.EVENT_TEXT: return 0;
       case Input.EVENT_TOUCH: return 0;
+      case Input.EVENT_ACCELEROMETER: return 0;
     }
     return Input.EVTSTATE_IMPOSSIBLE;
   }
@@ -398,6 +442,47 @@ export class Input {
     return 0;
   }
   
+  /* Accelerometer.
+   **************************************************************************/
+   
+  accelerometerEnable() {
+    this._accelerometerEnableInternal().then(() => {
+      if (!this.accelListener) {
+        this.accelListener = () => this.onAccelerometer();
+        this.accel.addEventListener("reading", this.accelListener);
+      }
+      this.accel.start();
+    }).catch(() => {});
+  }
+  
+  _accelerometerEnableInternal() {
+    if (this.accel) return Promise.resolve();
+    if (!this.window.navigator.permissions) return Promise.reject();
+    return this.window.navigator.permissions.query({ name: "accelerometer" }).then(result => {
+      if (result.state === "denied") throw null;
+      if (!this.accel) {
+        this.accel = new Accelerometer({ referenceFrame: "device", frequency: 60 });
+      }
+    });
+  }
+  
+  accelerometerDisable() {
+    if (!this.accel) return;
+    if (this.accelListener) {
+      this.accel.removeEventListener("reading", this.accelListener);
+      this.accelListener = null;
+    }
+    this.accel.stop();
+  }
+  
+  onAccelerometer() {
+    if (!this.accel) return;
+    const x = ~~(this.accel.x * 65536.0);
+    const y = ~~(this.accel.y * 65536.0);
+    const z = ~~(this.accel.z * 65536.0);
+    this.pushEvent(Input.EVENT_ACCELEROMETER, x, y, z);
+  }
+  
   /* Public API.
    *******************************************************************************/
   
@@ -421,6 +506,13 @@ export class Input {
     }
     const mouseEvents = (1 << Input.EVENT_MMOTION) | (1 << Input.EVENT_MBUTTON) | (1 << Input.EVENT_MWHEEL);
     this._checkCursorVisibility(this.evtmask & mouseEvents);
+    if (type === Input.EVENT_ACCELEROMETER) {
+      if (this.evtmask & (1 << type)) {
+        this.accelerometerEnable();
+      } else {
+        this.accelerometerDisable();
+      }
+    }
     return (this.evtmask & (1 << type)) ? Input.EVTSTATE_ENABLED : Input.EVTSTATE_DISABLED;
   }
   
@@ -531,6 +623,7 @@ Input.EVENT_MWHEEL        = 10; /* [dx,dy,x,y] */
 Input.EVENT_KEY           = 11; /* [hidusage,value,_,_] */
 Input.EVENT_TEXT          = 12; /* [codepoint,_,_,_] */
 Input.EVENT_TOUCH         = 13; /* [id,state,x,y] */
+Input.EVENT_ACCELEROMETER = 14; /* [x,y,z,_] */
   
 Input.EVTSTATE_QUERY = 0;
 Input.EVTSTATE_IMPOSSIBLE = 1;
