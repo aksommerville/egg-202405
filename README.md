@@ -17,16 +17,12 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - [ ] MacOS.
 - - [ ] Windows.
 - - [ ] Preferred language for Mac and Windows.
-- [ ] User-supplied HTTP permissions.
-- [ ] User-supplied storage permissions.
+- [x] User-supplied HTTP permissions.
+- [x] User-supplied storage permissions.
 - [ ] Accelerometer input.
 - - [ ] Update lojs
 - - [ ] Update lowasm
-- [x] softrender: Update (encfmt) with alpha hint when an image is used as destination, and initialize at decode.
-- [x] softrender: Tint and global alpha. I think would be best to implement as blenders at softrender_draw.c, not sure.
-- [x] http_request failing sometimes, JS Native.
-- [x] Native: OpenSSL for HTTP and WebSocket.
-- [ ] Web is allowing unreasonably long updates. (Run lojs Time test, and pause via dev tools)
+- [x] Web is allowing unreasonably long updates. (Run lojs Time test, and pause via dev tools)
 - [ ] Cleaner solution for native builds. Get everything linux-specific out of etc/make/demos.mk
 
 ### Low Priority
@@ -42,7 +38,8 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - [ ] Ensure that egg_native_export.c gets dropped by tree-shaking when linking native.
 - [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.
 - [ ] egg_audio_get_playhead(native): Loop. Right now it just keeps counting after the song repeats.
-- [ ] Web: Detect low frame rate and pause. Or at least kill the audio. (eg when browser window goes into background)
+- [x] Web: Detect low frame rate and pause. Or at least kill the audio. (eg when browser window goes into background)
+- [ ] Runtime.js: See `updatePanicCount`. Do a hard-pause instead of terminate.
 - [ ] render and softrender currently both require upload stride to be provided explicitly. Should we loosen that? Maybe allow (stride==0) for "oh come on, you know what i mean".
 - [ ] Do I need to forbid rendering from a texture onto itself? My heart says yes, but we're not forbidding it yet.
 - [ ] Mouse coords when softrender in play. Will require a new hostio_video hook i think.
@@ -56,3 +53,4 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - - Egg itself doesn't use ROM hashes.
 - [ ] Refactor egg_native_export.c and egg_native_rom.c to make the native/bundled/external decision clearer, it's a mess right now.
 - [ ] x11fb: Why does scaling 2x or 3x make such a big performance difference? I'm seeing like 22% CPU vs 4%.
+- [ ] Fine-grained access controls for HTTP and Storage. Native and Web both.

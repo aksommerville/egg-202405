@@ -181,6 +181,7 @@ int localstore_load(struct localstore *localstore,const char *path) {
  */
  
 int localstore_save(struct localstore *localstore,const char *path) {
+  if (!localstore->save_permit) return -1;
   struct sr_encoder encoder={0};
   const struct localstore_entry *entry=localstore->entryv;
   int i=localstore->entryc;

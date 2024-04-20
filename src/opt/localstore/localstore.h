@@ -17,6 +17,7 @@ struct localstore {
   } *entryv;
   int entryc,entrya;
   int dirty;
+  int save_permit; // Set zero to forbid writing. Reading can still happen.
 };
 
 void localstore_cleanup(struct localstore *localstore);

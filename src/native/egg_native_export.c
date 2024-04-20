@@ -1221,6 +1221,9 @@ static const JSCFunctionListEntry egg_native_js_exports[]={
 static int egg_wasm_rand(wasm_exec_env_t ee) {//XXX
   return rand();
 }
+static int egg_wasm_main_argc_argv(wasm_exec_env_t ee,int argc,int argv) { // Required by WASI, but it won't be called.
+  return 1;
+}
 
 static NativeSymbol egg_native_wasm_exports[]={
   {"egg_log",egg_wasm_log,"($i)"},
@@ -1264,6 +1267,7 @@ static NativeSymbol egg_native_wasm_exports[]={
   
   //TODO Figure out what we want to expose from libc, and do it right.
   {"rand",egg_wasm_rand,"()i"},
+  {"__main_argc_argv",egg_wasm_main_argc_argv,"(ii)i"},
 };
 #endif
 

@@ -23,6 +23,11 @@ export class Runtime {
     this.render = new RenderGl(canvas, this.rom);
     Runtime.singleton = this;
     
+    this.minimumUpdateTime = 0.013; // Skip frames if they come in faster than this.
+    this.maximumUpdateTime = 0.030; // Don't report anything longer than this to the game.
+    this.updatePanicTime = 0.200; // Longer than this between frames, a few in a row, we panic and abort.
+    this.updatePanicLimit = 3;
+    this.updatePanicCount = 0;
     this.pendingAnimationFrame = null;
     this.lastFrameTime = 0;
     this.terminated = false;
@@ -48,6 +53,7 @@ export class Runtime {
         if (this.egg_client_init() < 0) throw new Error(`egg_client_init failed`);
       }
       this.lastFrameTime = Date.now();
+      this.updatePanicCount = 0;
       this.pendingAnimationFrame = this.window.requestAnimationFrame(() => this.update());
     });
   }
@@ -197,21 +203,34 @@ export class Runtime {
     this.pendingAnimationFrame = null;
     if (this.terminated) return;
     const now = Date.now();
-    const elapsed = (now - this.lastUpdateTime) / 1000;
-    this.lastUpdateTime = now;
-    this.input.update();
-    this.audio.update();
-    if (this.egg_client_update) {
-      this.egg_client_update(elapsed);
+    const elapsedActual = (now - this.lastFrameTime) / 1000;
+    if (elapsedActual >= this.updatePanicTime) {
+      this.updatePanicCount++;
+      if (this.updatePanicCount >= this.updatePanicLimit) {
+        console.log(`Egg: Too many long frames (${this.updatePanicCount} longer than ${this.updatePanicTime} s). Aborting.`);
+        //TODO terminate might be too heavy-handed. Can we have a hard-pause instead?
+        return this.terminate();
+      }
+    } else {
+      this.updatePanicCount = 0;
     }
-    if (this.terminated) {
-      // Client terminated us during update, probably. All good, but don't render or ask for another frame!
-      return;
-    }
-    if (this.egg_client_render) {
-      this.render.draw_mode(0, 0, 0xff);
-      this.egg_client_render(this.gl);
-      this.render.draw_to_main();
+    if (elapsedActual >= this.minimumUpdateTime) { // Too fast? (eg 120 Hz monitor) Pretend we didn't see it.
+      const elapsedEffective = Math.min(this.maximumUpdateTime, elapsedActual); // Too slow? (eg running in background) Clamp game time and let them skew.
+      this.lastFrameTime = now;
+      this.input.update();
+      this.audio.update();
+      if (this.egg_client_update) {
+        this.egg_client_update(elapsedEffective);
+      }
+      if (this.terminated) {
+        // Client terminated us during update, probably. All good, but don't render or ask for another frame!
+        return;
+      }
+      if (this.egg_client_render) {
+        this.render.draw_mode(0, 0, 0xff);
+        this.egg_client_render(this.gl);
+        this.render.draw_to_main();
+      }
     }
     this.pendingAnimationFrame = this.window.requestAnimationFrame(() => this.update());
   }

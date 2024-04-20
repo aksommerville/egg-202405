@@ -291,7 +291,7 @@ static int egg_native_update() {
     return -2;
   }
   
-  if (egg.localstore.dirty&&egg.storepath) {
+  if (egg.localstore.dirty&&egg.storepath&&egg.localstore.save_permit) {
     if (localstore_save(&egg.localstore,egg.storepath)<0) {
       fprintf(stderr,"%s: Failed to save game data.\n",egg.storepath);
     } else {

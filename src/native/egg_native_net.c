@@ -50,6 +50,10 @@ static void egg_net_cb_ws_message(struct curlwrap *cw,int wsid,int msgid,int len
  */
  
 int egg_native_net_init() {
+  if (!egg.net_permit) {
+    // Very easy to forbid all network access, as long as the decision can't change (it can't). Just don't initialize curlwrap.
+    return 0;
+  }
   #if USE_curlwrap
     struct curlwrap_delegate delegate={
       .cb_http_rsp=egg_net_cb_http_rsp,

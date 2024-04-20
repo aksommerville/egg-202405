@@ -57,7 +57,9 @@ static void egg_native_configure_print_help(const char *topic,int topicc) {
     "  --input-driver=LIST      Input drivers. Will try to load all. See below.\n"
     "  --input-device=NAME      If required by driver.\n"
     "  --store=PATH             File for persistent data, per-game.\n"
+    "  --no-save                Don't save game data. Will still attempt to load it initially.\n"
     "  --lang=NAME              ISO 639 eg \"en\"=English. Overrides LANG variable.\n"
+    "  --no-net                 Forbid all network access.\n"
     "\n"
   );
   {
@@ -192,6 +194,8 @@ static int egg_native_configure_kv(const char *k,int kc,const char *v,int vc) {
   STROPT("input-driver",input_driver)
   STROPT("input-device",input_device)
   STROPT("store",storepath)
+  BOOLOPT("save",save_permit)
+  BOOLOPT("net",net_permit)
   
   #undef STROPT
   #undef INTOPT
@@ -297,6 +301,8 @@ static int egg_native_configure_finish() {
     if ((err=egg_native_configure_default_storepath())<0) return err;
   }
   
+  egg.localstore.save_permit=egg.save_permit;
+  
   return 0;
 }
 
@@ -307,7 +313,14 @@ int egg_native_configure(int argc,char **argv) {
   int err;
   egg.exename="egg";
   if ((argc>=1)&&argv&&argv[0]&&argv[0][0]) egg.exename=argv[0];
+  
+  // All nonzero defaults.
+  egg.save_permit=1;
+  egg.net_permit=1;
+  
   //TODO environment? config files?
+  
   if ((err=egg_native_configure_argv(argc,argv))<0) return err;
+  
   return egg_native_configure_finish();
 }

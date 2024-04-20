@@ -50,6 +50,8 @@ extern struct egg {
   char *rompath;
   char *storepath;
   int lang; // Big-endian ISO 639, or zero for default.
+  int net_permit;
+  int save_permit;
   
   // From ROM file.
   char *romtitle;
