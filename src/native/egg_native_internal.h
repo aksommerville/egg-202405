@@ -16,11 +16,13 @@
 #include "opt/fs/fs.h"
 #include "opt/serial/serial.h"
 #include "opt/localstore/localstore.h"
-#include "opt/http/http.h"
 #include "opt/render/render.h"
 #include "opt/softrender/softrender.h"
 #include "opt/synth/synth.h"
 #include "quickjs.h"
+#if USE_curlwrap
+  #include "opt/curlwrap/curlwrap.h"
+#endif
 
 #define EGG_EVENT_QUEUE_LENGTH 256
 
@@ -65,29 +67,6 @@ extern struct egg {
   void *appicon_rgba;
   int appiconw,appiconh;
   
-  // Managed by egg_native_net.c.
-  struct egg_net_op {
-    int id; // reqid or wsid exposed to game
-    struct http_xfer *req;
-    struct http_websocket *ws;
-    void *v;
-    int c;
-    int status;
-    int ttl;
-    int msgid_next;
-    struct egg_net_msg {
-      int msgid;
-      int opcode;
-      void *v;
-      int c;
-      int ttl;
-    } *msgv;
-    int msgc,msga;
-  } *net_opv;
-  int net_opc,net_opa;
-  int net_id_next;
-  struct http_context *http;
-  
   volatile int sigc;
   int terminate;
   struct egg_event eventq[EGG_EVENT_QUEUE_LENGTH];
@@ -113,6 +92,9 @@ extern struct egg {
   struct render *render;
   struct softrender *softrender;
   struct synth *synth;
+  #if USE_curlwrap
+    struct curlwrap *curlwrap;
+  #endif
   
 } egg;
 

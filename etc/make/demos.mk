@@ -68,12 +68,12 @@ define DEMO_NATIVE_RULES
   $$(demos_$1_NATIVE_ARCHIVE_C):$$(demos_$1_NATIVE_ARCHIVE);$$(PRECMD) node etc/tool/cbin.js -o$$@ $$< --name=egg_bundled_rom
   $$(demos_$1_NATIVE_ARCHIVE):$$(demos_$1_NATIVE_DATAFILES) $(tools_eggrom_EXE);$$(PRECMD) $(tools_eggrom_EXE) -c -o$$@ src/demo/$1/data
   $$(demos_$1_EXE):$$(demos_$1_NATIVE_OFILES) $(demos_LIBEGG);$$(PRECMD) gcc -o$$@ $$(demos_$1_NATIVE_OFILES) $(demos_LIBEGG) \
-    -ldrm -lgbm -lEGL -lX11 -lGL -lEGL -lXinerama -lasound -lpulse-simple -lm -lz -ljpeg -lpthread 
+    -ldrm -lgbm -lEGL -lX11 -lGL -lEGL -lXinerama -lasound -lpulse-simple -lm -lz -ljpeg -lpthread $(CURL_SDK)/build/lib/libcurl.a -lssl -lcrypto
     #$(QJS_SDK)/libquickjs.a $(WAMR_SDK)/build/libvmlib.a
 endef
 
 demos_NATIVE:=$(filter lowasm,$(demos_DEMOS))
 $(foreach D,$(demos_NATIVE),$(eval $(call DEMO_NATIVE_RULES,$D)))
 
-$(demos_MIDDIR)/native/%.o:src/demo/%.c;$(PRECMD) gcc -c -MMD -O2 -Isrc -Werror -Wimplicit -o$@ $<
-$(demos_MIDDIR)/native/%.o:$(demos_MIDDIR)/native/%.c;$(PRECMD) gcc -c -MMD -O2 -Isrc -Werror -Wimplicit -o$@ $<
+$(demos_MIDDIR)/native/%.o:src/demo/%.c;$(PRECMD) gcc -c -MMD -O2 -Isrc -Werror -Wimplicit -o$@ $< -I$(CURL_SDK)/include
+$(demos_MIDDIR)/native/%.o:$(demos_MIDDIR)/native/%.c;$(PRECMD) gcc -c -MMD -O2 -Isrc -Werror -Wimplicit -o$@ $< -I$(CURL_SDK)/include

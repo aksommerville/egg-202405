@@ -297,6 +297,35 @@ static int server_cb_ws(struct http_xfer *req,struct http_xfer *rsp) {
   return 0;
 }
 
+/* HTTP POST, same idea as WebSocket, it's an echo service for testing HTTP clients.
+ */
+ 
+static int server_cb_echo(struct http_xfer *req,struct http_xfer *rsp) {
+
+  const struct sr_encoder *reqbody=http_xfer_get_body(req);
+  fprintf(stderr,"%s POST %d bytes\n",__func__,reqbody->c);
+  char summary[13];
+  int summaryc;
+  if (reqbody->c<=sizeof(summary)) {
+    memcpy(summary,reqbody->v,reqbody->c);
+    summaryc=reqbody->c;
+  } else {
+    summaryc=sizeof(summary);
+    int half=(summaryc-3)>>1;
+    memcpy(summary,reqbody->v,half);
+    memset(summary+half,'.',summaryc-(half<<1));
+    memcpy(summary+summaryc-half,(char*)reqbody->v+reqbody->c-half,half);
+  }
+  int i=summaryc; while (i-->0) {
+    if ((summary[i]<0x20)||(summary[i]>=0x7f)) summary[i]='?';
+  }
+  
+  struct sr_encoder *rspbody=http_xfer_get_body(rsp);
+  sr_encode_fmt(rspbody,"You posted %d bytes: %.*s\n",reqbody->c,summaryc,summary);
+  http_xfer_set_header(rsp,"Content-Type",12,"text/plain",10);
+  return http_xfer_set_status(rsp,200,"OK");
+}
+
 /* Dispatch HTTP requests.
  */
  
@@ -304,6 +333,7 @@ static int server_cb_serve(struct http_xfer *req,struct http_xfer *rsp,void *use
   return http_dispatch(req,rsp,
     HTTP_METHOD_GET,"/list-games",server_cb_list_games,
     HTTP_METHOD_GET,"/ws",server_cb_ws,
+    HTTP_METHOD_POST,"/echo",server_cb_echo,
     HTTP_METHOD_GET,"/**",server_cb_serve_static
   );
 }

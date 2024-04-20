@@ -44,6 +44,10 @@ endif
 ifneq (,$(strip $(filter jpeg,$(linux_OPT_ENABLE))))
   linux_LDPOST+=-ljpeg
 endif
+ifneq (,$(strip $(filter curlwrap,$(linux_OPT_ENABLE))))
+  linux_CC+=-I$(CURL_SDK)/include
+  linux_LDPOST+=$(CURL_SDK)/build/lib/libcurl.a -lssl -lcrypto
+endif
 
 linux_CFILES:=$(filter \
   src/native/% \

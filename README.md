@@ -25,13 +25,13 @@ Input is more agnostic, tries to give you raw events as much as possible.
 - [x] softrender: Update (encfmt) with alpha hint when an image is used as destination, and initialize at decode.
 - [x] softrender: Tint and global alpha. I think would be best to implement as blenders at softrender_draw.c, not sure.
 - [x] http_request failing sometimes, JS Native.
-- [ ] Native: OpenSSL for HTTP and WebSocket.
+- [x] Native: OpenSSL for HTTP and WebSocket.
 - [ ] Web is allowing unreasonably long updates. (Run lojs Time test, and pause via dev tools)
 - [ ] Cleaner solution for native builds. Get everything linux-specific out of etc/make/demos.mk
 
 ### Low Priority
 
-- [ ] http_get_header is not workable, remove it.
+- [x] http_get_header is not workable, remove it. ...with curlwrap, now it is workable. Keep it.
 - [ ] Assess SfgPrinter performance, opportunities for optimization here if needed.
 - [ ] Synthesizer, native.
 - - [ ] GM instruments.

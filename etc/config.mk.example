@@ -9,6 +9,7 @@ run:web-run
 WAMR_SDK:=path/to/wasm-micro-runtime
 WASI_SDK:=path/to/wasi-sdk-16.0
 QJS_SDK:=path/to/quickjs-2023-12-09
+CURL_SDK:=path/to/curl # Must build from source with WebSocket enabled, as of 2024-04-20. Hopefully WS will become standard soon.
 
 #----------------------------------------------------------------
 
@@ -16,7 +17,7 @@ QJS_SDK:=path/to/quickjs-2023-12-09
 # Should select at least one audio driver: alsafd asound pulse
 # Input drivers are optional but why not:  evdev
 # Enable fake unit "xinerama" for the X11 Xinerama extension, for monitor size detection.
-linux_OPT_ENABLE:=alsafd asound pulse drmgx xegl xinerama evdev
+linux_OPT_ENABLE:=alsafd asound pulse drmgx xegl xinerama evdev curlwrap
 
 linux_TOOLCHAIN:=
 linux_CC_EXTRA:=

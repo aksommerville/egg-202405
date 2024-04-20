@@ -245,8 +245,8 @@ static void _select_network_event(struct menu *menu,const struct egg_event *even
         int length=event->v[2];
         char *serial=calloc(1,length+1);
         if (serial) {
-          egg_ws_get_message(serial,length,wsid,msgid);
-          egg_log("WS_MESSAGE, wsid=%d msgid=%d: %.*s",wsid,msgid,length,serial);
+          int serialc=egg_ws_get_message(serial,length,wsid,msgid);
+          egg_log("WS_MESSAGE, wsid=%d msgid=%d len=%d: %.*s",wsid,msgid,length,serialc,serial);
           free(serial);
         }
       } break;
