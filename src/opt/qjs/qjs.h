@@ -14,6 +14,12 @@ void qjs_del(struct qjs *qjs);
 
 struct qjs *qjs_new();
 
+/* Unlike our cousin wamr, qjs does require constant maintenance,
+ * in order to resolve Promises.
+ * Call this as often as possible.
+ */
+int qjs_update(struct qjs *qjs);
+
 /* (entryv) is array of JSCFunctionListEntry from quickjs.h.
  */
 int qjs_set_exports(struct qjs *qjs,const char *modname,const void *entryv,int entryc);

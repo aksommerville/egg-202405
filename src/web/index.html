@@ -92,6 +92,27 @@ function populateGamesList(names) {
     container.appendChild(button);
   }
 }
+function loadFile(event) {
+  const files = event?.target?.files;
+  if (files?.length !== 1) return;
+  const file = files[0];
+  const reader = new FileReader();
+  reader.addEventListener("loadend", () => {
+    if (!reader.result) {
+      const errorElement = document.getElementById("error");
+      errorElement.innerHTML = "";
+      errorElement.innerText = "Failed to read file.";
+      errorElement.classList.remove("hidden");
+    } else {
+      window.postMessage({
+        eggRunSerial: reader.result,
+        eggFileName: file.name,
+        eggCanvasId: "game",
+      });
+    }
+  });
+  reader.readAsArrayBuffer(file);
+}
 window.addEventListener("load", () => {
   window.fetch("/list-games").then(rsp => {
     if (!rsp.ok) throw rsp;
@@ -107,8 +128,8 @@ window.addEventListener("load", () => {
 </head>
 <body>
 <button onclick="terminate()">Terminate</button>
+<input type="file" onchange="loadFile(event)"/>
 <div id="gameslist"></div>
-<!--<canvas id="game" width="640" height="360"></canvas>-->
 <canvas id="game"></canvas>
 <div id="error" class="hidden"></div>
 </body>

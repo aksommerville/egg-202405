@@ -129,13 +129,13 @@ export class Input {
       case Input.EVENT_WS_CONNECT: return 0;
       case Input.EVENT_WS_DISCONNECT: return 0;
       case Input.EVENT_WS_MESSAGE: return Input.EVTSTATE_REQUIRED;
-      case Input.EVENT_MMOTION: return 0;
+      case Input.EVENT_MMOTION: return 0; //TODO Can we distinguish mouseless mobile devices?
       case Input.EVENT_MBUTTON: return 0;
       case Input.EVENT_MWHEEL: return 0;
       case Input.EVENT_KEY: return 0;
       case Input.EVENT_TEXT: return 0;
-      case Input.EVENT_TOUCH: return 0;
-      case Input.EVENT_ACCELEROMETER: return 0;
+      case Input.EVENT_TOUCH: return 0; //TODO Can we detect?
+      case Input.EVENT_ACCELEROMETER: return 0; //TODO Can we detect?
     }
     return Input.EVTSTATE_IMPOSSIBLE;
   }

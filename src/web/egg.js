@@ -6,19 +6,27 @@
 import { Rom } from "./js/Rom.js";
 import { Runtime } from "./js/Runtime.js";
 
+let runningRuntime = null;
+
 window.addEventListener("message", e => {
   if (!e.data?.eggRunSerial) return;
   const canvas = document.getElementById(e.data.eggCanvasId);
   if (!canvas || (canvas.tagName !== "CANVAS")) {
     throw new Error(`eggCanvasId ${JSON.stringify(e.data.eggCanvasId)} is not a <canvas>`);
   }
+  if (runningRuntime) {
+    runningRuntime.terminate();
+    runningRuntime = null;
+  }
   const rom = new Rom(e.data.eggRunSerial, e.data.eggFileName);
   const rt = new Runtime(rom, canvas, window);
+  runningRuntime = rt;
   window.egg = rt.getClientExports();
   console.log(`Starting platform...`);
   rt.run().then(() => {
     console.log(`Running`);
   }).catch(e => {
     console.error(`Failed to initialize platform.`, e);
+    runningRuntime = null;
   });
 });

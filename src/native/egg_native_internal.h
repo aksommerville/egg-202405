@@ -123,6 +123,7 @@ int egg_native_call_client_init();
 void egg_native_call_client_quit();
 int egg_native_call_client_update(double elapsed);
 int egg_native_call_client_render();
+int egg_native_vm_update();
 
 // Never fails. May overwrite the oldest event.
 struct egg_event *egg_native_push_event();

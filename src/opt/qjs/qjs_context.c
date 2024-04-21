@@ -150,6 +150,17 @@ struct qjs *qjs_new() {
   return qjs;
 }
 
+/* Maintenance.
+ */
+ 
+int qjs_update(struct qjs *qjs) {
+  if (JS_IsJobPending(qjs->jsrt)) {
+    JSContext *ctx=0;
+    int err=JS_ExecutePendingJob(qjs->jsrt,&ctx);
+  }
+  return 0;
+}
+
 /* Trivial accessors.
  */
  

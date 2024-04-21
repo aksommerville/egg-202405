@@ -284,6 +284,10 @@ static int egg_native_update() {
     if (err!=-2) fprintf(stderr,"%s: Error updating network.\n",egg.exename);
     return -2;
   }
+  if ((err=egg_native_vm_update())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Error updating Javascript or Wasm runtime.\n",egg.exename);
+    return -2;
+  }
   
   double elapsed=timer_tick(&egg.timer);
   if ((err=egg_native_call_client_update(elapsed))<0) {

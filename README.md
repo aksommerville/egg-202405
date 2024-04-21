@@ -65,3 +65,5 @@ Once you've done that, `make` should build the whole project.
 - [ ] Fine-grained access controls for HTTP and Storage. Native and Web both.
 - [ ] Web: Need some way to prevent game JS from accessing browser APIs.
 - [ ] If there's more than one 'js' or 'wasm' resource, concatenate them. And at build time, we can allow >1MB.
+- [ ] Source maps
+- [ ] Web: Input.js: Try to detect availability of mouse, keyboard, touch, accelerometer.

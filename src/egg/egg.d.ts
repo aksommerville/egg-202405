@@ -29,7 +29,7 @@ const enum EventType {
   WS_DISCONNECT =  6, /* [wsid,_,_,_] */
   WS_MESSAGE    =  7, /* [wsid,msgid,length,_] */
   MMOTION       =  8, /* [x,y,_,_] */
-  MBUTTON       =  9, /* [btnid,value,x,y] */
+  MBUTTON       =  9, /* [btnid,value,x,y] (1,2,3)=(left,right,middle) */
   MWHEEL        = 10, /* [dx,dy,x,y] */
   KEY           = 11, /* [hidusage,value,_,_] */
   TEXT          = 12, /* [codepoint,_,_,_] */

@@ -248,6 +248,7 @@ int egg_native_call_client_init() { return egg_client_init(); }
 void egg_native_call_client_quit() { egg_client_quit(); }
 int egg_native_call_client_update(double elapsed) { egg_client_update(elapsed); return 0; }
 int egg_native_call_client_render() { egg_client_render(); return 0; }
+int egg_native_vm_update() { return 0; }
 
 #else
  
@@ -292,6 +293,10 @@ int egg_native_call_client_render() {
     case EGG_TID_js: err=qjs_call(egg.qjs,egg.loc_client_render.modid,egg.loc_client_render.fnid,argv,1); break;
   }
   return err;
+}
+
+int egg_native_vm_update() {
+  return qjs_update(egg.qjs);
 }
 
 #endif
