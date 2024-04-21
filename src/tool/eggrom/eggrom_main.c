@@ -67,6 +67,7 @@ static int eggrom_c_finish() {
   
   /* Resource processing.
    */
+  if ((err=eggrom_js_combine())<0) return err;
   if ((err=eggrom_expand_resources())<0) return err;
   if ((err=eggrom_assign_missing_ids())<0) return err;
   if ((err=eggrom_link_resources())<0) return err;

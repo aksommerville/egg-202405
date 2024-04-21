@@ -63,3 +63,5 @@ Once you've done that, `make` should build the whole project.
 - [ ] Refactor egg_native_export.c and egg_native_rom.c to make the native/bundled/external decision clearer, it's a mess right now.
 - [ ] x11fb: Why does scaling 2x or 3x make such a big performance difference? I'm seeing like 22% CPU vs 4%.
 - [ ] Fine-grained access controls for HTTP and Storage. Native and Web both.
+- [ ] Web: Need some way to prevent game JS from accessing browser APIs.
+- [ ] If there's more than one 'js' or 'wasm' resource, concatenate them. And at build time, we can allow >1MB.

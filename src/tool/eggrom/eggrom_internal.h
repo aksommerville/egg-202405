@@ -35,6 +35,8 @@ int eggrom_qual_eval(const char *src,int srcc,uint8_t tid);
  */
 int eggrom_infer_ids(struct romw_res *res);
 
+int eggrom_js_combine();
+
 /* "expand" handlers should create new resources in (eggrom.romw).
  */
 int eggrom_string_expand(const char *src,int srcc,uint16_t qual,const char *path);
