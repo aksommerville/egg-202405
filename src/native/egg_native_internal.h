@@ -75,6 +75,7 @@ extern struct egg {
   int eventp,eventc;
   uint32_t eventmask; // bitfields; 1<<EGG_EVENT_*
   int mousex,mousey;
+  int cursor_desired; // egg_show_cursor()
   struct egg_input_device {
     int devid;
     struct hostio_input *driver; // WEAK

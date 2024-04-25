@@ -41,6 +41,23 @@ int egg_event_next(struct egg_event *eventv,int eventa) {
   return eventa;
 }
 
+/* Update cursor visibility after a change to event mask or cursor_desired.
+ */
+ 
+static void egg_native_check_cursor() {
+  if (!egg.hostio->video->type->show_cursor) return;
+  // If the events are disabled, hide regardless of cursor_desired.
+  if (!(egg.eventmask&(
+    (1<<EGG_EVENT_MMOTION)|
+    (1<<EGG_EVENT_MBUTTON)|
+    (1<<EGG_EVENT_MWHEEL)
+  ))) {
+    egg.hostio->video->type->show_cursor(egg.hostio->video,0);
+    return;
+  }
+  egg.hostio->video->type->show_cursor(egg.hostio->video,egg.cursor_desired);
+}
+
 /* Return 0, EGG_EVTSTATE_IMPOSSIBLE, or EGG_EVTSTATE_REQUIRED,
  * to identify events that can't be changed by the client.
  */
@@ -112,13 +129,7 @@ int egg_event_enable(int evttype,int evtstate) {
     case EGG_EVENT_MBUTTON:
     case EGG_EVENT_MWHEEL: {
         ACCEPT
-        if (egg.hostio->video->type->show_cursor) {
-          egg.hostio->video->type->show_cursor(egg.hostio->video,(egg.eventmask&(
-            (1<<EGG_EVENT_MMOTION)|
-            (1<<EGG_EVENT_MBUTTON)|
-            (1<<EGG_EVENT_MWHEEL)
-          ))?1:0);
-        }
+        egg_native_check_cursor();
         RETURN
       }
     
@@ -133,6 +144,20 @@ int egg_event_enable(int evttype,int evtstate) {
   #undef ACCEPT
   #undef RETURN
   return EGG_EVTSTATE_IMPOSSIBLE;
+}
+
+/* Public: Show cursor.
+ */
+ 
+void egg_show_cursor(int show) {
+  if (show) {
+    if (egg.cursor_desired) return;
+    egg.cursor_desired=1;
+  } else {
+    if (!egg.cursor_desired) return;
+    egg.cursor_desired=0;
+  }
+  egg_native_check_cursor();
 }
 
 /* Init.
@@ -150,6 +175,7 @@ int egg_native_event_init() {
     (1<<EGG_EVENT_KEY)|
     // MMOTION, MBUTTON, MWHEEL, TEXT, TOUCH, ACCELEROMETER: off by default
   0;
+  egg.cursor_desired=1; // Make the cursor visible if events enabled.
   return 0;
 }
 

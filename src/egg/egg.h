@@ -105,6 +105,11 @@ void egg_input_device_get_button(
 
 void egg_input_device_disconnect(int devid);
 
+/* Zero to hide cursor even when enabled.
+ * By default, we show the system cursor if there is one and any of the mouse events is enabled.
+ */
+void egg_show_cursor(int show);
+
 /* Video.
  ****************************************************************/
 

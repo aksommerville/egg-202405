@@ -23,6 +23,7 @@ export class Input {
     0;
     
     this.cursorVisible = false;
+    this.cursorDesired = true; // Should be visible when enabled. (egg.show_cursor())
     this.mouseEventListener = null;
     this.mouseButtonsDown = new Set();
     
@@ -43,41 +44,6 @@ export class Input {
     
     this.accel = null;
     this.accelListener = null;
-    /*XXX
-    // TODO Accelerometer. Looks easy to support, just need to define it in the public API.
-    // Need to switch on and off when event mask changes, like cursor.
-    // https://developer.mozilla.org/en-US/docs/Web/API/Accelerometer
-    this.tmpmsg = document.createElement("DIV");
-    this.tmpmsg.style.position = "fixed";
-    this.tmpmsg.style.backgroundColor = "#000";
-    this.tmpmsg.style.color = "#fff";
-    this.tmpmsg.style.left = "0vw";
-    this.tmpmsg.style.right = "100vw";
-    this.tmpmsg.style.top = "80vh";
-    this.tmpmsg.style.zIndex = "100";
-    this.tmpmsg.innerText = "starting up";
-    if (this.window.navigator.permissions) this.tmpmsg.innerText += " has permissions";
-    if (this.window.Accelerometer) this.tmpmsg.innerText += " has Accelerometer";
-    document.body.appendChild(this.tmpmsg);
-    if (this.window.navigator.permissions) {
-      this.tmpmsg.innerText = `requesting accelerometer...`;
-      this.window.navigator.permissions.query({ name: "accelerometer" }).then(result => {
-        console.log(`accelerometer permissions`, result);
-        if (result.state === "denied") {
-          // well just fucking brilliant... my phone either doesn't support Accelerometer or denies across the board.
-          // Maybe that's due to the insecure connection? I'm not set up to serve HTTPS. Fuck.
-          // ...can I upload these to aksommerville.com on a temporary basis?
-          // ...ok it works, it must be an HTTPS thing. We're getting (x,y,z) that appears to be in m/s**2, nine-point-something on the earthward axis at idle.
-          this.tmpmsg.innerText = "DENIED";
-          return;
-        }
-        const acc = new Accelerometer({ referenceFrame: "device" });
-        acc.addEventListener("error", event => this.tmpmsg.innerText = event.error.message);
-        acc.addEventListener("reading", event => this.onAccelerometerReading(acc.x, acc.y, acc.z));
-        acc.start();
-      });
-    }
-    /**/
   }
   
   detach() {
@@ -246,15 +212,25 @@ export class Input {
    ********************************************************************************/
   
   _checkCursorVisibility(show) {
-    show = !!show;
-    if (show === this.cursorVisible) return;
-    this.cursorVisible = show;
-    if (this.canvas) {
-      if (show) {
-        this.canvas.style.cursor = "pointer";
+    const enableEvents = show;
+    if (this.cursorDesired) show = !!show;
+    else show = false;
+    if (show !== this.cursorVisible) {
+      this.cursorVisible = show;
+      if (this.canvas) {
+        if (show) {
+          this.canvas.style.cursor = "pointer";
+        } else {
+          this.canvas.style.cursor = "none";
+        }
+      }
+    }
+    if (enableEvents) {
+      if (!this.mouseListener) {
         this._listenMouse();
-      } else {
-        this.canvas.style.cursor = "none";
+      }
+    } else {
+      if (this.mouseListener) {
         this._unlistenMouse();
       }
     }
@@ -607,6 +583,12 @@ export class Input {
     const local = this.gamepads[devid - 1];
     if (!local || (local.devid !== devid)) return;
     delete this.gamepads[devid - 1];
+  }
+   
+  show_cursor(show) {
+    this.cursorDesired = !!show;
+    const mouseEvents = (1 << Input.EVENT_MMOTION) | (1 << Input.EVENT_MBUTTON) | (1 << Input.EVENT_MWHEEL);
+    this._checkCursorVisibility(this.evtmask & mouseEvents);
   }
 }
 

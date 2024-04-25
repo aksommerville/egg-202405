@@ -421,6 +421,23 @@ static void egg_wasm_input_device_disconnect(wasm_exec_env_t ee,int devid) {
 }
 #endif
 
+/* egg_show_cursor
+ */
+ 
+#if EGG_ENABLE_VM
+static JSValue egg_js_show_cursor(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(1)
+  int32_t show=1;
+  JS_ToInt32(ctx,&show,argv[0]);
+  egg_show_cursor(show);
+  return JS_NULL;
+}
+
+static void egg_wasm_show_cursor(wasm_exec_env_t ee,int show) {
+  egg_show_cursor(show);
+}
+#endif
+
 /* egg_texture_del
  */
  
@@ -1185,6 +1202,7 @@ static const JSCFunctionListEntry egg_native_js_exports[]={
   JS_CFUNC_DEF("input_device_get_ids",0,egg_js_input_device_get_ids),
   JS_CFUNC_DEF("input_device_get_button",0,egg_js_input_device_get_button),
   JS_CFUNC_DEF("input_device_disconnect",0,egg_js_input_device_disconnect),
+  JS_CFUNC_DEF("show_cursor",0,egg_js_show_cursor),
   JS_CFUNC_DEF("texture_del",0,egg_js_texture_del),
   JS_CFUNC_DEF("texture_new",0,egg_js_texture_new),
   JS_CFUNC_DEF("texture_load_image",0,egg_js_texture_load_image),
@@ -1233,6 +1251,7 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_input_device_get_ids",egg_wasm_input_device_get_ids,"(***i)"},
   {"egg_input_device_get_button",egg_wasm_input_device_get_button,"(*****ii)"},
   {"egg_input_device_disconnect",egg_wasm_input_device_disconnect,"(i)"},
+  {"egg_show_cursor",egg_wasm_show_cursor,"(i)"},
   {"egg_texture_del",egg_wasm_texture_del,"(i)"},
   {"egg_texture_new",egg_wasm_texture_new,"()i"},
   {"egg_texture_load_image",egg_wasm_texture_load_image,"(iii)i"},

@@ -52,7 +52,8 @@ interface Event {
 
 function event_next(): Event[];
 
-/* Ask for one bit of the event mask, or change one.
+/**
+ * Ask for one bit of the event mask, or change one.
  * In your request:
  *   QUERY: Don't change anything, just report the current state.
  *   DISABLED: Turn off.
@@ -83,6 +84,13 @@ function input_device_get_ids(devid: number): { vid: number, pid: number, versio
 function input_device_get_button(devid: number, index: number): { btnid: number, hidusage: number, lo: number, hi: number, value: number } | null;
 
 function input_device_disconnect(devid: number): void;
+
+/**
+ * Cursor is always hidden when MMOTION, MBUTTON, and MWHEEL are disabled.
+ * By default, we show the system cursor when any of those is enabled, if there is a system cursor.
+ * Send false here to keep it hidden always.
+ */
+function show_cursor(show: boolean): void;
 
 /* Video.
  ****************************************************************/

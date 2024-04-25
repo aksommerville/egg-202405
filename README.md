@@ -67,3 +67,6 @@ Once you've done that, `make` should build the whole project.
 - [ ] If there's more than one 'js' or 'wasm' resource, concatenate them. And at build time, we can allow >1MB.
 - [ ] Source maps
 - [ ] Web: Input.js: Try to detect availability of mouse, keyboard, touch, accelerometer.
+- [ ] Consider adding a "platform" qualifier to joystick ID (along with vid, pid, version). In case you move a saved game from one machine to another or something.
+- [ ] ^ or should we allow saving input config in some global space?
+- [x] Option to hide cursor while enabling pointer events (new API). eggsamples/ts/input/PointerShaper.ts could use it.
