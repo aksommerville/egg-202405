@@ -54,7 +54,7 @@ Once you've done that, `make` should build the whole project.
 - [ ] Mouse coords when softrender in play. Will require a new hostio_video hook i think.
 - [ ] Res type, event type, etc symbols where Javascript can reach them. I don't want to expose them out of the runtime, tho that is an option.
 - [ ] Really need a "get string resource" helper for the JS API, that returns strings.
-- [ ] Web storage: We're dumping keys willy-nilly in localStorage. Wiser to pack them into one object, with a game-specific key.
+- [x] Web storage: We're dumping keys willy-nilly in localStorage. Wiser to pack them into one object, with a game-specific key.
 - - It is likely that we'll have domains serving multiple games, we need some measure of isolation for them.
 - [ ] One can freely append garbage to ROM files, and that's by design, for future expansion.
 - - Means attackers can arrange an MD5 sum for any given ROM file. (and other hashes? research)
@@ -70,3 +70,5 @@ Once you've done that, `make` should build the whole project.
 - [ ] Consider adding a "platform" qualifier to joystick ID (along with vid, pid, version). In case you move a saved game from one machine to another or something.
 - [ ] ^ or should we allow saving input config in some global space?
 - [x] Option to hide cursor while enabling pointer events (new API). eggsamples/ts/input/PointerShaper.ts could use it.
+- [x] Server option to provide an egg file at the command line. So client projects can do their own "make serve".
+- [ ] See src/tool/server/server_main.c:server_htdocs_path(): We need to validate against the roots, now that external serving is an option.

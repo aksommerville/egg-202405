@@ -27,11 +27,23 @@ export class Rom {
     };
   }
   
+  // Insecure hash of the rom's serial content. We use this for the default storage key.
+  calculateHash() {
+    return this.hash;
+  }
+  
   _initDefault() {
     this.resv = []; // {tid,qual,rid,v:Uint8Array}
+    this.hash = 0;
   }
   
   _initBinary(src) {
+    this.hash = 0;
+    for (let i=0; i<src.length; i++) {
+      this.hash = (this.hash << 1) | ((this.hash & 0x80000000) ? 1 : 0);
+      this.hash ^= src[i];
+    }
+    this.hash &= 0xffffffff;
     if (src.length < 16) throw new Error(`Impossible length ${src.length} for Egg ROM`);
     if ((src[0] !== 0x00) || (src[1] !== 0x0e) || (src[2] !== 0x67) || (src[3] !== 0x67)) {
       throw new Error(`Egg ROM signature mismatch`);
@@ -143,6 +155,7 @@ export class Rom {
   _initCopy(src) {
     // Don't bother copying the serial dumps, they are supposed to be read-only.
     this.resv = src.resv.map(res => ({ ...res }));
+    this.hash = src.calculateHash();
   }
   
   _append(tid, qual, rid, src, srcp, srcc) {

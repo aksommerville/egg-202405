@@ -21,6 +21,8 @@ extern struct server {
   int htdocsc,htdocsa;
   char **makeabledirv;
   int makeabledirc,makeabledira;
+  char **romv;
+  int romc,roma;
   struct pollfd *pollfdv;
   int pollfda;
   struct pending {

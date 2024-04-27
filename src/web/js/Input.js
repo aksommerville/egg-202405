@@ -265,9 +265,6 @@ export class Input {
       case "mousemove": this.pushEvent(Input.EVENT_MMOTION, x, y); break;
       case "mousedown": {
           if (e.target !== this.canvas) return;
-          if (this.mouseButtonsDown.has(e.button)) return;
-          this.mouseButtonsDown.add(e.button);
-          e.preventDefault();
           let button;
           switch (e.button) {
             case 0: button = 1; break; // left
@@ -275,12 +272,22 @@ export class Input {
             case 2: button = 2; break; // right
             default: button = e.button;
           }
+          if (this.mouseButtonsDown.has(button)) return;
+          this.mouseButtonsDown.add(button);
+          e.preventDefault();
           this.pushEvent(Input.EVENT_MBUTTON, button, 1, x, y);
         } break;
       case "mouseup": {
-          if (!this.mouseButtonsDown.has(e.button)) return;
-          this.mouseButtonsDown.delete(e.button);
-          this.pushEvent(Input.EVENT_MBUTTON, e.button, 0, x, y);
+          let button;
+          switch (e.button) {
+            case 0: button = 1; break; // left
+            case 1: button = 3; break; // middle
+            case 2: button = 2; break; // right
+            default: button = e.button;
+          }
+          if (!this.mouseButtonsDown.has(button)) return;
+          this.mouseButtonsDown.delete(button);
+          this.pushEvent(Input.EVENT_MBUTTON, button, 0, x, y);
         } break;
       case "contextmenu": e.preventDefault(); break;
       case "mousewheel": {

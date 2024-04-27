@@ -5,6 +5,8 @@
 export class SysExtra {
   constructor(window) {
     this.window = window;
+    this.storage = null;
+    this.storageKey = "egg"; // Set before the first access.
   }
   
   /* Returns:
@@ -159,16 +161,30 @@ export class SysExtra {
   
   store_set(k, v) {
     //TODO User-imposed storage limits.
-    this.window.localStorage.setItem(k, v);
+    if (typeof(v) !== "string") v = JSON.stringify(v);
+    this.requireStorage();
+    this.storage[k] = v;
+    this.window.localStorage.setItem(this.storageKey, JSON.stringify(this.storage));
     return 0;
   }
   
   store_get(k) {
-    return this.window.localStorage.getItem(k);
+    this.requireStorage();
+    return this.storage[k] || "";
   }
   
   store_key_by_index(p) {
-    return this.window.localStorage.key(p) || "";
+    this.requireStorage();
+    const kv = Object.keys(this.storage);
+    return kv[p] || "";
+  }
+  
+  requireStorage() {
+    if (this.storage) return;
+    try {
+      this.storage = JSON.parse(this.window.localStorage.getItem(this.storageKey));
+    } catch (e) {}
+    if (!this.storage) this.storage = {};
   }
   
   // The related time_real() is implemented directly by Runtime.

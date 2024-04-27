@@ -124,7 +124,7 @@ static const char *server_strip_wd(const char *src) {
   int srcc=0; while (src[srcc]) srcc++;
   if ((srcc<wdc)||memcmp(wd,src,wdc)) {
     free(wd);
-    return 0;
+    return src;
   }
   free(wd);
   src+=wdc;
@@ -199,6 +199,18 @@ static int server_makeabledir_path(char *dst,int dsta,const char *root,const cha
   return realc;
 }
 
+static int server_rom_path(char *dst,int dsta,const char *rom,const char *reqpath,int reqpathc) {
+  int romc=0; while (rom[romc]) romc++;
+  while (reqpathc&&(reqpath[0]=='/')) { reqpath++; reqpathc--; }
+  if (reqpathc>romc) return -1;
+  if (memcmp(rom+romc-reqpathc,reqpath,reqpathc)) return -1;
+  if ((reqpathc<romc)&&(rom[romc-reqpathc-1]!='/')) return -1;
+  if (romc>=dsta) return -1;
+  memcpy(dst,rom,romc);
+  dst[romc]=0;
+  return romc;
+}
+
 /* Serve HTTP GET, static files. May invoke make first.
  */
  
@@ -224,6 +236,13 @@ static int server_cb_serve_static(struct http_xfer *req,struct http_xfer *rsp) {
       return server_make_then_serve_file(req,rsp,path);
     }
   }
+  for (i=0;i<server.romc;i++) {
+    char path[1024];
+    int pathc=server_rom_path(path,sizeof(path),server.romv[i],reqpath,reqpathc);
+    if ((pathc>0)&&(pathc<sizeof(path))) {
+      return server_make_then_serve_file(req,rsp,path);
+    }
+  }
   return http_xfer_set_status(rsp,404,"Not found");
 }
 
@@ -245,9 +264,28 @@ static int server_cb_list_games_1(const char *path,const char *base,char ftype,v
 static int server_cb_list_games(struct http_xfer *req,struct http_xfer *rsp) {
   struct sr_encoder *dst=http_xfer_get_body(rsp);
   sr_encode_json_array_start(dst,0,0);
+  
+  // Running from the egg project, it's usually one "makeabledir": out/rom
   int i=0; for (;i<server.makeabledirc;i++) {
     dir_read(server.makeabledirv[i],server_cb_list_games_1,dst);
   }
+  
+  // Running from a client project, there's usually one "--rom" provided.
+  // Return only the basename.
+  for (i=0;i<server.romc;i++) {
+    const char *src=server.romv[i];
+    int slashp=-1,srcc=0;
+    while (src[srcc]) {
+      if (src[srcc]=='/') slashp=srcc;
+      srcc++;
+    }
+    if (slashp>=0) {
+      src+=slashp+1;
+      srcc-=slashp+1;
+    }
+    sr_encode_json_string(dst,0,0,src,srcc);
+  }
+  
   if (sr_encode_json_end(dst,0)<0) return -1;
   http_xfer_add_header(rsp,"Content-Type",12,"application/json",16);
   return http_xfer_set_status(rsp,200,"OK");
@@ -411,6 +449,20 @@ static int server_arg_makeable_dir(const char *src) {
   return 0;
 }
 
+static int server_arg_rom(const char *src) {
+  if (server.romc>=server.roma) {
+    int na=server.roma+8;
+    if (na>INT_MAX/sizeof(void*)) return -1;
+    void *nv=realloc(server.romv,sizeof(void*)*na);
+    if (!nv) return -1;
+    server.romv=nv;
+    server.roma=na;
+  }
+  if (!(server.romv[server.romc]=strdup(src))) return -1;
+  server.romc++;
+  return 0;
+}
+
 /* Rebuild pollfdv.
  */
  
@@ -466,6 +518,8 @@ int main(int argc,char **argv) {
       if (server_arg_htdocs(arg+9)<0) return 1;
     } else if (!memcmp(arg,"--makeable-dir=",15)) {
       if (server_arg_makeable_dir(arg+15)<0) return 1;
+    } else if (!memcmp(arg,"--rom=",6)) {
+      if (server_arg_rom(arg+6)<0) return 1;
     } else if (!strcmp(arg,"--listen-remote")) {
       local_only=0;
     } else {

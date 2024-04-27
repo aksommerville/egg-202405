@@ -115,6 +115,7 @@ export class Runtime {
   }
   
   _findAndApplyMetadata() {
+    this.sysExtra.storageKey = "";
     const src = this.rom.getResource(Rom.TID_metadata, 0, 1);
     if (!src) return;
     const textDecoder = new TextDecoder("utf8");
@@ -128,11 +129,17 @@ export class Runtime {
       srcp += vc;
       this._applyMetadata(k, v);
     }
+    if (!this.sysExtra.storageKey) {
+      this.sysExtra.storageKey = `egg-${this.rom.calculateHash()}`;
+    }
   }
   
   _applyMetadata(k, v) {
     switch (k) {
-      case "title": this.window.document.title = v; break;
+      case "title": {
+          this.window.document.title = v;
+          this.sysExtra.storageKey = v;
+        } break;
       case "framebuffer": {
           const match = v.match(/^(\d+)x(\d+)$/);
           if (match) this._resizeCanvas(+match[1], +match[2]);
