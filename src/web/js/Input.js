@@ -162,10 +162,10 @@ export class Input {
       
       for (let i=local.axes.length; i-->0; ) {
         const pv = local.axes[i];
-        const nx = gamepad.axes[i];
+        const nx = gamepad.axes[i] ? Math.floor(gamepad.axes[i] * 127) : 0;
         if (pv === nx) continue;
         local.axes[i] = nx;
-        this.pushEvent(Input.EVENT_INPUT, local.devid, i, nx);
+        this.pushEvent(Input.EVENT_INPUT, local.devid, 0x40 + i, nx);
       }
       
       for (let i=local.buttons.length; i-->0; ) {
@@ -173,7 +173,7 @@ export class Input {
         const nx = gamepad.buttons[i].value;
         if (pv === nx) continue;
         local.buttons[i] = nx;
-        this.pushEvent(Input.EVENT_INPUT, local.devid, 0x100 + i, nx);
+        this.pushEvent(Input.EVENT_INPUT, local.devid, 0x80 + i, nx);
       }
     }
   }
@@ -543,11 +543,11 @@ export class Input {
         }
       }
       return {
-        btnid: p,
+        btnid: 0x40 + p,
         hidusage,
-        lo: -1,
-        hi: 1,
-        value: local.axes[p],
+        lo: -128,
+        hi: 127,
+        value: 0,
       };
     }
     p -= local.axes.length;
@@ -576,11 +576,11 @@ export class Input {
         }
       }
       return {
-        btnid: 0x100 + p,
+        btnid: 0x80 + p,
         hidusage,
         lo: 0,
         hi: 1,
-        value: local.buttons[p],
+        value: 0,
       };
     }
     return null;
