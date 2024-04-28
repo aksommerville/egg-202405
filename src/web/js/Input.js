@@ -338,10 +338,16 @@ export class Input {
     // Likewise, if user wants text and it looks like text. (but not for "keyup" of course).
     if (e.type !== "keyup") {
       if (this.evtmask & (1 << Input.EVENT_TEXT)) {
-        if (e.key?.length === 1) {
-          this.pushEvent(Input.EVENT_TEXT, e.key.charCodeAt(0));
-          e.preventDefault();
-          e.stopPropagation();
+        switch (e.key) {
+          case "Backspace": this.pushEvent(Input.EVENT_TEXT, 0x08); e.preventDefault(); e.stopPropagation(); break;
+          case "Tab":       this.pushEvent(Input.EVENT_TEXT, 0x09); e.preventDefault(); e.stopPropagation(); break;
+          case "Enter":     this.pushEvent(Input.EVENT_TEXT, 0x0a); e.preventDefault(); e.stopPropagation(); break;
+          case "Escape":    this.pushEvent(Input.EVENT_TEXT, 0x1b); e.preventDefault(); e.stopPropagation(); break;
+          default: if (e.key?.length === 1) {
+              this.pushEvent(Input.EVENT_TEXT, e.key.charCodeAt(0));
+              e.preventDefault();
+              e.stopPropagation();
+            } break;
         }
       }
     }

@@ -290,7 +290,11 @@ static int eggrom_js_reduce_1(struct sr_encoder *dst,const char *src,int srcc,co
           fprintf(stderr,"%s:%d: Unclosed string.\n",path,eggrom_js_lineno(src,srcp0));
           return -2;
         }
-        if (src[srcp++]==quote) break;
+        if (src[srcp]=='\\') {
+          srcp+=2;
+        } else {
+          if (src[srcp++]==quote) break;
+        }
       }
       if (sr_encode_raw(dst,src+srcp0,srcp-srcp0)<0) return -1;
       continue;

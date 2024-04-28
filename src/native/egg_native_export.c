@@ -890,6 +890,7 @@ static JSValue egg_js_store_get(JSContext *ctx,JSValueConst this,int argc,JSValu
       JS_FreeCString(ctx,k);
       return JS_NewInt32(ctx,0);
     }
+    buf=nv;
   }
 }
  

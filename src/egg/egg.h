@@ -53,7 +53,7 @@ void egg_client_render();
 #define EGG_EVENT_MWHEEL        10 /* [dx,dy,x,y] */
 #define EGG_EVENT_KEY           11 /* [hidusage,value,_,_] */
 #define EGG_EVENT_TEXT          12 /* [codepoint,_,_,_] */
-#define EGG_EVENT_TOUCH         13 /* [id,state(0,1,2),x,y] */
+#define EGG_EVENT_TOUCH         13 /* [id,state(0,1,2),x,y] (0,1,2)=(release,press,move) */
 #define EGG_EVENT_ACCELEROMETER 14 /* [x,y,z,_] ms/s**2 s16.16 */
 
 /* Native platforms will usually only be able to use RAW here.
