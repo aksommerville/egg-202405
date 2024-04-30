@@ -53,7 +53,8 @@ Once you've done that, `make` should build the whole project.
 - [ ] Do I need to forbid rendering from a texture onto itself? My heart says yes, but we're not forbidding it yet.
 - [ ] Mouse coords when softrender in play. Will require a new hostio_video hook i think.
 - [ ] Res type, event type, etc symbols where Javascript can reach them. I don't want to expose them out of the runtime, tho that is an option.
-- [ ] Really need a "get string resource" helper for the JS API, that returns strings.
+- [x] Really need a "get string resource" helper for the JS API, that returns strings.
+- - eggsamples/ts has this for Typescript, and it works great.
 - [x] Web storage: We're dumping keys willy-nilly in localStorage. Wiser to pack them into one object, with a game-specific key.
 - - It is likely that we'll have domains serving multiple games, we need some measure of isolation for them.
 - [ ] One can freely append garbage to ROM files, and that's by design, for future expansion.
@@ -64,6 +65,7 @@ Once you've done that, `make` should build the whole project.
 - [ ] x11fb: Why does scaling 2x or 3x make such a big performance difference? I'm seeing like 22% CPU vs 4%.
 - [ ] Fine-grained access controls for HTTP and Storage. Native and Web both.
 - [ ] Web: Need some way to prevent game JS from accessing browser APIs.
+- - Would it help to run in a Web Worker? That eliminates Window and Document, but we'd still have to prevent eg fetch and setTimeout.
 - [ ] If there's more than one 'js' or 'wasm' resource, concatenate them. And at build time, we can allow >1MB.
 - [ ] Source maps
 - [ ] Web: Input.js: Try to detect availability of mouse, keyboard, touch, accelerometer.
@@ -72,3 +74,7 @@ Once you've done that, `make` should build the whole project.
 - [x] Option to hide cursor while enabling pointer events (new API). eggsamples/ts/input/PointerShaper.ts could use it.
 - [x] Server option to provide an egg file at the command line. So client projects can do their own "make serve".
 - [ ] See src/tool/server/server_main.c:server_htdocs_path(): We need to validate against the roots, now that external serving is an option.
+- [x] New API to expose platform image decoders (see eggsamples/ts/Font)
+- [ ] Wasm: (export "memory"). Web requires this but native does not. Decide who's wrong and change them.
+- [ ] romr has a vestigial "qual_by_tid" that we aren't using -- remove it. Make romr_get() take a qualifier.
+- [ ] bmp needs a decode_header. For now, we decode the whole image just to read the header. (rawimg_encode.c) jpeg too

@@ -56,6 +56,29 @@ int egg_client_init() {
   
   if (!lowasm_menu_new_main()) return -1;
   
+  /*XXX TEMP: Test image decode.
+  egg_log("Decoding all images...");
+  int imageid=1; for (;;imageid++) {
+    int w=0,h=0,fmt=0;
+    egg_image_get_header(&w,&h,&fmt,0,imageid);
+    if (w<1) break;
+    int stride=0;
+    switch (fmt) {
+      case EGG_TEX_FMT_RGBA: stride=w<<2; break;
+      case EGG_TEX_FMT_A8:
+      case EGG_TEX_FMT_Y8: stride=w; break;
+      case EGG_TEX_FMT_A1:
+      case EGG_TEX_FMT_Y1: stride=(w+7)>>3; break;
+    }
+    if (stride<1) break;
+    void *dst=calloc(stride,h);
+    if (!dst) break;
+    int dstc=egg_image_decode(dst,stride*h,stride,0,imageid);
+    egg_log("Decoded image %d: size=%d,%d fmt=%d stride=%d dstc=%d",imageid,w,h,fmt,stride,dstc);
+    free(dst);
+  }
+  /**/
+  
   return 0;
 }
 

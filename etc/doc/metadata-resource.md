@@ -3,6 +3,7 @@
 Egg ROMs are expected to contain a resource `1:0:1` describing the game for external tools.
 
 It's a packed set of Key=Value pairs, keys and values both limited to 255 bytes.
+Keys are expected to be unique. Decoder behavior is undefined if a key is repeated.
 
 ```
   u8 key length
@@ -13,6 +14,8 @@ It's a packed set of Key=Value pairs, keys and values both limited to 255 bytes.
 
 All standard keys are C identifiers beginning with a lowercase letter.
 It's fine to make up new keys. Wise to add a dot or space or something so it's not mistaken for a standard one.
+Any text resources for human consumption may have an alternate version with "Str" appended, a string ID for translation.
+If you use that, I recommend providing both keys (eg "title" and "titleStr"), with a default for readers that deign not to resolve the strings.
 
 | Key         | Value |
 |-------------|-------|

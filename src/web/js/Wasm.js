@@ -37,13 +37,14 @@ export class Wasm {
     this.abort();
     return this.window.WebAssembly.instantiate(serial, this.generateOptions()).then((result) => {
       this.instance = result.instance;
-      this.memU8 = new Uint8Array(this.instance.exports.memory.buffer);
-      this.memU16 = new Uint16Array(this.instance.exports.memory.buffer);
-      this.memS16 = new Int16Array(this.instance.exports.memory.buffer);
-      this.memU32 = new Uint32Array(this.instance.exports.memory.buffer);
-      this.memS32 = new Int32Array(this.instance.exports.memory.buffer);
-      this.memF32 = new Float32Array(this.instance.exports.memory.buffer);
-      this.memF64 = new Float64Array(this.instance.exports.memory.buffer);
+      const buffer = this.instance.exports.memory?.buffer || new ArrayBuffer(0);
+      this.memU8 = new Uint8Array(buffer);
+      this.memU16 = new Uint16Array(buffer);
+      this.memS16 = new Int16Array(buffer);
+      this.memU32 = new Uint32Array(buffer);
+      this.memS32 = new Int32Array(buffer);
+      this.memF32 = new Float32Array(buffer);
+      this.memF64 = new Float64Array(buffer);
       return this.instance;
     });
   }
@@ -133,6 +134,7 @@ export class Wasm {
   
   getMemoryView(v, c) {
     if (!this.instance) throw new Error(`WASM instance not loaded`);
+    if (!this.instance.exports.memory?.buffer) throw new Error(`No exported memory`);
     const memory = this.instance.exports.memory.buffer;
     if ((typeof(v) !== "number") || (typeof(c) !== "number") || (v < 0) || (c < 0) || (v > memory.byteLength - c)) {
       throw new Error(`Invalid address ${c} @ ${v}`);

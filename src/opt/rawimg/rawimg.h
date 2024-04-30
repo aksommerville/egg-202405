@@ -148,6 +148,11 @@ const char *rawimg_detect_format(const void *src,int srcc);
  */
 const char *rawimg_supported_format_by_index(int p);
 
+/* Partial decode of any format, only enough to determine the geometry.
+ * On success, populates (w,h,stride,pixelsize) if provided, and returns the encoding's name.
+ */
+const char *rawimg_decode_header(int *w,int *h,int *stride,int *pixelsize,const void *src,int srcc);
+
 /* Iteration.
  ******************************************************************/
 

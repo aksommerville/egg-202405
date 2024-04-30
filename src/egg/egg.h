@@ -127,6 +127,16 @@ void egg_show_cursor(int show);
 #define EGG_XFORM_YREV 2
 #define EGG_XFORM_SWAP 4
 
+/* Access to the platform's image decoder.
+ * You don't need this for normal image rendering.
+ * If you are doing software rendering client-side or some other weird thing,
+ * you can use these to fetch image resources, decoding the same way egg_texture_load_image() would.
+ * You must first call egg_image_get_header(), then allocate enough space for it, then egg_image_decode().
+ * You provide the row-to-row stride at decode, largely as a validation mechanism.
+ */
+void egg_image_get_header(int *w,int *h,int *fmt,int qual,int imageid);
+int egg_image_decode(void *dst,int dsta,int stride,int qual,int imageid);
+
 /* Create or delete a texture.
  * Platform will have some internal limit, but it's not publically defined and may vary across hosts.
  * (texid) is a positive integer, zero for invalid, and never negative.

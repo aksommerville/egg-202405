@@ -120,6 +120,14 @@ const enum Xform {
   XREV_YREV_SWAP = 7,
 }
 
+/* Decode image resources the same way texture_load_image() would.
+ * You don't need this in normal cases, only if you're doing software rendering client-side or something.
+ * It's split into two functions to match the C API, though on the JS side it could have been just one.
+ * The image's stride is the ArrayBuffer's length divided by height, which will always divide exactly.
+ */
+function image_get_header(qual: number, imageid: number): { w: number; h: number; fmt: TextureFormat };
+function image_decode(qual: number, imageid: number): ArrayBuffer | null;
+
 /* Create or delete a texture.
  * Platform will have some internal limit, but it's not publically defined and may vary across hosts.
  * (texid) is a positive integer or zero for errors (never negative).
@@ -227,6 +235,17 @@ function audio_get_playhead(): number;
 
 /* Storage.
  ***************************************************************/
+ 
+const enum ResType { // Canonical list: src/opt/romr/romr.h
+  metadata = 1,
+  wasm = 2,
+  js = 3,
+  image = 4,
+  string = 5,
+  song = 6,
+  sound = 7,
+  map = 8,
+}
 
 /* Copy a resource from the ROM file.
  * May return >dsta if your buffer isn't long enough, and does not populate (dst) in that case.

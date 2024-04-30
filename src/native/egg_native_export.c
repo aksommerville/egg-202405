@@ -15,6 +15,7 @@
 #include "quickjs.h"
 #include "wasm_export.h"
 #include "opt/strfmt/strfmt.h"
+#include "opt/rawimg/rawimg.h"
 #include <stdarg.h>
 #include <time.h>
 #include <sys/time.h>
@@ -435,6 +436,116 @@ static JSValue egg_js_show_cursor(JSContext *ctx,JSValueConst this,int argc,JSVa
 
 static void egg_wasm_show_cursor(wasm_exec_env_t ee,int show) {
   egg_show_cursor(show);
+}
+#endif
+
+/* egg_image_get_header
+ */
+ 
+void egg_image_get_header(int *w,int *h,int *fmt,int qual,int imageid) {
+  const void *serial=0;
+  int serialc=romr_get_qualified(&serial,&egg.romr,EGG_TID_image,qual,imageid);
+  if (serialc<1) return;
+  int pixelsize=0;
+  const char *encfmt=rawimg_decode_header(w,h,0,&pixelsize,serial,serialc);
+  if (!encfmt) return;
+  if (fmt) switch (pixelsize) {
+    case 32: *fmt=EGG_TEX_FMT_RGBA; break;
+    case 8: *fmt=EGG_TEX_FMT_A8; break;
+    case 4: *fmt=EGG_TEX_FMT_RGBA; break; // ICO may use 4-bit pixels; they'll promote to 32 on decode.
+    case 1: *fmt=EGG_TEX_FMT_A1; break;
+  }
+}
+
+#if EGG_ENABLE_VM
+static JSValue egg_js_image_get_header(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t qual=0,imageid=0;
+  JS_ToInt32(ctx,&qual,argv[0]);
+  JS_ToInt32(ctx,&imageid,argv[1]);
+  int w=0,h=0,fmt=0;
+  egg_image_get_header(&w,&h,&fmt,qual,imageid);
+  JSValue result=JS_NewObject(ctx);
+  JS_SetPropertyStr(ctx,result,"w",JS_NewInt32(ctx,w));
+  JS_SetPropertyStr(ctx,result,"h",JS_NewInt32(ctx,h));
+  JS_SetPropertyStr(ctx,result,"fmt",JS_NewInt32(ctx,fmt));
+  return result;
+}
+
+static void egg_wasm_image_get_header(wasm_exec_env_t ee,int *w,int *h,int *fmt,int qual,int imageid) {
+  egg_image_get_header(w,h,fmt,qual,imageid);
+}
+#endif
+
+/* egg_image_decode
+ */
+ 
+static int egg_image_minimum_stride(int w,int fmt) {
+  if (w<1) return 0;
+  if (w>INT_MAX>>2) return 0;
+  switch (fmt) {
+    case EGG_TEX_FMT_RGBA: return w<<2;
+    case EGG_TEX_FMT_A8:
+    case EGG_TEX_FMT_Y8: return w;
+    case EGG_TEX_FMT_A1:
+    case EGG_TEX_FMT_Y1: return (w+7)>>3;
+  }
+  return 0;
+}
+ 
+int egg_image_decode(void *dst,int dsta,int stride,int qual,int imageid) {
+  if (stride<1) return -1;
+  const void *serial=0;
+  int serialc=romr_get_qualified(&serial,&egg.romr,EGG_TID_image,qual,imageid);
+  if (serialc<1) return -1;
+  struct rawimg *rawimg=rawimg_decode(serial,serialc);
+  if (!rawimg) return -1;
+  if (rawimg->stride>stride) {
+    rawimg_del(rawimg);
+    return -1;
+  }
+  int dstc=rawimg->stride*rawimg->h;
+  if (dstc<=dsta) {
+    if (stride==rawimg->stride) {
+      memcpy(dst,rawimg->v,dstc);
+    } else {
+      const uint8_t *srcrow=rawimg->v;
+      uint8_t *dstrow=dst;
+      int i=rawimg->h;
+      for (;i-->0;srcrow+=rawimg->stride,dstrow+=stride) {
+        memcpy(dstrow,srcrow,rawimg->stride);
+      }
+    }
+  }
+  rawimg_del(rawimg);
+  return dstc;
+}
+
+#if EGG_ENABLE_VM
+static JSValue egg_js_image_decode(JSContext *ctx,JSValueConst this,int argc,JSValueConst *argv) {
+  JSASSERTARGC(2)
+  int32_t qual=0,imageid=0;
+  JS_ToInt32(ctx,&qual,argv[0]);
+  JS_ToInt32(ctx,&imageid,argv[1]);
+  int w=0,h=0,fmt=0;
+  egg_image_get_header(&w,&h,&fmt,qual,imageid);
+  if ((w<1)||(h<1)) return JS_NULL;
+  int stride=egg_image_minimum_stride(w,fmt);
+  if (stride<1) return JS_NULL;
+  if (stride>INT_MAX/h) return JS_NULL;
+  int dsta=stride*h;
+  void *dst=malloc(dsta);
+  if (!dst) return JS_NULL;
+  int dstc=egg_image_decode(dst,dsta,stride,qual,imageid);
+  if ((dstc<dsta)||(dstc>dsta)) {
+    free(dst);
+    return JS_NULL;
+  }
+  return JS_NewArrayBuffer(ctx,dst,dstc,egg_js_basic_free,0,0);
+}
+
+static int egg_wasm_image_decode(wasm_exec_env_t ee,void *dst,int dsta,int stride,int qual,int imageid) {
+  return egg_image_decode(dst,dsta,stride,qual,imageid);
 }
 #endif
 
@@ -1204,6 +1315,8 @@ static const JSCFunctionListEntry egg_native_js_exports[]={
   JS_CFUNC_DEF("input_device_get_button",0,egg_js_input_device_get_button),
   JS_CFUNC_DEF("input_device_disconnect",0,egg_js_input_device_disconnect),
   JS_CFUNC_DEF("show_cursor",0,egg_js_show_cursor),
+  JS_CFUNC_DEF("image_get_header",0,egg_js_image_get_header),
+  JS_CFUNC_DEF("image_decode",0,egg_js_image_decode),
   JS_CFUNC_DEF("texture_del",0,egg_js_texture_del),
   JS_CFUNC_DEF("texture_new",0,egg_js_texture_new),
   JS_CFUNC_DEF("texture_load_image",0,egg_js_texture_load_image),
@@ -1253,6 +1366,8 @@ static NativeSymbol egg_native_wasm_exports[]={
   {"egg_input_device_get_button",egg_wasm_input_device_get_button,"(*****ii)"},
   {"egg_input_device_disconnect",egg_wasm_input_device_disconnect,"(i)"},
   {"egg_show_cursor",egg_wasm_show_cursor,"(i)"},
+  {"egg_image_get_header",egg_wasm_image_get_header,"(***ii)"},
+  {"egg_image_decode",egg_wasm_image_decode,"(*~iii)i"},
   {"egg_texture_del",egg_wasm_texture_del,"(i)"},
   {"egg_texture_new",egg_wasm_texture_new,"()i"},
   {"egg_texture_load_image",egg_wasm_texture_load_image,"(iii)i"},
