@@ -59,6 +59,19 @@ export class RenderGl {
   /* Public API.
    ***************************************************************************/
    
+  image_get_header(qual, rid) {
+    const serial = this.rom.getResource(Rom.TID_image, qual, rid);
+    if (!serial) return { w: 0, h: 0, fmt: 0 };
+    return this.imageDecoder.decodeHeader(serial);
+  }
+  
+  image_decode(qual, rid) {
+    const serial = this.rom.getResource(Rom.TID_image, qual, rid);
+    if (!serial) return null;
+    const image = this.imageDecoder.decode(serial);
+    return image ? image.v : null;
+  }
+   
   texture_del(texid) {
     if ((texid < 2) || (texid > this.textures.length)) return; // sic "<2". You can't delete the main framebuffer.
     const texture = this.textures[texid - 1];

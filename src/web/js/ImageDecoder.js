@@ -41,8 +41,44 @@ export class ImageDecoder {
     return "";
   }
   
+  /* { w, h, fmt } exactly as egg_image_get_header returns.
+   * Returns {0,0,0} on errors because that's what Egg's JS API declares.
+   */
+  decodeHeader(serial) {
+    if (serial instanceof ArrayBuffer) serial = new Uint8Array(serial);
+    if (!(serial instanceof Uint8Array)) return {w:0,h:0,fmt:0};
+    let hdr = null;
+    switch (this.detectFormat(serial)) {
+      case "rawimg": hdr = this.decode_header_rawimg(serial); break;
+      case "qoi": hdr = this.decode_header_qoi(serial); break;
+      case "rlead": hdr = this.decode_header_rlead(serial); break;
+    }
+    if (!hdr) return {w:0,h:0,fmt:0};
+    return hdr;
+  }
+  
   /* rawimg
    *******************************************************************/
+   
+  decode_header_rawimg(src) {
+    const hdrlen = 32;
+    if (src.length < hdrlen) return null;
+    if (src[0] !== 0x00) return null;
+    if (src[1] !== 0x72) return null;
+    if (src[2] !== 0x61) return null;
+    if (src[3] !== 0x77) return null;
+    const w = (src[4] << 8) | src[5];
+    if ((w < 1) || (w > 0x7fff)) return null;
+    const h = (src[6] << 8) | src[7];
+    if ((h < 1) || (h > 0x7fff)) return null;
+    const pixelsize = src[29];
+    switch (pixelsize) {
+      case 1: return { w, h, fmt: 3 }; // A1
+      case 8: return { w, h, fmt: 2 }; // A8
+      case 32: return { w, h, fmt: 1 }; // RGBA
+    }
+    return null;
+  }
    
   decode_rawimg(src) {
     
@@ -152,6 +188,19 @@ export class ImageDecoder {
   
   /* qoi
    *******************************************************************/
+   
+  decode_header_qoi(src) {
+    if (src.length < 12) return null;
+    if (src[0] !== 0x71) return null;
+    if (src[1] !== 0x6f) return null;
+    if (src[2] !== 0x69) return null;
+    if (src[3] !== 0x66) return null;
+    const w = (src[4] << 24) | (src[5] << 16) | (src[6] << 8) | src[7];
+    const h = (src[8] << 24) | (src[9] << 16) | (src[10] << 8) | src[11];
+    if ((w < 1) || (w > 0x7fff)) return null;
+    if ((h < 1) || (h > 0x7fff)) return null;
+    return { w, h, fmt: 1 }; // RGBA
+  }
    
   decode_qoi(src) {
     
@@ -267,6 +316,17 @@ export class ImageDecoder {
   
   /* rlead
    *******************************************************************/
+   
+  decode_header_rlead(src) {
+    if (src.length < 7) return null;
+    if (src[0] !== 0xbb) return null;
+    if (src[1] !== 0xad) return null;
+    const w = (src[2] << 8) | src[3];
+    const h = (src[4] << 8) | src[5];
+    if ((w < 1) || (w > 0x7fff)) return null;
+    if ((h < 1) || (h > 0x7fff)) return null;
+    return { w, h, fmt: 3 }; // A1
+  }
    
   decode_rlead(src) {
     

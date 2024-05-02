@@ -255,6 +255,8 @@ export class Runtime {
       input_device_get_button: (devid, index) => this.input.input_device_get_button(devid, index),
       input_device_disconnect: (devid) => this.input.input_device_disconnect(devid),
       show_cursor: (show) => this.input.show_cursor(show),
+      image_get_header: (qual, rid) => this.render.image_get_header(qual, rid),
+      image_decode: (qual, rid) => this.render.image_decode(qual, rid),
       texture_del: (texid) => this.render.texture_del(texid),
       texture_new: () => this.render.texture_new(),
       texture_load_image: (texid, qual, imageid) => this.render.texture_load_image(texid, qual, imageid),
@@ -300,6 +302,8 @@ export class Runtime {
       egg_input_device_get_button: (a, b, c, d, e, id, p) => this.wasm_input_device_get_button(a, b, c, d, e, id, p),
       egg_input_device_disconnect: (id) => this.input.input_device_disconnect(id),
       egg_show_cursor: (show) => this.input.show_cursor(show),
+      egg_image_get_header: (wp, hp, fmtp, qual, rid) => this.wasm_image_get_header(wp, hp, fmtp, qual, rid),
+      egg_image_decode: (dst, dsta, stride, qual, rid) => this.wasm_image_decode(dst, dsta, stride, qual, rid),
       egg_texture_del: (texid) => this.render.texture_del(texid),
       egg_texture_new: () => this.render.texture_new(),
       egg_texture_load_image: (texid, qual, imageid) => this.render.texture_load_image(texid, qual, imageid),
@@ -379,6 +383,22 @@ export class Runtime {
       if (hi) this.wasm.memU32[hi >> 2] = btn.hi;
       if (value) this.wasm.memU32[value >> 2] = btn.value;
     }
+  }
+  
+  wasm_image_get_header(wp, hp, fmtp, qual, rid) {
+    const header = this.render.image_get_header(qual, rid);
+    if (header) {
+      if (wp) this.wasm.memU32[wp >> 2] = header.w;
+      if (hp) this.wasm.memU32[hp >> 2] = header.h;
+      if (fmtp) this.wasm.memU32[fmtp >> 2] = header.fmt;
+    }
+  }
+  
+  wasm_image_decode(dst, dsta, stride, qual, rid) {
+    const pixels = this.render.image_decode(qual, rid);
+    if (!pixels) return -1;
+    if (pixels.byteLength > dsta) return -1;
+    return this.wasm.safeWrite(dst, dsta, pixels);
   }
   
   wasm_texture_upload(texid, w, h, stride, fmt, src, srcc) {
