@@ -206,6 +206,44 @@ static int eggrom_t_1(uint8_t tid,uint16_t qual,uint16_t rid,const void *v,int c
   }
   return 0;
 }
+
+struct eggrom_t_summary {
+  int tid;
+  int count;
+  int size;
+};
+
+static void eggrom_t_summary_flush(struct eggrom_t_summary *ctx) {
+  if (ctx->count) {
+    char tidstr[16];
+    int tidstrc=eggrom_tid_repr(tidstr,sizeof(tidstr),ctx->tid);
+    if ((tidstrc<1)||(tidstrc>sizeof(tidstr))) {
+      tidstrc=sr_decuint_repr(tidstr,sizeof(tidstr),ctx->tid,0);
+    }
+    fprintf(stdout,"  %12.*s: %7d bytes for %4d resources\n",tidstrc,tidstr,ctx->size,ctx->count);
+  }
+  ctx->count=0;
+  ctx->size=0;
+}
+
+static int eggrom_t_summarize_cb(uint8_t tid,uint16_t qual,uint16_t rid,const void *v,int c,void *userdata) {
+  struct eggrom_t_summary *ctx=userdata;
+  if (tid!=ctx->tid) {
+    eggrom_t_summary_flush(ctx);
+    ctx->tid=tid;
+  }
+  ctx->count++;
+  ctx->size+=c;
+  return 0;
+}
+
+static int eggrom_t_summarize(const char *path,const void *serial,int serialc) {
+  fprintf(stdout,"%s: Total size %d bytes.\n",path,serialc);
+  struct eggrom_t_summary ctx={0};
+  romr_for_each(serial,serialc,eggrom_t_summarize_cb,&ctx);
+  eggrom_t_summary_flush(&ctx);
+  return 0;
+}
  
 static int eggrom_t_input(const char *path) {
   void *serial=0;
@@ -213,6 +251,11 @@ static int eggrom_t_input(const char *path) {
   if (serialc<0) {
     fprintf(stderr,"%s: Failed to read file.\n",path);
     return -2;
+  }
+  if (eggrom.format=='s') { // Summary mode works a little different from the others.
+    eggrom_t_summarize(path,serial,serialc);
+    free(serial);
+    return 0;
   }
   switch (eggrom.format) {
     case 0:
@@ -282,6 +325,25 @@ int main(int argc,char **argv) {
       continue;
     }
     
+    // "--help"
+    if (!strcmp(arg,"--help")) {
+      fprintf(stderr,
+        "Usage: %s -c -oROMFILE [INPUTS]\n"
+        "   Or: %s -x -oDIRECTORY ROMFILE\n"
+        "   Or: %s -t [-fFORMAT] ROMFILE\n"
+        "\n"
+        "FORMAT for mode -t:\n"
+        "  -fdefault    Balanced human- and machine- readable.\n"
+        "  -fmachine    Decimal integers and whitespace only.\n"
+        "  -fjson       {tid,qual,rid,len} for each resource, all numeric.\n"
+        "  -fnumeric    Same as default but don't use symbolic names for tid or qual.\n"
+        "  -fsummary    One line per type, with the totals for that type.\n"
+        "\n"
+        "INPUTS to mode -c can be files or directories.\n"
+      ,eggrom.exename,eggrom.exename,eggrom.exename);
+      return 0;
+    }
+    
     // Single dash alone, and more than one dash, not currently defined.
     if (!arg[1]||(arg[1]=='-')) {
       fprintf(stderr,"%s: Unexpected argument '%s'\n",eggrom.exename,arg);
@@ -311,8 +373,9 @@ int main(int argc,char **argv) {
           else if (!strcmp(arg+2,"machine")) eggrom.format='m';
           else if (!strcmp(arg+2,"json")) eggrom.format='j';
           else if (!strcmp(arg+2,"numeric")) eggrom.format='n';
+          else if (!strcmp(arg+2,"summary")) eggrom.format='s';
           else {
-            fprintf(stderr,"%s: Unknown table format '%s' (-fdefault,-fmachine,-fjson,-fnumeric)\n",eggrom.exename,arg);
+            fprintf(stderr,"%s: Unknown table format '%s' (-fdefault,-fmachine,-fjson,-fnumeric,-fsummary)\n",eggrom.exename,arg);
             return 1;
           }
         } break;

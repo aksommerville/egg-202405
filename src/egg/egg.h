@@ -228,6 +228,16 @@ double egg_audio_get_playhead();
 
 /* Storage.
  ***************************************************************/
+ 
+// Canonical list: src/opt/romr/romr.h
+#define EGG_TID_metadata 1
+#define EGG_TID_wasm 2
+#define EGG_TID_js 3
+#define EGG_TID_image 4
+#define EGG_TID_string 5
+#define EGG_TID_song 6
+#define EGG_TID_sound 7
+#define EGG_TID_map 8
 
 /* Copy a resource from the ROM file.
  * May return >dsta if your buffer isn't long enough, and does not populate (dst) in that case.

@@ -26,17 +26,41 @@ const struct synth_builtin synth_builtin[0x80]={
 // 0..7: Piano
   BLIP(0x00) // Acoustic Grand Piano TODO
   ALIAS(0x01,0x00) // Bright Acoustic Piano TODO
-  ALIAS(0x02,0x00) // Electric Grand Piano TODO
-  ALIAS(0x03,0x00) // Honky-tonk Piano TODO
-  ALIAS(0x04,0x00) // EP 1 (Rhodes) TODO
+  FMREL(0x02, // Electric Grand Piano
+    .rate=0x20,
+    .scale=0x40,
+    .range=0x8fc8,
+    .level=TONE|ATTACK(0)|RELEASE(4),
+  )
+  FMREL(0x03, // Honky-Tonk Piano
+    .rate=0x18,
+    .scale=0x40,
+    .range=0xff82,
+    .level=TONE|ATTACK(1)|RELEASE(3),
+  )
+  ROCK(0x04, // EP 1 (Rhodes)
+    .wave={0x80,0xc0,0x40,0x20,0x08},
+    .mix=0x0f80,
+    .level=TONE|ATTACK(1)|RELEASE(3),
+  )
   FMABS(0x05, // EP 2 (Chorus). The Spooky Organ.
     .rate=0x0800,
     .scale=0x01,
     .range=0x0f30,
     .level=PLUCK|ATTACK(2)|RELEASE(4),
   )
-  ALIAS(0x06,0x00) // Harpsichord TODO
-  ALIAS(0x07,0x00) // Clavinet TODO
+  FMREL(0x06, // Harpsichord
+    .rate=0x50,
+    .scale=0x50,
+    .range=0xfff0,
+    .level=IMPULSE|ATTACK(0)|RELEASE(5),
+  )
+  FMREL(0x07, // Clavinet
+    .rate=0x40,
+    .scale=0x50,
+    .range=0x8f00,
+    .level=PLUCK|ATTACK(0)|RELEASE(5),
+  )
   
 // 8..15: Chromatic
   FMREL(0x08, // Celesta
@@ -45,7 +69,12 @@ const struct synth_builtin synth_builtin[0x80]={
     .range=0xf87a,
     .level=IMPULSE|ATTACK(0)|RELEASE(6),
   )
-  ALIAS(0x09,0x08) // Glockenspiel TODO
+  FMREL(0x09, // Glockenspiel
+    .rate=0x30,
+    .scale=0x40,
+    .range=0xfff4,
+    .level=IMPULSE|ATTACK(0)|RELEASE(3),
+  )
   ALIAS(0x0a,0x08) // Music Box TODO
   ALIAS(0x0b,0x08) // Vibraphone TODO
   ALIAS(0x0c,0x08) // Marimba TODO
@@ -59,8 +88,16 @@ const struct synth_builtin synth_builtin[0x80]={
   ALIAS(0x0f,0x08) // Dulcimer TODO
   
 // 16..23: Organ
-  BLIP(0x10) // Drawbar Organ TODO
-  ALIAS(0x11,0x10) // Percussive Organ TODO
+  ROCK(0x10, // Drawbar Organ
+    .wave={0xff,0x02,0x55,0x01,0x33,0x00,0x11},
+    .mix=0x2f8c,
+    .level=BOW|ATTACK(2)|RELEASE(5),
+  )
+  ROCK(0x11, // Percussive Organ
+    .wave={0x00,0xc0,0x04,0x40,0x01},
+    .mix=0xc2f4,
+    .level=PLUCK|ATTACK(0)|RELEASE(5),
+  )
   ALIAS(0x12,0x10) // Rock Organ TODO
   ALIAS(0x13,0x10) // Church Organ TODO
   ROCK(0x14, // Reed Organ
@@ -95,13 +132,28 @@ const struct synth_builtin synth_builtin[0x80]={
     .delay_rate=0x10,
     .delay_depth=0x20,
   )
-  ALIAS(0x1e,0x18) // Distortion Guitar TODO
+  FX(0x1e, // Distortion Guitar
+    .rangeenv=0xff44,
+    .rangelfo=0x20,
+    .rangelfo_depth=0x08,
+    .rate=0x08,
+    .scale=0x30,
+    .detune_rate=0x10,
+    .detune_depth=0x10,
+    .overdrive=0xe0,
+    .delay_rate=0x10,
+    .delay_depth=0x10,
+    .level=PLUCK|ATTACK(3)|RELEASE(5),
+  )
   ALIAS(0x1f,0x18) // Guitar Harmonics TODO
   
 // 32..39: Bass
   BLIP(0x20) // Acoustic Bass TODO
   ALIAS(0x21,0x18) // Fingered Electric Bass TODO
-  ALIAS(0x22,0x05) // Picked Electric Bass TODO
+  WAVE(0x22, // Picked Electric Bass
+    .wave={0xc0,0xc0,0x30,0x00,0x10,0x80,0x40,0x20},
+    .level=PLUCK|ATTACK(1)|RELEASE(3),
+  )
   ALIAS(0x23,0x20) // Fretless Bass TODO
   FMREL(0x24, // Slap Bass 1
     .rate=0x08,
@@ -109,9 +161,23 @@ const struct synth_builtin synth_builtin[0x80]={
     .range=0x6f61,
     .level=PLUCK|ATTACK(1)|RELEASE(3),
   )
-  ALIAS(0x25,0x20) // Slap Bass 2 TODO
-  ALIAS(0x26,0x20) // Synth Bass 1 TODO
-  ALIAS(0x27,0x20) // Synth Bass 2 TODO
+  ROCK(0x25, // Slap Bass 2
+    .wave={0x40,0xff,0xc0,0x80,0x40,0x10,0x08,0x02},
+    .mix=0x0f40,
+    .level=PLUCK|ATTACK(2)|RELEASE(4),
+  )
+  FMREL(0x26, // Synth Bass 1
+    .rate=0x08,
+    .scale=0x30,
+    .range=0x4fc2,
+    .level=PLUCK|ATTACK(2)|RELEASE(2),
+  )
+  FMREL(0x27, // Synth Bass 2
+    .rate=0x08,
+    .scale=0x50,
+    .range=0x8ff0,
+    .level=PLUCK|ATTACK(1)|RELEASE(4),
+  )
   
 // 40..47: Solo String
   BLIP(0x28) // Violin TODO
@@ -134,7 +200,11 @@ const struct synth_builtin synth_builtin[0x80]={
   ALIAS(0x37,0x30) // Orchestra Hit TODO
   
 // 56..63: Brass
-  BLIP(0x38) // Trumpet TODO
+  ROCK(0x38, // Trumpet
+    .wave={0x20,0xc0,0x60,0x50,0x40,0x10,0x08,0x02},
+    .mix=0xf0f4,
+    .level=BOW|ATTACK(3)|RELEASE(3),
+  )
   ALIAS(0x39,0x38) // Trombone TODO
   ALIAS(0x3a,0x38) // Tuba TODO
   ALIAS(0x3b,0x38) // Muted Trumpet TODO
@@ -144,7 +214,12 @@ const struct synth_builtin synth_builtin[0x80]={
   ALIAS(0x3f,0x38) // Synth Brass 2 TODO
   
 // 64..71: Solo Reed
-  BLIP(0x40) // Soprano Sax TODO
+  FMREL(0x40, // Soprano Sax
+    .rate=0x40,
+    .scale=0x30,
+    .range=0x4fc2,
+    .level=TONE|ATTACK(2)|RELEASE(4),
+  )
   ALIAS(0x41,0x40) // Alto Sax TODO
   ALIAS(0x42,0x40) // Tenor Sax TODO
   ALIAS(0x43,0x40) // Baritone Sax TODO
@@ -178,7 +253,12 @@ const struct synth_builtin synth_builtin[0x80]={
     .level=PLUCK|ATTACK(2)|RELEASE(4),
   )
   ALIAS(0x4e,0x48) // Whistle TODO
-  ALIAS(0x4f,0x48) // Ocarina TODO
+  FMREL(0x4f, // Ocarina
+    .rate=0x20,
+    .scale=0x28,
+    .range=0x8f00,
+    .level=BOW|ATTACK(2)|RELEASE(5),
+  )
   
 // 80..87: Synth Lead
   BLIP(0x50) // Square Lead. This should always be BLIP, it's not a placeholder.
@@ -192,7 +272,10 @@ const struct synth_builtin synth_builtin[0x80]={
   
 // 88..95: Synth Pad
   BLIP(0x58) // Fantasia Pad TODO
-  ALIAS(0x59,0x58) // Warm Pad TODO
+  WAVE(0x59, // Warm Pad
+    .wave={0xff,0x10,0x08,0x02},
+    .level=BOW|ATTACK(0)|RELEASE(3),
+  )
   ALIAS(0x5a,0x58) // Polysynth Pad TODO
   SUB(0x5b, // Choir Space Voice
     .width1=40,
@@ -200,7 +283,12 @@ const struct synth_builtin synth_builtin[0x80]={
     .gain=40,
     .level=BOW|ATTACK(3)|RELEASE(4),
   )
-  ALIAS(0x5c,0x58) // Bowed Glass TODO
+  SUB(0x5c, // Bowed Glass
+    .width1=20,
+    .width2=40,
+    .gain=30,
+    .level=BOW|ATTACK(2)|RELEASE(5),
+  )
   ALIAS(0x5d,0x58) // Metallic Pad TODO
   ALIAS(0x5e,0x58) // Halo Pad TODO
   ALIAS(0x5f,0x58) // Sweep Pad TODO
@@ -237,9 +325,19 @@ const struct synth_builtin synth_builtin[0x80]={
   
 // 120..127: Insert Joke Here
   BLIP(0x78) // Guitar Fret Noise TODO
-  ALIAS(0x79,0x78) // Breath Noise TODO
+  SUB(0x79, // Breath Noise
+    .width1=40,
+    .width2=40,
+    .gain=30,
+    .level=PLUCK|ATTACK(3)|RELEASE(3),
+  )
   ALIAS(0x7a,0x78) // Seashore TODO
-  ALIAS(0x7b,0x78) // Bird Tweet TODO
+  FMABS(0x7b, // Bird Tweet
+    .rate=0x0800,
+    .scale=0x12,
+    .range=0xf400,
+    .level=PLUCK|ATTACK(1)|RELEASE(5),
+  )
   ALIAS(0x7c,0x78) // Telephone Ring TODO
   ALIAS(0x7d,0x78) // Helicopter TODO
   ALIAS(0x7e,0x78) // Applause TODO

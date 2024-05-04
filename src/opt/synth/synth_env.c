@@ -24,8 +24,8 @@ void synth_env_config_init_tiny(struct synth *synth,struct synth_env_config *con
     case 0x01: config->rlsthi=60; break;
     case 0x02: config->rlsthi=100; break;
     case 0x03: config->rlsthi=200; break;
-    case 0x04: config->rlsthi=400; break;
-    case 0x05: config->rlsthi=600; break;
+    case 0x04: config->rlsthi=300; break;
+    case 0x05: config->rlsthi=400; break;
     case 0x06: config->rlsthi=800; break;
     case 0x07: config->rlsthi=1200; break;
   }

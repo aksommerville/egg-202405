@@ -73,7 +73,25 @@ int egg_client_init() {
     spritec=SPRITEA;
   }
   
-  egg_audio_play_song(0,13,0,1);
+  egg_audio_play_song(0,3,0,1);
+  /*
+ 1-tangled_vine.mid
+ 2-seven_circles.mid
+ 3-toil_and_trouble.mid
+ 4-eye_of_newt.mid
+ 5-jaws_of_wrath.mid
+ 6-truffles_in_forbidden_sauce.mid
+ 7-seventh_roots_of_unity.mid
+ 8-snowglobe.mid
+ 9-choose_a_door.mid
+10-blood_for_silver.mid
+11-first_frost.mid
+12-gloom_for_company.mid
+13-nearer_the_sky.mid
+14-sky-gardening.mid
+15-feline-mind.mid
+16-what-fits-in-the-box.mid
+  */
   
   egg_log("size of sound:0:35=%d",egg_res_get(0,0,7,0,35));
   
@@ -159,6 +177,7 @@ static void on_key(int keycode,int value) {
 
 static void on_input_connect(int devid) {
   egg_log("CONNECT %d",devid);
+  return;
   char name[256];
   int namec=egg_input_device_get_name(name,sizeof(name),devid);
   if ((namec<0)||(namec>sizeof(name))) namec=0;

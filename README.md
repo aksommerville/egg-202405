@@ -78,3 +78,7 @@ Once you've done that, `make` should build the whole project.
 - [ ] Wasm: (export "memory"). Web requires this but native does not. Decide who's wrong and change them.
 - [ ] romr has a vestigial "qual_by_tid" that we aren't using -- remove it. Make romr_get() take a qualifier.
 - [ ] bmp needs a decode_header. For now, we decode the whole image just to read the header. (rawimg_encode.c) jpeg too
+- [ ] When a function is absent at link we get this, but it doesn't prevent link or launch:
+- - [00:02:38:170 - 76B5EDC2BC80]: warning: failed to link import function (env, jcfg_del)
+- - [ ] Can we detect this at runtime and abort earlier?
+- - [ ] Can we cause link to fail in this case? Will be a trick, because we do have all those deferred-link "egg_" functions.
