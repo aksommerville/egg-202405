@@ -35,7 +35,7 @@ int egg_event_next(struct egg_event *eventv,int eventa) {
   memcpy(eventv,egg.eventq+egg.eventp,sizeof(struct egg_event)*cpc);
   if (!(egg.eventc-=cpc)) {
     egg.eventp=0;
-    return cpc;
+    return eventa;
   }
   if ((egg.eventp+=cpc)>=EGG_EVENT_QUEUE_LENGTH) egg.eventp=0;
   return eventa;

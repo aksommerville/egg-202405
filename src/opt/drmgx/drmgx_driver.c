@@ -67,11 +67,6 @@ int drmgx_init(const char *device) {
     drmgx_quit();
     return -1;
   }
-  drmgx.crtcunset=0;
-  
-  // Set the CRTC pointlessly, just because this is where I usually fail if we launch with X11 running.
-  uint32_t fbid=0;
-  if (drmgx_swap_egl(&fbid)<0) return -1;
 
   return 0;
 }

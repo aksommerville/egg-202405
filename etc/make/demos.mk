@@ -36,6 +36,10 @@ define DEMO_RULES
 endef
 
 demos_DEMOS:=$(notdir $(wildcard src/demo/*))
+ifeq (,$(strip $(WASI_SDK)))
+  # WASI_SDK unset, don't build the demos. (We could still build the JS-only ones, but meh).
+  demos_DEMOS:=
+endif
 $(foreach D,$(demos_DEMOS),$(eval $(call DEMO_RULES,$D)))
 
 $(demos_MIDDIR)/%.o:src/demo/%.c;$(PRECMD) $(demos_CC) -o$@ $<

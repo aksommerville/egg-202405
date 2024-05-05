@@ -1,7 +1,7 @@
 # The truly optional things should be set by config.mk:
 #   glx x11fb xinerama drmgx drmfb alsafd asound pulse evdev
 linux_OPT_ENABLE+=hostio fs serial qjs wamr timer romr romw strfmt localstore http render softrender synth midi sfg
-linux_OPT_ENABLE+=qoi rlead rawimg gif jpeg bmp ico png
+linux_OPT_ENABLE+=qoi rlead rawimg gif bmp ico png
 
 linux_CCWARN:=-Werror -Wimplicit
 linux_CCINC:=-Isrc -I$(linux_MIDDIR) -I$(QJS_SDK) -I$(WAMR_SDK)/core/iwasm/include
@@ -19,7 +19,7 @@ linux_AR:=$(linux_TOOLCHAIN)ar rc
 
 ifneq (,$(strip $(filter drmgx,$(linux_OPT_ENABLE))))
   linux_CC+=-I/usr/include/libdrm
-  linux_LDPOST+=-ldrm -lgbm -lEGL
+  linux_LDPOST+=-ldrm -lgbm -lEGL -lGL
 else ifneq (,$(strip $(filter drmfb,$(linux_OPT_ENABLE))))
   linux_CC+=-I/usr/include/libdrm
   linux_LDPOST+=-ldrm

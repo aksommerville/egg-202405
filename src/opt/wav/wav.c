@@ -178,7 +178,7 @@ struct wav_file *wav_file_decode(const void *src,int srcc) {
   const uint8_t *SRC=src;
   
   // RIFF and WAVE signatures.
-  if ((srcc<8)||memcmp(src,"RIFF",8)) return 0;
+  if ((srcc<8)||memcmp(src,"RIFF",4)) return 0;
   int riffsize=SRC[4]|(SRC[5]<<8)|(SRC[6]<<16)|(SRC[7]<<24);
   int srcp=8;
   if ((riffsize<0)||(srcp>srcc-riffsize)) return 0;
