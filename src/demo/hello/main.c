@@ -73,7 +73,7 @@ int egg_client_init() {
     spritec=SPRITEA;
   }
   
-  egg_audio_play_song(0,3,0,1);
+  egg_audio_play_song(0,16,0,1);
   /*
  1-tangled_vine.mid
  2-seven_circles.mid

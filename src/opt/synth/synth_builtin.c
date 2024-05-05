@@ -75,17 +75,42 @@ const struct synth_builtin synth_builtin[0x80]={
     .range=0xfff4,
     .level=IMPULSE|ATTACK(0)|RELEASE(3),
   )
-  ALIAS(0x0a,0x08) // Music Box TODO
-  ALIAS(0x0b,0x08) // Vibraphone TODO
-  ALIAS(0x0c,0x08) // Marimba TODO
-  ALIAS(0x0d,0x08) // Xylophone TODO
+  FMREL(0x0a, // Music Box
+    .rate=0x62,
+    .scale=0x80,
+    .range=0xff84,
+    .level=IMPULSE|ATTACK(0)|RELEASE(5),
+  )
+  FMREL(0x0b, // Vibraphone
+    .rate=0x40,
+    .scale=0x40,
+    .range=0x0ff4,
+    .level=IMPULSE|ATTACK(1)|RELEASE(5),
+  )
+  FMREL(0x0c, // Marimba
+    .rate=0x80,
+    .scale=0x38,
+    .range=0x8ff4,
+    .level=IMPULSE|ATTACK(0)|RELEASE(5),
+  )
+  FMREL(0x0c, // Xylophone
+    .rate=0x80,
+    .scale=0x30,
+    .range=0xfff4,
+    .level=IMPULSE|ATTACK(0)|RELEASE(5),
+  )
   FMREL(0x0e, // Tubular Bells
     .rate=0x38,
     .scale=0x67,
     .range=0xf8ff,
     .level=IMPULSE|ATTACK(1)|RELEASE(6),
   )  
-  ALIAS(0x0f,0x08) // Dulcimer TODO
+  FMREL(0x0f, // Dulcimer
+    .rate=0x60,
+    .scale=0x70,
+    .range=0x8f84,
+    .level=IMPULSE|ATTACK(0)|RELEASE(6),
+  )
   
 // 16..23: Organ
   ROCK(0x10, // Drawbar Organ
@@ -98,8 +123,16 @@ const struct synth_builtin synth_builtin[0x80]={
     .mix=0xc2f4,
     .level=PLUCK|ATTACK(0)|RELEASE(5),
   )
-  ALIAS(0x12,0x10) // Rock Organ TODO
-  ALIAS(0x13,0x10) // Church Organ TODO
+  ROCK(0x12, // Rock Organ
+    .wave={0xc0,0x00,0x60,0x00,0x30,0x00,0x18},
+    .mix=0x0f84,
+    .level=TONE|ATTACK(2)|RELEASE(4),
+  )
+  ROCK(0x13, // Church Organ
+    .wave={0xc0,0xa0,0x60,0x00,0x30,0x00,0x18},
+    .mix=0xfff0,
+    .level=TONE|ATTACK(3)|RELEASE(6),
+  )
   ROCK(0x14, // Reed Organ
     .wave={0x00,0x7c,0xa5,0x80,0x33,0x60,0x11,0x00},
     .mix=0x0ff0,
@@ -116,10 +149,58 @@ const struct synth_builtin synth_builtin[0x80]={
     .range=0x4fc0,
     .level=IMPULSE|ATTACK(0)|RELEASE(5),
   )
-  ALIAS(0x19,0x18) // Steel Acoustic Guitar TODO
-  ALIAS(0x1a,0x18) // Jazz Electric Guitar TODO
-  ALIAS(0x1b,0x18) // Clean Electric Guitar TODO
-  ALIAS(0x1c,0x18) // Muted Electric Guitar TODO
+  FX(0x19, // Steel Acoustic Guitar
+    .rangeenv=0x0f80,
+    .rangelfo=0x00,
+    .rangelfo_depth=0x00,
+    .rate=0x60,
+    .scale=0x78,
+    .detune_rate=0x40,
+    .detune_depth=0x10,
+    .overdrive=0x00,
+    .delay_rate=0x10,
+    .delay_depth=0x10,
+    .level=PLUCK|ATTACK(0)|RELEASE(4),
+  )
+  FX(0x1a, // Jazz Electric Guitar
+    .rangeenv=0x0fff,
+    .rangelfo=0x10,
+    .rangelfo_depth=0x08,
+    .rate=0x20,
+    .scale=0x40,
+    .detune_rate=0x40,
+    .detune_depth=0x10,
+    .overdrive=0x00,
+    .delay_rate=0x00,
+    .delay_depth=0x00,
+    .level=PLUCK|ATTACK(0)|RELEASE(4),
+  )
+  FX(0x1b, // Clean Electric Guitar
+    .rangeenv=0x7f84,
+    .rangelfo=0x20,
+    .rangelfo_depth=0x10,
+    .rate=0x20,
+    .scale=0x40,
+    .detune_rate=0x10,
+    .detune_depth=0x10,
+    .overdrive=0x00,
+    .delay_rate=0x08,
+    .delay_depth=0x40,
+    .level=PLUCK|ATTACK(1)|RELEASE(4),
+  )
+  FX(0x1c, // Muted Electric Guitar
+    .rangeenv=0x0ff0,
+    .rangelfo=0x20,
+    .rangelfo_depth=0x20,
+    .rate=0x20,
+    .scale=0x40,
+    .detune_rate=0x10,
+    .detune_depth=0x10,
+    .overdrive=0x10,
+    .delay_rate=0x10,
+    .delay_depth=0x20,
+    .level=PLUCK|ATTACK(0)|RELEASE(4),
+  )
   FX(0x1d, // Overdriven Guitar
     .rangeenv=0xff80,
     .rangelfo=0x40,
@@ -145,16 +226,56 @@ const struct synth_builtin synth_builtin[0x80]={
     .delay_depth=0x10,
     .level=PLUCK|ATTACK(3)|RELEASE(5),
   )
-  ALIAS(0x1f,0x18) // Guitar Harmonics TODO
+  FX(0x1f, // Guitar Harmonics
+    .rangeenv=0x0ff0,
+    .rangelfo=0x00,
+    .rangelfo_depth=0x00,
+    .rate=0x77,
+    .scale=0x80,
+    .detune_rate=0x10,
+    .detune_depth=0x10,
+    .overdrive=0x00,
+    .delay_rate=0x10,
+    .delay_depth=0x10,
+    .level=PLUCK|ATTACK(3)|RELEASE(5),
+  )
   
 // 32..39: Bass
-  BLIP(0x20) // Acoustic Bass TODO
-  ALIAS(0x21,0x18) // Fingered Electric Bass TODO
+  FMREL(0x20, // Acoustic Bass
+    .rate=0x08,
+    .scale=0x18,
+    .range=0x6fd8,
+    .level=TONE|ATTACK(1)|RELEASE(3),
+  )
+  FX(0x21, // Fingered Electric Bass
+    .rangeenv=0x8fc4,
+    .rangelfo=0x20,
+    .rangelfo_depth=0x04,
+    .rate=0x08,
+    .scale=0x20,
+    .detune_rate=0x00,
+    .detune_depth=0x00,
+    .overdrive=0x00,
+    .delay_rate=0x00,
+    .delay_depth=0x00,
+    .level=PLUCK|ATTACK(0)|RELEASE(3),
+  )
   WAVE(0x22, // Picked Electric Bass
     .wave={0xc0,0xc0,0x30,0x00,0x10,0x80,0x40,0x20},
     .level=PLUCK|ATTACK(1)|RELEASE(3),
   )
-  ALIAS(0x23,0x20) // Fretless Bass TODO
+  FMREL(0x23, // Fretless Bass
+    .rate=0x08,
+    .scale=0x20,
+    .range=0x4f80,
+    .level=TONE|ATTACK(3)|RELEASE(4),
+  )
+  FMREL(0x20,
+    .rate=0x08,
+    .scale=0x40,
+    .range=0xf888,
+    .level=BOW|ATTACK(3)|RELEASE(5),
+  )
   FMREL(0x24, // Slap Bass 1
     .rate=0x08,
     .scale=0x28,
@@ -180,19 +301,101 @@ const struct synth_builtin synth_builtin[0x80]={
   )
   
 // 40..47: Solo String
-  BLIP(0x28) // Violin TODO
-  ALIAS(0x29,0x05) // Viola TODO
-  ALIAS(0x2a,0x28) // Cello TODO
-  ALIAS(0x2b,0x28) // Contrabass TODO
-  ALIAS(0x2c,0x28) // Tremolo Strings TODO
-  ALIAS(0x2d,0x28) // Pizzicato Strings TODO
-  ALIAS(0x2e,0x28) // Orchestral Harp TODO
-  ALIAS(0x2f,0x28) // Timpani TODO
+  ROCK(0x28, // Violin
+    .wave={0x20,0xc0,0x70,0x58,0x40,0x20,0x08},
+    .mix=0x8fc0,
+    .level=BOW|ATTACK(3)|RELEASE(5),
+  )
+  ROCK(0x29, // Viola
+    .wave={0xff,0x80,0x55,0x40,0x33,0x20,0x08},
+    .mix=0x8fc0,
+    .level=BOW|ATTACK(3)|RELEASE(5),
+  )
+  ROCK(0x2a, // Cello
+    .wave={0x40,0xff,0x80,0x55,0x40,0x33,0x20,0x08},
+    .mix=0x8fc0,
+    .level=BOW|ATTACK(3)|RELEASE(4),
+  )
+  FMREL(0x2b, // Contrabass
+    .rate=0x08,
+    .scale=0x40,
+    .range=0xf888,
+    .level=BOW|ATTACK(3)|RELEASE(5),
+  )
+  FX(0x2c, // Tremolo Strings
+    .rangeenv=0x0fc4,
+    .rangelfo=0x08,
+    .rangelfo_depth=0x02,
+    .rate=0x10,
+    .scale=0x20,
+    .detune_rate=0x00,
+    .detune_depth=0x00,
+    .overdrive=0x00,
+    .delay_rate=0x00,
+    .delay_depth=0x00,
+    .level=BOW|ATTACK(0)|RELEASE(6),
+  )
+  FX(0x2d, // Pizzicato Strings
+    .rangeenv=0x0fc4,
+    .rangelfo=0x08,
+    .rangelfo_depth=0x08,
+    .rate=0x10,
+    .scale=0x30,
+    .detune_rate=0x04,
+    .detune_depth=0x10,
+    .overdrive=0x00,
+    .delay_rate=0x10,
+    .delay_depth=0x10,
+    .level=IMPULSE|ATTACK(0)|RELEASE(5),
+  )
+  FX(0x2e, // Orchestral Harp
+    .rangeenv=0x8fc4,
+    .rangelfo=0x00,
+    .rangelfo_depth=0x00,
+    .rate=0x30,
+    .scale=0x30,
+    .detune_rate=0x04,
+    .detune_depth=0x10,
+    .overdrive=0x00,
+    .delay_rate=0x10,
+    .delay_depth=0x20,
+    .level=IMPULSE|ATTACK(0)|RELEASE(6),
+  )
+  SUB(0x2f, // Timpani
+    .width1=50,
+    .width2=10,
+    .gain=150,
+    .level=IMPULSE|ATTACK(1)|RELEASE(3),
+  )
   
 // 48..55: String Ensemble
-  BLIP(0x30) // String Ensemble 1 TODO
+  FX(0x30, // String Ensemble 1
+    .rangeenv=0x8fc4,
+    .rangelfo=0x40,
+    .rangelfo_depth=0x08,
+    .rate=0x18,
+    .scale=0x20,
+    .detune_rate=0x10,
+    .detune_depth=0x08,
+    .overdrive=0x00,
+    .delay_rate=0x10,
+    .delay_depth=0x20,
+    .level=BOW|ATTACK(2)|RELEASE(5),
+  )
   ALIAS(0x31,0x30) // String Ensemble 2 TODO
-  ALIAS(0x32,0x30) // Synth Strings 1 TODO
+  FX(0x32, // Synth Strings 1
+    .rangeenv=0xcfe4,
+    .rangelfo=0x40,
+    .rangelfo_depth=0x08,
+    .rate=0x08,
+    .scale=0x50,
+    .detune_rate=0x10,
+    .detune_depth=0x08,
+    .overdrive=0x00,
+    .delay_rate=0x10,
+    .delay_depth=0x20,
+    .level=BOW|ATTACK(2)|RELEASE(5),
+  )
   ALIAS(0x33,0x30) // Synth Strings 2 TODO
   ALIAS(0x34,0x30) // Choir Aahs TODO
   ALIAS(0x35,0x30) // Voice Oohs TODO
@@ -261,22 +464,74 @@ const struct synth_builtin synth_builtin[0x80]={
   )
   
 // 80..87: Synth Lead
-  BLIP(0x50) // Square Lead. This should always be BLIP, it's not a placeholder.
-  ALIAS(0x51,0x50) // Saw Lead TODO
-  ALIAS(0x52,0x50) // Calliope TODO
-  ALIAS(0x53,0x50) // Chiffer TODO
-  ALIAS(0x54,0x50) // Charang TODO
-  ALIAS(0x55,0x50) // Voice Solo TODO
-  ALIAS(0x56,0x50) // Fifths TODO
-  ALIAS(0x57,0x50) // Bass and Lead TODO
+  WAVE(0x50, // Square Lead
+    .wave={0xff,0x00,0x55,0x00,0x33,0x00,0x10},
+    .level=TONE|ATTACK(1)|RELEASE(3),
+  )
+  WAVE(0x51, // Saw Lead
+    .wave={0xff,0x80,0x55,0x40,0x33,0x20,0x10,0x08},
+    .level=TONE|ATTACK(2)|RELEASE(3),
+  )
+  ROCK(0x52, // Calliope
+    .wave={0x00,0xff,0x20},
+    .mix=0x0f80,
+    .level=TONE|ATTACK(1)|RELEASE(5),
+  )
+  BLIP(0x53) // Chiffer. This is intentionally BLIP, not a placeholder.
+  ROCK(0x54, // Sounds exactly like whatever the hell a "Charang" is.
+    .wave={0x00,0xff,0x40,0x20,0x10,0x08},
+    .mix=0x00ff,
+    .level=TONE|ATTACK(1)|RELEASE(4),
+  )
+  FMREL(0x55, // Voice Solo
+    .rate=0x28,
+    .scale=0x20,
+    .range=0xf8c4,
+    .level=BOW|ATTACK(3)|RELEASE(4),
+  )
+  FMREL(0x56, // Fifths
+    .rate=0x18,
+    .scale=0x40,
+    .range=0x8fc4,
+    .level=TONE|ATTACK(3)|RELEASE(4),
+  )
+  ROCK(0x57, // Bass and Lead
+    .wave={0x00,0x00,0x00,0xff},
+    .mix=0xcf00,
+    .level=TONE|ATTACK(2)|RELEASE(4),
+  )
   
 // 88..95: Synth Pad
-  BLIP(0x58) // Fantasia Pad TODO
+  FX(0x58, // Fantasia Pad
+    .rangeenv=0xffff,
+    .rangelfo=0x80,
+    .rangelfo_depth=0x20,
+    .rate=0x10,
+    .scale=0x10,
+    .detune_rate=0x10,
+    .detune_depth=0x18,
+    .overdrive=0x00,
+    .delay_rate=0x10,
+    .delay_depth=0x20,
+    .level=BOW|ATTACK(0)|RELEASE(7),
+  )
   WAVE(0x59, // Warm Pad
     .wave={0xff,0x10,0x08,0x02},
     .level=BOW|ATTACK(0)|RELEASE(3),
   )
-  ALIAS(0x5a,0x58) // Polysynth Pad TODO
+  FX(0x5a, // Polysynth Pad
+    .rangeenv=0xcf40,
+    .rangelfo=0x40,
+    .rangelfo_depth=0x10,
+    .rate=0x10,
+    .scale=0x40,
+    .detune_rate=0x40,
+    .detune_depth=0x10,
+    .overdrive=0x00,
+    .delay_rate=0x10,
+    .delay_depth=0x20,
+    .level=BOW|ATTACK(2)|RELEASE(5),
+  )
   SUB(0x5b, // Choir Space Voice
     .width1=40,
     .width2=25,
@@ -289,19 +544,95 @@ const struct synth_builtin synth_builtin[0x80]={
     .gain=30,
     .level=BOW|ATTACK(2)|RELEASE(5),
   )
-  ALIAS(0x5d,0x58) // Metallic Pad TODO
-  ALIAS(0x5e,0x58) // Halo Pad TODO
-  ALIAS(0x5f,0x58) // Sweep Pad TODO
+  FX(0x5d, // Metallic Pad
+    .rangeenv=0xfff0,
+    .rangelfo=0x40,
+    .rangelfo_depth=0x04,
+    .rate=0x76,
+    .scale=0x30,
+    .detune_rate=0x80,
+    .detune_depth=0x10,
+    .overdrive=0x00,
+    .delay_rate=0x10,
+    .delay_depth=0x08,
+    .level=BOW|ATTACK(2)|RELEASE(6),
+  )
+  ROCK(0x5e, // Halo Pad
+    .wave={0x00,0xff,0x20,0x10,0x08,0x04,0x02,0x01},
+    .mix=0x04f0,
+    .level=BOW|ATTACK(3)|RELEASE(6),
+  )
+  FX(0x5f, // Sweep Pad
+    .rangeenv=0xffff,
+    .rangelfo=0x40,
+    .rangelfo_depth=0x20,
+    .rate=0x40,
+    .scale=0x30,
+    .detune_rate=0x40,
+    .detune_depth=0x10,
+    .overdrive=0x00,
+    .delay_rate=0x10,
+    .delay_depth=0x08,
+    .level=BOW|ATTACK(2)|RELEASE(6),
+  )
   
 // 96..103: Synth Effects
-  BLIP(0x60) // Rain TODO
+  FX(0x60, // Rain
+    .rangeenv=0x8ff0,
+    .rangelfo=0x80,
+    .rangelfo_depth=0x80,
+    .rate=0x38,
+    .scale=0x60,
+    .detune_rate=0x00,
+    .detune_depth=0x00,
+    .overdrive=0x00,
+    .delay_rate=0x08,
+    .delay_depth=0xa0,
+    .level=IMPULSE|ATTACK(2)|RELEASE(3),
+  )
   ALIAS(0x61,0x60) // Soundtrack TODO
   ALIAS(0x62,0x60) // Crystal TODO
   ALIAS(0x63,0x60) // Atmosphere TODO
   ALIAS(0x64,0x60) // Brightness TODO
-  ALIAS(0x65,0x60) // Goblins TODO
-  ALIAS(0x66,0x60) // Echoes, Drops TODO
-  ALIAS(0x67,0x60) // Sci-Fi Star Theme TODO
+  FX(0x65, // Goblins. My favorite instrument here. (being a goblin and all)
+    .rangeenv=0x8ff0,
+    .rangelfo=0x40,
+    .rangelfo_depth=0x40,
+    .rate=0x08,
+    .scale=0x40,
+    .detune_rate=0x00,
+    .detune_depth=0x00,
+    .overdrive=0x40,
+    .delay_rate=0x10,
+    .delay_depth=0x80,
+    .level=PLUCK|ATTACK(2)|RELEASE(3),
+  )
+  FX(0x66, // Echoes, Drops
+    .rangeenv=0xf0ff,
+    .rangelfo=0x40,
+    .rangelfo_depth=0x80,
+    .rate=0x20,
+    .scale=0x10,
+    .detune_rate=0x10,
+    .detune_depth=0x20,
+    .overdrive=0x00,
+    .delay_rate=0x08,
+    .delay_depth=0xa0,
+    .level=PLUCK|ATTACK(2)|RELEASE(3),
+  )
+  FX(0x67, // Sci-Fi Star Theme
+    .rangeenv=0x0fff,
+    .rangelfo=0x80,
+    .rangelfo_depth=0x18,
+    .rate=0x20,
+    .scale=0x60,
+    .detune_rate=0x10,
+    .detune_depth=0x08,
+    .overdrive=0x08,
+    .delay_rate=0x10,
+    .delay_depth=0x20,
+    .level=BOW|ATTACK(1)|RELEASE(5),
+  )
   
 // 104..111; World
   BLIP(0x68) // Sitar TODO
@@ -314,33 +645,97 @@ const struct synth_builtin synth_builtin[0x80]={
   ALIAS(0x6f,0x68) // Shanai TODO
   
 // 112..119: Percussion
-  BLIP(0x70) // Tinkle Bell TODO
-  ALIAS(0x71,0x70) // Agogo TODO
-  ALIAS(0x72,0x70) // Steel Drums TODO
-  ALIAS(0x73,0x70) // Wood Block TODO
-  ALIAS(0x74,0x70) // Taiko TODO
-  ALIAS(0x75,0x70) // Melodic Tom TODO
-  ALIAS(0x76,0x70) // Synth Drum TODO
+  FMREL(0x70, // Tinkle Bell
+    .rate=0x90,
+    .scale=0xa0,
+    .range=0xff8f,
+    .level=IMPULSE|ATTACK(0)|RELEASE(6),
+  )
+  FMREL(0x71, // Agogo
+    .rate=0x57,
+    .scale=0x40,
+    .range=0xffff,
+    .level=IMPULSE|ATTACK(0)|RELEASE(5),
+  )
+  FMREL(0x72, // Steel Drums
+    .rate=0x58,
+    .scale=0x40,
+    .range=0xf0ff,
+    .level=IMPULSE|ATTACK(1)|RELEASE(5),
+  )
+  FMREL(0x73, // Wood Block
+    .rate=0x18,
+    .scale=0x20,
+    .range=0x0fff,
+    .level=IMPULSE|ATTACK(0)|RELEASE(2),
+  )
+  FMREL(0x74, // Taiko
+    .rate=0x04,
+    .scale=0x30,
+    .range=0xf0ff,
+    .level=IMPULSE|ATTACK(1)|RELEASE(5),
+  )
+  FMREL(0x75, // Melodic Tom
+    .rate=0x18,
+    .scale=0x38,
+    .range=0xf8f0,
+    .level=IMPULSE|ATTACK(1)|RELEASE(3),
+  )
+  FX(0x76, // Synth Drum
+    .rangelfo=0x0a,
+    .rangelfo_depth=0x20,
+    .rate=0x08,
+    .scale=0x20,
+    .rangeenv=0xff80,
+    .detune_rate=0x08,
+    .detune_depth=0x04,
+    .level=IMPULSE|ATTACK(0)|RELEASE(3),
+  )
   ALIAS(0x77,0x70) // Reverse Cymbal TODO
   
 // 120..127: Insert Joke Here
-  BLIP(0x78) // Guitar Fret Noise TODO
+  FMREL(0x78, // Guitar Fret Noise
+    .rate=0x58,
+    .scale=0xa0,
+    .range=0xf88f,
+    .level=IMPULSE|ATTACK(3)|RELEASE(4),
+  )
   SUB(0x79, // Breath Noise
     .width1=40,
     .width2=40,
     .gain=30,
     .level=PLUCK|ATTACK(3)|RELEASE(3),
   )
-  ALIAS(0x7a,0x78) // Seashore TODO
+  SUB(0x7a, // Seashore
+    .width1=200,
+    .width2=100,
+    .gain=5,
+    .level=BOW|ATTACK(3)|RELEASE(7),
+  )
   FMABS(0x7b, // Bird Tweet
     .rate=0x0800,
     .scale=0x12,
     .range=0xf400,
     .level=PLUCK|ATTACK(1)|RELEASE(5),
   )
-  ALIAS(0x7c,0x78) // Telephone Ring TODO
-  ALIAS(0x7d,0x78) // Helicopter TODO
-  ALIAS(0x7e,0x78) // Applause TODO
-  ALIAS(0x7f,0x78) // Gunshot TODO
+  FMABS(0x7c, // Telephone Ring
+    .rate=0x1000,
+    .scale=0x08,
+    .range=0xcfc0,
+    .level=IMPULSE|ATTACK(3)|RELEASE(3),
+  )
+  FMABS(0x7d, // Helicopter. The kind the invaders from Mars fly.
+    .rate=0x0800,
+    .scale=0x10,
+    .range=0x0ff0,
+    .level=TONE|ATTACK(1)|RELEASE(5),
+  )
+  BLIP(0x7e) // Applause. There will be none.
+  SUB(0x00, // Gunshot
+    .width1=400,
+    .width2=400,
+    .gain=1,
+    .level=IMPULSE|ATTACK(1)|RELEASE(4),
+  )
   
 };

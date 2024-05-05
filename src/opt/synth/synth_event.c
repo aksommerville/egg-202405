@@ -63,7 +63,7 @@ static void synth_event_note_once(struct synth *synth,uint8_t chid,uint8_t notei
  */
  
 static void synth_event_control(struct synth *synth,uint8_t chid,uint8_t k,uint8_t v) {
-  if (chid<SYNTH_SONG_CHANNEL_COUNT) return;
+  //if (chid<SYNTH_SONG_CHANNEL_COUNT) return;
   if (chid>=SYNTH_CHANNEL_COUNT) return;
   switch (k) {
   
@@ -89,7 +89,7 @@ static void synth_event_control(struct synth *synth,uint8_t chid,uint8_t k,uint8
  */
  
 static void synth_event_program(struct synth *synth,uint8_t chid,uint8_t pid) {
-  if (chid<SYNTH_SONG_CHANNEL_COUNT) return;
+  //if (chid<SYNTH_SONG_CHANNEL_COUNT) return;
   if (chid>=SYNTH_CHANNEL_COUNT) return;
   synth->pidv[chid]=(synth->pidv[chid]&~0x7f)|pid;
   if (synth->channelv[chid]) {
@@ -127,7 +127,8 @@ static void synth_event_reset(struct synth *synth,uint8_t chid) {
     synth_channel_del(synth->channelv[chid]);
     synth->channelv[chid]=0;
   } else { // Reset all API channels.
-    int i=SYNTH_SONG_CHANNEL_COUNT;
+    //int i=SYNTH_SONG_CHANNEL_COUNT;
+    int i=0; // Actually, reset all of them: We might be sourcing events from the MIDI bus, which would use song channels.
     for (;i<SYNTH_CHANNEL_COUNT;i++) {
       synth_drop_voices_for_channel(synth,i);
       synth_channel_del(synth->channelv[i]);

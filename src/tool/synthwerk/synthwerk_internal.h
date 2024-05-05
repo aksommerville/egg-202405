@@ -9,6 +9,7 @@
 #include "opt/synth/synth.h"
 #include "opt/synth/synth_channel.h"
 #include "opt/http/http.h"
+#include "opt/romr/romr.h"
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -19,8 +20,9 @@
 #include <sys/inotify.h>
 
 // Toggle runtime features here. TODO command line.
+#define SW_USE_MIDI_IN 0 /* Take input directly from all attached MIDI devices. */
 #define SW_USE_AUDIO 1 /* Native audio output, synthesizer, and dynamically reload an instrument per inotify. */
-#define SW_USE_HTTP  0 /* Serve the web app. */
+#define SW_USE_HTTP  1 /* Serve the web app. */
 
 #define SW_INSTRUMENT_FILE "mid/synthwerk.ins"
 #define SW_INSTRUMENT_DIR "mid"
@@ -35,6 +37,8 @@ extern struct sw {
   struct http_context *http;
   struct synth_builtin ins;
   int infd;
+  struct http_websocket *ws;
+  struct romr romr; // Only required for drums.
 } sw;
 
 int synthwerk_load_file();

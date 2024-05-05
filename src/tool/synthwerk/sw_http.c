@@ -88,10 +88,38 @@ static int sw_serve_static(struct http_xfer *req,struct http_xfer *rsp) {
   return http_xfer_set_status(rsp,200,"OK");
 }
 
+/* Input from WebSocket.
+ */
+ 
+static int sw_rcv_ws(struct http_websocket *ws,int opcode,const void *v,int c) {
+  if (opcode<=0) return 0;
+  fprintf(stderr,"%s %d: ",__func__,opcode);
+  int i=0; for (;i<c;i++) fprintf(stderr,"%02x ",((uint8_t*)v)[i]);
+  fprintf(stderr,"\n");
+  struct midi_stream stream={0};
+  if (midi_stream_receive(&stream,v,c)<0) return 0;
+  if (!sw.audio->type->lock||(sw.audio->type->lock(sw.audio)>=0)) {
+    struct midi_event event;
+    while (midi_stream_next(&event,&stream)>0) {
+      synth_event(sw.synth,event.chid,event.opcode,event.a,event.b,0);
+    }
+    if (sw.audio->type->unlock) sw.audio->type->unlock(sw.audio);
+  }
+  return 0;
+}
+
 /* Serve HTTP request, main entry point.
  */
  
 int sw_serve(struct http_xfer *req,struct http_xfer *rsp,void *userdata) {
+  struct http_websocket *ws=http_websocket_check_upgrade(req,rsp);
+  if (ws) {
+    fprintf(stderr,"Accepted WebSocket connection.\n");
+    //http_websocket_disconnect(sw.ws);
+    sw.ws=ws;
+    http_websocket_set_callback(ws,sw_rcv_ws);
+    return 0;
+  }
   return http_dispatch(req,rsp,
     HTTP_METHOD_GET,"",sw_serve_static
   );

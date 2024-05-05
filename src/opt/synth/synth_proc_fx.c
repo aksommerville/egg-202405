@@ -32,6 +32,7 @@ struct synth_fx_context {
   struct synth_delay detune;
   uint32_t detunep;
   uint32_t detunedp;
+  int ttl;
   float buf[SYNTH_BUFFER_LIMIT];
   float lfobuf[SYNTH_BUFFER_LIMIT];
 };
@@ -128,6 +129,20 @@ static void _fx_update(float *v,int c,struct synth *synth,struct synth_proc *pro
     for (i=c;i-->0;p++) (*p)*=CTX->trim;
   }
   
+  // TTL.
+  if (CTX->ttl>0) {
+    float *p=CTX->buf;
+    for (i=c;i-->0;p++) {
+      if (CTX->ttl<=0) {
+        *p=0;
+        proc->update=0;
+      } else if (CTX->ttl<10000) {
+        (*p)*=(float)CTX->ttl/10000.0f;
+      }
+      CTX->ttl--;
+    }
+  }
+  
   const float *src=CTX->buf;
   for (i=c;i-->0;v++,src++) (*v)+=(*src);
 }
@@ -142,12 +157,18 @@ static void _fx_release(struct synth *synth,struct synth_proc *proc) {
     synth_env_release(&voice->level);
     synth_env_release(&voice->range);
   }
+  CTX->ttl=synth->rate;
 }
 
 /* Control change.
  */
 
 static void _fx_control(struct synth *synth,struct synth_proc *proc,uint8_t k,uint8_t v) {
+  switch (k) {
+    case MIDI_CONTROL_VOLUME_MSB: {
+        CTX->trim=v/127.0f;
+      } break;
+  }
 }
 
 /* Pitch wheel.

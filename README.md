@@ -43,6 +43,9 @@ Once you've done that, `make` should build the whole project.
 - - [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.
 - - [ ] egg_audio_get_playhead(native): Loop. Right now it just keeps counting after the song repeats.
 - [ ] Synthesizer, web.
+- - [ ] Tangled Vine: Lead instrument is clipping at attack or something.
+- - [ ] Blood for Silver: Lead is not audible.
+- - [ ] Pause or something between song changes, right now it's immediate and they can overlap a little.
 - - [ ] fx: detune
 - - [ ] Pitch wheel
 - - [ ] Readhead should wrap around on song repeats.
@@ -82,3 +85,4 @@ Once you've done that, `make` should build the whole project.
 - - [00:02:38:170 - 76B5EDC2BC80]: warning: failed to link import function (env, jcfg_del)
 - - [ ] Can we detect this at runtime and abort earlier?
 - - [ ] Can we cause link to fail in this case? Will be a trick, because we do have all those deferred-link "egg_" functions.
+- [ ] Add a facility to native runtime, to fake Standard Mapping for joysticks.

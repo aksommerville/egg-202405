@@ -61,7 +61,7 @@ int main(int argc,char **argv) {
   fprintf(stderr,"HTTP service disabled.\n");
   #endif
   
-  /* Acquire audio driver.
+  /* Acquire audio driver and synthesizer.
    */
   #if SW_USE_AUDIO
   struct hostio_audio_delegate audio_delegate={
@@ -87,9 +87,20 @@ int main(int argc,char **argv) {
     }
   }
   
+  /* Initialize romr with an Egg file containing the GM drums.
+   * Keep going if this fails, it's not the end of the world.
+   */
+  {
+    void *romserial=0;
+    int romserialc=file_read(&romserial,"out/rom/hello.egg");
+    if (romserialc>0) {
+      romr_decode_borrow(&sw.romr,romserial,romserialc);
+    }
+  }
+  
   /* Create synthesizer.
    */
-  if (!(sw.synth=synth_new(sw.audio->rate,sw.audio->chanc,0))) {
+  if (!(sw.synth=synth_new(sw.audio->rate,sw.audio->chanc,&sw.romr))) {
     fprintf(stderr,"Failed to create synthesizer.\n");
     return 1;
   }
@@ -110,23 +121,27 @@ int main(int argc,char **argv) {
   inotify_add_watch(sw.infd,SW_INSTRUMENT_DIR,IN_CREATE|IN_ATTRIB|IN_MOVED_TO);
   
   sw.audio->type->play(sw.audio,1);
+  #else
+  fprintf(stderr,"Native audio disabled.\n");
+  #endif
   
   /* Create MIDI-in manager.
    */
+  #if SW_USE_MIDI_IN
   struct ossmidi_delegate ossmidi_delegate={
     .cb_event=sw_midi_event,
   };
   if (!(sw.ossmidi=ossmidi_new(&ossmidi_delegate))) return 1;
   #else
-  fprintf(stderr,"Native audio disabled.\n");
+  fprintf(stderr,"MIDI-In disabled.\n");
   #endif
   
   // One of the pollable things must have a nonzero timeout, and the other should be zero.
   // Recommend nonzero for ossmidi if enabled, since it's more sensitive to latency.
-  #if SW_USE_AUDIO && SW_USE_HTTP
+  #if SW_USE_MIDI_IN && SW_USE_HTTP
     int ossto=100;
     int httpto=0;
-  #elif SW_USE_AUDIO
+  #elif SW_USE_MIDI_IN
     int ossto=100;
     int httpto=0;
   #elif SW_USE_HTTP
@@ -140,11 +155,14 @@ int main(int argc,char **argv) {
   /* Main loop.
    */
   while (!sw.sigc) {
-    #if SW_USE_AUDIO
+    #if SW_USE_MIDI_IN
     if (ossmidi_update(sw.ossmidi,ossto)<0) {
       fprintf(stderr,"ossmidi_update failed\n");
       return 1;
     }
+    #endif
+    
+    #if SW_USE_AUDIO
     if (sw.audio->type->update) {
       if (sw.audio->type->update(sw.audio)<0) {
         fprintf(stderr,"Failed to update audio driver.\n");

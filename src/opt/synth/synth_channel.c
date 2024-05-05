@@ -205,10 +205,10 @@ void synth_channel_control(struct synth *synth,struct synth_channel *channel,uin
   switch (k) {
     case MIDI_CONTROL_VOLUME_MSB: {
         channel->trim=v/127.0f;
-      } return;
+      } break;
     case MIDI_CONTROL_PAN_MSB: {
         channel->pan=v/64.0f-1.0f;
-      } return;
+      } break;
   }
   switch (channel->mode) {
     case SYNTH_CHANNEL_MODE_FX: {
