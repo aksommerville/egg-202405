@@ -1,0 +1,52 @@
+2024-05-05
+Installing on my Pi, the first host other than my main workstation to install on.
+Noting every step for future reference.
+
+- git clone https://github.com/aksommerville/egg
+- make # etc/config.mk gets created
+- Set TARGETS:=linux.
+- wamr
+- - git clone https://github.com/bytecodealliance/wasm-micro-runtime
+- - mkdir build ; cd build ; cmake .. ; make # XXX
+- - wasm-micro-runtime/core/iwasm/common/arch/invokeNative_aarch64_simd.s:25: Error: bad instruction `stp x19,x20,[sp,#0x20]'
+- - cmake .. -DWAMR_BUILD_TARGET=ARM
+- wasi
+- - git clone --recursive https://github.com/WebAssembly/wasi-sdk.git
+- - This is not a trivial download, multiple gigabytes.
+- - Probably should have added `--depth 1` here, dammit.
+- - If you're on x86, use WASI's prebuilt packages.
+- - sudo apt install ninja
+- - Need cmake 3.20; I have 3.18.
+- - - Pull source from https://github.com/Kitware/CMake/releases/download/v3.29.2/cmake-3.29.2.tar.gz
+- - - sudo apt install libssl-dev
+- - - cmake is not the easy build you'd think it is.
+- - - And of course it fails after an hour or two: typeof.cpp:(.text+0xd0): undefined reference to `__atomic_fetch_sub_8'
+- - Jesus Fucking Christ. Well, we only want the runtime, so maybe we can do it without WASI.
+- qjs: Was already installed.
+- curl
+- - git clone --depth 1 https://github.com/curl/curl
+- - mkdir build ; cd build
+- - cmake .. -DENABLE_WEBSOCKETS=ON -DBUILD_STATIC_LIBS=ON
+- src/opt/wav/wav.c:181:   if ((srcc<8)||memcmp(src,"RIFF",8)) return 0; // oops! Fixed here but remember to update bits
+- Disable libjpeg: etc/config.mk: tools_OPT_ENABLE
+- Reduce linux and tests OPT_ENABLE to alsafd and drmgx, no other audio or video.
+- Add a cudgel in etc/make/demos.mk to prevent those building.
+- jpeg is added in etc/target/linux.mk too. Why?
+- Bunch of GL link errors. Add -lGL in etc/target/linux.mk, the drmgx block.
+- OK build succeeded, albeit without the demos.
+- scp all the roms: cfood.egg  hello.egg  lojs.egg  lowasm.egg  minigolf.egg  ts.egg  wat.egg
+- drmModeGetResources() failed
+- - Need --video-device=/dev/dri/card1
+- Stalling at startup. Probly due to alsafd, grrr. Try pulse instead.
+- drmModePageFlip: Invalid argument
+- - Runs fine under drmgx on my Nuc.
+- - This extra cruft in drmgx_init seems to have been the culprit:
+- -   drmgx.crtcunset=0;
+- -   // Set the CRTC pointlessly, just because this is where I usually fail if we launch with X11 running.
+- -   uint32_t fbid=0;
+- -   if (drmgx_swap_egl(&fbid)<0) return -1;
+- Well it worked once. Now I'm stalling on startup again. This time I'm using pulse, so it's not likely an audio thing.
+- - Looks like it stalls at wamr_call for egg_client_update
+- - eggsamples/cfood/jlog.c: dsta=(dstc+1024)&~1023; // <-- Supposed to be (dstc+err). This is a real error, was just waiting for a long enough template to choke on. D'oh.
+- Success!
+- But I realize, most of what we have is not usable due to there not being a keyboard or mouse.
