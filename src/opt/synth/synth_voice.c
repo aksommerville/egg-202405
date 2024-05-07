@@ -165,7 +165,7 @@ void synth_voice_update(float *v,int c,struct synth *synth,struct synth_voice *v
           float mod=synth->sine[voice->modp>>SYNTH_WAVE_SHIFT];
           voice->modp+=voice->moddp;
           mod*=synth_env_update(&voice->param0);
-          voice->p+=voice->dp+(uint32_t)((float)voice->dp*mod);
+          voice->p+=voice->dp+(int32_t)((float)voice->dp*mod);
         }
         if (synth_env_is_finished(&voice->level)) {
           voice->origin=0;
