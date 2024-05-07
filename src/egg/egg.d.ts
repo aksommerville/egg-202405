@@ -251,6 +251,7 @@ const enum ResType { // Canonical list: src/opt/romr/romr.h
  * May return >dsta if your buffer isn't long enough, and does not populate (dst) in that case.
  * Managing qualifiers is up to you. We'll provide client-side helpers for that.
  */
+ //XXX This actually returns Uint8Array, and that is better -- otherwise we would have to copy each resource internally.
 function res_get(tid: number, qual: number, rid: number): ArrayBuffer | null;
 
 /* Examine the resource TOC.

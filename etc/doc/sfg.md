@@ -81,6 +81,8 @@ Finally, all but the last voice must be explicitly terminated:
 endvoice
 ```
 
+ENV is `VALUE [MS VALUE...]`
+
 ## Notes
 
 Global Header:

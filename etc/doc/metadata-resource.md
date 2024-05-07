@@ -93,6 +93,24 @@ Or of course you can make something up. But try to use one of these, it's helpfu
 Comma-delimited strings.
 
 Same idea as Genre, let's try to use tags that already exist on itch.io, just for a common reference.
+Top 40 tags from Itch on 2024-05-06:
+
+```
+Horror        2D                    Singleplayer   Pixel Art
+Adventure     3D                    Short          Visual Novel
+Retro         Role Playing          Atmospheric    Action
+Fantasy       Platformer            First-Person   Puzzle
+Creepy        Cute                  Simulation     Unity
+Romance       Interactive Fiction   Survival       Tabletop role-playing game
+Low-poly      Top-Down              Story Rich     Sprites
+LGBT          Psychological Horror  Casual         RPG Maker
+Shooter       Indie                 Sci-fi         Anime
+Narrative     Female Protagonist    Dark           Arcade
+```
+
+Some of these obviously don't make sense, eg "Unity".
+I wouldn't recommend calling out "2D" either, since Egg doesn't really support 3D.
+And of course you can make things up.
 
 ## Required/Optional Features
 

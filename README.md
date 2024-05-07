@@ -37,7 +37,9 @@ Once you've done that, `make` should build the whole project.
 - - [ ] Drivers.
 - - [ ] Languages.
 - - [ ] Build sensible app bundle.
-- [ ] Pi. We'll need the BCM video driver, beyond that it's really just linux.
+- [x] Pi. We'll need the BCM video driver, beyond that it's really just linux.
+- - [x] Synth is broken. Obvious in the lead of Too Heavy.
+- - 26% CPU in a full run-through of Too Heavy. Is that too much?
 - [ ] Synthesizer, native.
 - - [ ] GM instruments.
 - - [ ] egg_audio_get_playhead(native): Estimate driver's buffer position.
@@ -86,3 +88,5 @@ Once you've done that, `make` should build the whole project.
 - - [ ] Can we detect this at runtime and abort earlier?
 - - [ ] Can we cause link to fail in this case? Will be a trick, because we do have all those deferred-link "egg_" functions.
 - [ ] Add a facility to native runtime, to fake Standard Mapping for joysticks.
+- [ ] res_get for JS/web: Should return Uint8Array, not ArrayBuffer. Update header and native.
+- [ ] I'm a bit disillusioned with QOI. eg Too Heavy, the graphics are twice as big in QOI as PNG. Can we do PNG?
