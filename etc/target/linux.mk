@@ -111,4 +111,10 @@ linux_OFILES_NATIVE_LIB:=$(filter-out \
   ,$(linux_OFILES))
 $(linux_NATIVE_LIB):$(linux_OFILES_NATIVE_LIB);$(PRECMD) $(linux_AR) $@ $(linux_OFILES_NATIVE_LIB)
 
+linux_BUNDLE_SCRIPT:=$(linux_OUTDIR)/egg-bundle.sh
+linux_NATIVE_SCRIPT:=$(linux_OUTDIR)/egg-native.sh
+$(linux_BUNDLE_SCRIPT):etc/tool/gen-bundle.sh;$(PRECMD) CC="$(linux_CC)" LD="$(linux_LD)" LDPOST="$(linux_LDPOST)" LIB="$(linux_BUNDLED_LIB)" $< $@
+$(linux_NATIVE_SCRIPT):etc/tool/gen-native.sh;$(PRECMD) CC="$(linux_CC)" LD="$(linux_LD)" LDPOST="$(linux_LDPOST)" LIB="$(linux_NATIVE_LIB)" $< $@
+all:$(linux_BUNDLE_SCRIPT) $(linux_NATIVE_SCRIPT)
+
 linux-run:$(linux_EXE) demos-all;$(linux_EXE) $(linux_RUN_ARGS)

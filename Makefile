@@ -16,6 +16,7 @@ include etc/make/common.mk
 include etc/make/tools.mk
 include etc/make/tests.mk
 include etc/make/demos.mk
+include etc/make/web.mk
 
 define TARGET_RULES
   $1_MIDDIR:=mid/$1
