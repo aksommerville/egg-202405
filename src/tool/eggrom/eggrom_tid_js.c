@@ -121,6 +121,7 @@ static int eggrom_js_resolve_path(struct eggrom_js_context *ctx,const char *pfx,
  *  - No further imports appear after the first non-import line.
  *  - Imports will not contain block comments before the string.
  *  - No multi-line block comment will contain lines that look like imports.
+ *  - Block comments end on some subsequent line, with terminator at the end of that subsequent line.
  */
  
 static int eggrom_js_discover_imports(struct eggrom_js_context *ctx) {
@@ -130,15 +131,23 @@ static int eggrom_js_discover_imports(struct eggrom_js_context *ctx) {
     struct sr_decoder decoder={.v=res->src,.c=res->srcc};
     int lineno=0,linec;
     const char *line;
+    int block_comment=0;
     while ((linec=sr_decode_line(&line,&decoder))>0) {
       lineno++;
       while (linec&&((unsigned char)line[0]<=0x20)) { linec--; line++; }
-      int stopp=linec-1,searchp=0;
-      for (;searchp<stopp;searchp++) {
-        if ((line[searchp]=='/')&&(line[searchp+1]=='/')) { linec=searchp; break; }
-        if ((line[searchp]=='/')&&(line[searchp+1]=='*')) { linec=searchp; break; }
-      }
       while (linec&&((unsigned char)line[linec-1]<=0x20)) linec--;
+      int stopp=linec-1,searchp=0;
+      if (block_comment) {
+        if ((linec>=2)&&!memcmp(line+linec-2,"*/",2)) {
+          block_comment=0;
+        }
+        continue;
+      } else {
+        for (;searchp<stopp;searchp++) {
+          if ((line[searchp]=='/')&&(line[searchp+1]=='/')) { linec=searchp; break; }
+          if ((line[searchp]=='/')&&(line[searchp+1]=='*')) { linec=searchp; block_comment=1; break; }
+        }
+      }
       if (!linec) continue;
       if ((linec<7)||memcmp(line,"import ",7)) break; // something that isn't an import or space
       
